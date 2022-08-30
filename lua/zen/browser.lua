@@ -24,6 +24,8 @@ zen.IncludeCL("zen/modules/console/cl_console.lua")
 
 zen.IncludeCL("zen/modules/hud/cl_hud.lua")
 
+zen.IncludeCL("zen/modules/map/cl_map_edit.lua")
+
 zen.IncludeSH("zen/modules/world_click/sh_world_click.lua")
 zen.IncludeSV("zen/modules/world_click/sv_world_click.lua")
 zen.IncludeCL("zen/modules/world_click/cl_world_click.lua")
