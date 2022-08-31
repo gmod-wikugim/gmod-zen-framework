@@ -4,6 +4,51 @@ map_edit.hookName = "zen.map_edit"
 map_edit.ViewData = map_edit.ViewData or {}
 local viewdata = map_edit.ViewData
 
+function map_edit.HUDPaint()
+
+
+
+	if viewdata.IsDrawPlayers then
+		
+	end
+
+end
+
+function map_edit.GenerateGUI(pnlContext)
+	local pnlFrame = pnlContext:Add("DFrame")
+	pnlFrame:SetSize(300, 400)
+	pnlFrame:SetPos(100, 100)
+	pnlFrame:SetSizable(true)
+	pnlFrame:SetTitle("MapEdit")
+
+
+	local pnlList = pnlFrame:Add("EditablePanel")
+	pnlList:Dock(FILL)
+	pnlList:InvalidateParent(true)
+
+
+	local addButton = function(tall)
+		local pnlButton = pnlList:Add("EditablePanel")
+		pnlButton:SetTall(tall or 50)
+		pnlButton:Dock(TOP)
+		pnlButton:InvalidateParent(true)
+
+		return pnlButton
+	end
+
+	do
+		local pnlDrawEntities = addButton(20)
+		local pnl = pnlDrawEntities:Add("DCheckBoxLabel")
+		pnl:SetText("DrawPlayer")
+		pnl:Dock(FILL)
+		pnl.OnChange = function(self, value)
+			viewdata.IsDrawPlayers = value
+		end
+
+
+	end
+end
+
 
 function map_edit.Toggle()
 	local ply = LocalPlayer()
@@ -13,13 +58,28 @@ function map_edit.Toggle()
 		hook.Remove("CalcView", map_edit.hookName)
 		hook.Remove("StartCommand", map_edit.hookName)
 		hook.Remove("PlayerSwitchWeapon", map_edit.hookName)
+		hook.Remove("map_edit.HUDPaint", map_edit.hookName)
+
+		if IsValid(map_edit.pnlContext) then
+			map_edit.pnlContext:Remove()
+		end
 		return
 	end
+
+
+	map_edit.pnlContext = g_ContextMenu:Add("EditablePanel")
+	map_edit.pnlContext:SetSize(ScrW(), ScrH())
+	map_edit.pnlContext:SetPos(0, 0)
+	map_edit.pnlContext:SetWorldClicker(true)
+	map_edit.pnlContext:SetMouseInputEnabled(true)
+
+	map_edit.GenerateGUI(map_edit.pnlContext)
 	
 	
 	hook.Add("CalcView", map_edit.hookName, map_edit.CalcView)
 	hook.Add("StartCommand", map_edit.hookName, map_edit.StartCommand)
 	hook.Add("PlayerSwitchWeapon", map_edit.hookName, map_edit.PlayerSwitchWeapon)
+	hook.Add("map_edit.HUDPaint", map_edit.hookName, map_edit.HUDPaint)
 	
 	viewdata.Angle = ply:EyeAngles()
 	viewdata.Origin = ply:EyePos()
@@ -106,6 +166,5 @@ hook.Add("PlayerButtonPress", "zen.map_edit", function(ply, but)
 			start = pos,
 			endpos = pos + ang:Forward()*1000
 		})
-		print(trace.Entity)
 	end
 end)

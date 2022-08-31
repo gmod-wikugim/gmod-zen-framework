@@ -4,6 +4,8 @@ zen.IncludeSH("zen/lib/string.lua")
 zen.IncludeSH("zen/lib/sql.lua")
 zen.IncludeCL("zen/lib/cl_input.lua")
 
+zen.IncludeCL("zen/lib/ui/cl_fonts.lua")
+
 zen.IncludeSH("zen/modules/network/sh_nt.lua")
 zen.IncludeSV("zen/modules/network/sv_nt.lua")
 zen.IncludeCL("zen/modules/network/cl_nt.lua")
