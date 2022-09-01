@@ -1138,7 +1138,7 @@ function util.GetPlayerTraceSource(ply, noCursor)
         local normal
 
         if not noCursor then
-            local mx, my = gui.MouseX(), gui.MouseY()
+            local mx, my = input.GetCursorPos()
             normal = util.AimVector(view_data.angles, view_data.fov, mx, my, view_data.width, view_data.height)
         else
             normal = view_data.angles:Forward()

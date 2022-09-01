@@ -6,6 +6,8 @@ zen.IncludeCL("zen/lib/cl_input.lua")
 
 zen.IncludeCL("zen/lib/ui/cl_fonts.lua")
 zen.IncludeCL("zen/lib/ui/cl_draw.lua")
+zen.IncludeCL("zen/lib/ui/cl_draw_3d.lua")
+zen.IncludeCL("zen/lib/ui/cl_draw_3d2d.lua")
 zen.IncludeCL("zen/lib/ui/cl_gui.lua")
 zen.IncludeCL("zen/lib/ui/gui/cl_params.lua")
 zen.IncludeCL("zen/lib/ui/gui/cl_presets.lua")
