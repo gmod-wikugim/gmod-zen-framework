@@ -29,6 +29,12 @@ zen.IncludeSV("zen/modules/permission/command/sv_permissions.lua")
 zen.IncludeSV("zen/modules/console/sv_console.lua")
 zen.IncludeCL("zen/modules/console/cl_console.lua")
 
+zen.IncludeSH("zen/modules/var_edit/sh_nvars.lua")
+zen.IncludeSV("zen/modules/var_edit/sv_nvars.lua")
+zen.IncludeCL("zen/modules/var_edit/cl_nvars.lua")
+zen.IncludeCL("zen/modules/var_edit/cl_click.lua")
+zen.IncludeCL("zen/modules/var_edit/vgui/iproperties.lua")
+
 zen.IncludeCL("zen/modules/hud/cl_hud.lua")
 
 zen.IncludeCL("zen/modules/map_edit/cl_map_edit.lua")
@@ -42,10 +48,3 @@ zen.IncludeSH("zen/integration/sh_gamemode.lua")
 zen.IncludeSH("zen/integration/sh_fl_admin.lua")
 zen.IncludeSV("zen/integration/sv_white_list.lua")
 zen.IncludeSH("zen/integration/sh_admin.lua")
-
-zen.IncludeSH("zen/integration/variable_edit/sh_nvars.lua")
-zen.IncludeSV("zen/integration/variable_edit/sv_nvars.lua")
-zen.IncludeCL("zen/integration/variable_edit/cl_nvars.lua")
-zen.IncludeCL("zen/integration/variable_edit/cl_click.lua")
-
-zen.IncludeCL("zen/integration/variable_edit/vgui/iproperties.lua")
