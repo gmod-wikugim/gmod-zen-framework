@@ -1,21 +1,21 @@
 local ui = zen.Init("ui")
 local gui = ui.Init("gui")
 
-gui.CreatePreset("base", nil, {})
+gui.RegisterPreset("base", nil, {})
 
-gui.CreatePreset("header", "base", {
+gui.RegisterPreset("header", "base", {
     "input",
     "dock-top",
     min_size = {100, 100},
 })
 
-gui.CreatePreset("footer", "base", {
+gui.RegisterPreset("footer", "base", {
     "input",
     "dock-top",
     min_size = {100, 100},
 })
 
-gui.CreatePreset("frame", "base", {
+gui.RegisterPreset("frame", "base", {
     "input",
     "popup",
     "center",
