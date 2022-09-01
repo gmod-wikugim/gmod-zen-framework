@@ -1,5 +1,5 @@
-zen.map_edit = zen.map_edit or {}
-local map_edit = zen.map_edit
+local map_edit = zen.Init("map_edit")
+
 map_edit.hookName = "zen.map_edit"
 map_edit.ViewData = map_edit.ViewData or {}
 local viewdata = map_edit.ViewData
@@ -12,6 +12,10 @@ function map_edit.HUDPaint()
 		
 	end
 
+end
+
+function map_edit.HUDShouldDraw()
+	return false
 end
 
 function map_edit.GenerateGUI(pnlContext)
@@ -59,6 +63,7 @@ function map_edit.Toggle()
 		hook.Remove("StartCommand", map_edit.hookName)
 		hook.Remove("PlayerSwitchWeapon", map_edit.hookName)
 		hook.Remove("map_edit.HUDPaint", map_edit.hookName)
+		hook.Remove("HUDShouldDraw", map_edit.hookName)
 
 		if IsValid(map_edit.pnlContext) then
 			map_edit.pnlContext:Remove()
@@ -80,6 +85,7 @@ function map_edit.Toggle()
 	hook.Add("StartCommand", map_edit.hookName, map_edit.StartCommand)
 	hook.Add("PlayerSwitchWeapon", map_edit.hookName, map_edit.PlayerSwitchWeapon)
 	hook.Add("map_edit.HUDPaint", map_edit.hookName, map_edit.HUDPaint)
+	hook.Add("HUDShouldDraw", map_edit.hookName, map_edit.HUDShouldDraw)
 	
 	viewdata.Angle = ply:EyeAngles()
 	viewdata.Origin = ply:EyePos()
