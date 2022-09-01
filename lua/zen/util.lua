@@ -1152,7 +1152,7 @@ function util.GetPlayerTraceSource(ply, noCursor)
         local normal
 
         if not noCursor then
-            normal = ply:AimVector()
+            normal = ply:GetAimVector()
         else
             normal = ply:EyeAngles():Forward()
         end
