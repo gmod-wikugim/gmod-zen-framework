@@ -14,6 +14,7 @@ ui.t_FontData = ui.t_FontData or {}
 ---@param size number
 ---@param font_base? any
 ---@param font_data? table
+---@param noCheck? boolean
 ---@return string font_unique_id
 function ui.font(font_unique_id, size, font_base, font_data, noCheck)
 	if not noCheck then
@@ -21,7 +22,6 @@ function ui.font(font_unique_id, size, font_base, font_data, noCheck)
 		if ui.t_FastFontList[font_unique_id] then return ui.t_FastFontList[font_unique_id] end
 	end
 
-	assert(isnumber(size) or istable(font_data) and isnumber(font_data.size), "size or font_data.size not is number")
 	size = size
 	font_base = ui.t_FontList[font_base] or font_base or "Roboto"
 	font_data = font_data or {}
@@ -34,10 +34,12 @@ function ui.font(font_unique_id, size, font_base, font_data, noCheck)
 		font_data = new_font_data
 	end
 
+	assert(isnumber(size) or (istable(font_data) and isnumber(font_data.size)), "size or font_data.size not is number")
+
 	local data = {
 		font = font_data.font or font_base,
 		extended = font_data.expected or false,
-		size = font_data.size or (size * ( ScrH() / 350.0 )),
+		size = (size and size * ( ScrH() / 350.0 ) or font_data.size),
 		weight = font_data.weight or 300,
 		blursize = font_data.blursize or 0,
 		scanlines = font_data.scanlines or 0,
@@ -59,7 +61,17 @@ function ui.font(font_unique_id, size, font_base, font_data, noCheck)
 	return ui.t_FontList[font_unique_id]
 end
 
-function ui.CreatFont(font_unique_id, size, font_base, font_data)
+
+-- ```
+-- ui.CreateFont("MainHUD", 10, "Roboto", {})
+-- ui.CreateFont("MainHUD_Italic", nil, "MainHUD", {italic = true})
+-- ```
+---@param font_unique_id any
+---@param size number
+---@param font_base? any
+---@param font_data? table
+---@return string font_unique_id
+function ui.CreateFont(font_unique_id, size, font_base, font_data)
 	return ui.font(font_unique_id, size, font_base, font_data, true)
 end
 
