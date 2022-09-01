@@ -122,13 +122,18 @@ function gui.ApplyParams(pnl, data)
     end
 end
 
-function gui.Create(pnl_name, pnlParent, data, uniqueName, presets)
+function gui.Create(pnl_name, pnlParent, data, uniqueName, presets, isAdd)
     if uniqueName then
         local lastPanel = gui.t_UniquePanels[uniqueName]
         if IsValid(lastPanel) then lastPanel:Remove() end
     end
 
-    local pnl = vgui.Create(pnl_name, pnlParent)
+    local pnl
+    if pnlParent and isAdd then
+        pnl = pnlParent:Add(pnl_name)
+    else
+        pnl = vgui.Create(pnl_name, pnlParent, uniqueName)
+    end
 
     if not IsValid(pnl) then
         error("Panel not IsValid")
@@ -155,6 +160,7 @@ function gui.Create(pnl_name, pnlParent, data, uniqueName, presets)
     gui.MergeParams(tData, data)
 
     gui.ApplyParams(pnl, tData)
+    return pnl
 end
 
 function gui.RegisterPreset(preset_name, preset_base, data)
@@ -180,7 +186,11 @@ function gui.RegisterParam(param, func, aliases)
     end
 end
 
-function gui.CreateStyled(styleName, pnlParent, uniqueName, extraData, extraPresets)
+META.PANEL.AddStyled = function(self, styleName, extraData, extraPresets)
+    return gui.CreateStyled(styleName, self, nil, extraData, extraPresets, true)
+end
+
+function gui.CreateStyled(styleName, pnlParent, uniqueName, extraData, extraPresets, isAdd)
     assertStringNice(styleName, "styleName")
     local tStylePanel = gui.t_StylePanels[styleName]
     assert(tStylePanel != nil, "tStylePanel is nil")
@@ -203,7 +213,7 @@ function gui.CreateStyled(styleName, pnlParent, uniqueName, extraData, extraPres
         gui.MergeParams(tPresets, extraPresets)
     end
 
-    gui.Create(tStylePanel.vguiBase, pnlParent, tData, uniqueName, tPresets)
+    return gui.Create(tStylePanel.vguiBase, pnlParent, tData, uniqueName, tPresets, isAdd)
 end
 
 function gui.RegisterStylePanel(styleName, tPanel, vguiBase, data, presets)
