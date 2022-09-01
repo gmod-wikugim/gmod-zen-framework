@@ -16,6 +16,10 @@ gui.RegisterStylePanel("list", {}, "DScrollPanel", {"dock_fill", "input"}, {})
 gui.RegisterStylePanel("input_text", {}, "DTextEntry", {"input"}, {})
 gui.RegisterStylePanel("input_bool", {}, "DCheckBoxLabel", {"input", text = "zen.input_bool"}, {})
 gui.RegisterStylePanel("input_number", {}, "DNumSlider", {"input", text = "zen.input_number"}, {})
+gui.RegisterStylePanel("input_arg", {}, "DComboBox", {"input", text = "zen.input_arg"}, {})
+
+
+gui.RegisterStylePanel("button", {}, "DButton", {"input", text = "zen.button"}, {})
 
 
 
