@@ -32,6 +32,15 @@ function izen.print(...)
 end
 zen.print = izen.print
 
+function izen.Init(module_name)
+    if izen[module_name] then return izen[module_name] end
+    izen[module_name] = izen[module_name] or {}
+    zen[module_name] = izen[module_name]
+
+    return zen[module_name]
+end
+zen.Init = izen.Init
+
 function izen.Include(fl_path)
     return include(fl_path)
 end
