@@ -3,7 +3,7 @@ local worldclick = zen.worldclick
 worldclick.tLastTrace = worldclick.tLastTrace or {}
 worldclick.objLastEntity = worldclick.objLastEntity or NULL
 function worldclick.CheckHover()
-    local tr = worldclick.Trace(LocalPlayer(), EyePos(), LocalPlayer():GetAimVector() )
+    local tr = worldclick.Trace()
 
     worldclick.tLastTrace = tr
 
