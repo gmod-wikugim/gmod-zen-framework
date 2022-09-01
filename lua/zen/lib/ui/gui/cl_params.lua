@@ -1,6 +1,18 @@
 local ui = zen.Init("ui")
 local gui = ui.Init("gui")
 
+gui.RegisterParam("set_size_middle", function(pnl, value)
+    value = value or 0
+    local pnlOwner = pnl:GetParent()
+    local w, h = pnlOwner:GetSize()
+
+    pnl:SetSize(w*0.5 + value, h*0.5 + value)
+end, {
+    "set_size_middle",
+    "size_middle",
+    "middle_size",
+})
+
 gui.RegisterParam("set_size", function(pnl, value1, value2)
     pnl:SetSize(value1, value2)
 end, {
@@ -640,38 +652,46 @@ end, {
     "middle",
 })
 
-gui.RegisterParam("center-horizontal", function(pnl, value)
+gui.RegisterParam("center_horizontal", function(pnl, value)
     value = value != nil and value or 0.5
     pnl:CenterHorizontal(value)
 end, {
-    "center-horizontal",
-    "horizontal-center",
-    "center-wide",
-    "center-width",
-    "width-center",
-    "wide-center",
-    "wide-middle",
-    "width-middle",
-    "horizontal-middle",
-    "middle-wide",
-    "middle-width",
-    "middle-horizontal",
+    "center_horizontal",
+    "horizontal_center",
+    "center_wide",
+    "center_width",
+    "width_center",
+    "wide_center",
+    "wide_middle",
+    "width_middle",
+    "horizontal_middle",
+    "middle_wide",
+    "middle_width",
+    "middle_horizontal",
 })
 
-gui.RegisterParam("center-vertical", function(pnl, value)
+gui.RegisterParam("center_vertical", function(pnl, value)
     value = value != nil and value or 0.5
     pnl:CenterVertical(value)
 end, {
-    "center-vertical",
-    "vertical-center",
-    "center-tall",
-    "center-height",
-    "height-center",
-    "tall-center",
-    "tall-middle",
-    "height-middle",
-    "vertical-middle",
-    "middle-tall",
-    "middle-height",
-    "middle-vertical",
+    "center_vertical",
+    "vertical_center",
+    "center_tall",
+    "center_height",
+    "height_center",
+    "tall_center",
+    "tall_middle",
+    "height_middle",
+    "vertical_middle",
+    "middle_tall",
+    "middle_height",
+    "middle_vertical",
+})
+
+
+gui.RegisterParam("set_data", function(pnl, v1, v2, v3, v4, v5, v6, v7, v8)
+    pnl:SetData(v1, v2, v3, v4, v5, v6, v7, v8)
+end, {
+    "set_data",
+    "data",
 })

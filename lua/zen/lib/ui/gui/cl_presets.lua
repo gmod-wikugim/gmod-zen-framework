@@ -5,14 +5,14 @@ gui.RegisterPreset("base", nil, {})
 
 gui.RegisterPreset("header", "base", {
     "input",
-    "dock-top",
-    min_size = {100, 100},
+    "dock_top",
+    tall = 50,
 })
 
 gui.RegisterPreset("footer", "base", {
     "input",
-    "dock-top",
-    min_size = {100, 100},
+    "dock_top",
+    tall = 50,
 })
 
 gui.RegisterPreset("frame", "base", {

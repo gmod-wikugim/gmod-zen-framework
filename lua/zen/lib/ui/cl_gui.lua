@@ -37,6 +37,9 @@ local ParamsPriority = {
     "set_size",
     "set_wide",
     "set_tall",
+    "set_size_middle",
+    "center_vertical",
+    "center_horizontal",
     "dock",
     "dock_fill",
     "dock_bottom",
@@ -186,14 +189,17 @@ function gui.RegisterParam(param, func, aliases)
     end
 end
 
-META.PANEL.AddStyled = function(self, styleName, extraData, extraPresets)
+META.PANEL.zen_Add = function(self, pnl_name, extraData, extraPresets)
+    return gui.Create(pnl_name, self, extraData, nil, extraPresets, true)
+end
+META.PANEL.zen_AddStyled = function(self, styleName, extraData, extraPresets)
     return gui.CreateStyled(styleName, self, nil, extraData, extraPresets, true)
 end
 
 function gui.CreateStyled(styleName, pnlParent, uniqueName, extraData, extraPresets, isAdd)
     assertStringNice(styleName, "styleName")
     local tStylePanel = gui.t_StylePanels[styleName]
-    assert(tStylePanel != nil, "tStylePanel is nil")
+    assert(tStylePanel != nil, "stylePanel not exists: " .. tostring(styleName))
 
     local tData = {}
 
@@ -213,7 +219,15 @@ function gui.CreateStyled(styleName, pnlParent, uniqueName, extraData, extraPres
         gui.MergeParams(tPresets, extraPresets)
     end
 
-    return gui.Create(tStylePanel.vguiBase, pnlParent, tData, uniqueName, tPresets, isAdd)
+    local pnl = gui.Create(tStylePanel.vguiBase, pnlParent, tData, uniqueName, tPresets, isAdd)
+
+    if tStylePanel.tPanel then
+        for k, v in pairs(tStylePanel.tPanel) do
+            pnl[k] = v
+        end
+    end
+
+    return pnl
 end
 
 function gui.RegisterStylePanel(styleName, tPanel, vguiBase, data, presets)
