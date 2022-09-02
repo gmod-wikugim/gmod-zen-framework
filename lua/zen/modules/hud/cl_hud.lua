@@ -1,3 +1,37 @@
+RENDER_3D = 1
+RENDER_2D = 2
+
+RENDER_PRE = 1
+RENDER_DEFAULT = 2
+RENDER_POST = 3
+
+hook.Add("DrawTranslucentRenderables", "zen.hud", function()
+    hook.Run("Render", RENDER_3D, RENDER_PRE)
+end)
+
+hook.Run("PreDrawEffects", "zen.hud", function()
+    hook.Run("Render", RENDER_3D, RENDER_DEFAULT)
+end)
+
+hook.Add("PreDrawHUD", "zen.hud", function()
+    hook.Run("Render", RENDER_2D, RENDER_DEFAULT)
+end)
+
+hook.Add("PostDrawEffects", "zen.hud", function()
+    hook.Run("Render", RENDER_2D, RENDER_PRE)
+end)
+
+hook.Add("PostRender", "zen.hud", function()
+    cam.Start3D()
+        hook.Run("Render", RENDER_3D, RENDER_POST)
+    cam.End3D()
+
+    cam.Start2D()
+        hook.Run("Render", RENDER_2D, RENDER_POST)
+    cam.End2D()
+end)
+
+
 hook.Add("PostDrawOpaqueRenderables", "zen.hud", function()
     local lp = LocalPlayer()
     local lp_pos = lp:GetPos()

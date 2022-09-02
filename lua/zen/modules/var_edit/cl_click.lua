@@ -1,3 +1,5 @@
+local draw = zen.Import("ui.draw")
+
 local color_hover = Color(255, 0, 0)
 hook.Add("zen.worldclick.DrawEntityInfo", "zen.variable_edit", function(ent, pos, ang)
     if zen.nvars.mt_EntityButtons then
@@ -28,7 +30,7 @@ hook.Add("zen.worldclick.DrawEntityInfo", "zen.variable_edit", function(ent, pos
                 local x, y = v[1], v[2]
                 
                 local clr = minID == k and color_hover or color_white
-                draw.SimpleText(data.string, "DebugOverlay", x, y, clr, 1, 1)
+                draw.Text(data.string, 8, x, y, clr, 1, 1, COLOR.BLACK)
             end
         cam.End2D()
 
