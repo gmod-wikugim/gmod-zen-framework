@@ -11,10 +11,19 @@ local s_SetTextColor = surface.SetTextColor
 local s_SetMaterial = surface.SetMaterial
 local s_DrawTexturedRect = surface.DrawTexturedRect
 local s_DrawTexturedRectRotated = surface.DrawTexturedRectRotated
+local s_DrawLine = surface.DrawLine
 
 local math_ceil = math.ceil
 local tostring = tostring
 
+function draw.DrawLine(x1, y1, x2, y2, clr)
+    if clr then
+        s_SetDrawColor(clr.r, clr.g, clr.b, clr.a)
+    else
+        s_SetDrawColor(255, 255, 255, 255)
+    end
+    s_DrawLine(x1, y1, x2, y2)
+end
 
 function draw.Box(x, y, w, h, clr)
     if clr then

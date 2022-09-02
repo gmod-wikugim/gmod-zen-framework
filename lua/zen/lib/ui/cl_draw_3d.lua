@@ -7,6 +7,15 @@ function draw3d.GetTextPosition(vec)
     return sc.visible, sc.x, sc.y
 end
 
+function draw3d.Line(pos1, pos2, clr)
+    local succ1, x1, y1 = draw3d.GetTextPosition(pos1)
+    local succ2, x2, y2 = draw3d.GetTextPosition(pos2)
+
+    if succ1 or succ2 then
+        draw.DrawLine(x1, y1, x2, y2, clr)
+    end
+end
+
 function draw3d.Box(pos, x, y, w, h, clr)
     local succ, nx, ny = draw3d.GetTextPosition(pos)
 
