@@ -5,6 +5,9 @@ gui.RegisterParam("tPanel", function(pnl, value)
     for k, v in pairs(value) do
         pnl[k] = v
     end
+
+    if pnl.zen_PreInit then pnl:zen_PreInit() end
+    if value.Init then value.Init(pnl) end
 end)
 
 gui.RegisterParam("set_size_middle", function(pnl, value)
