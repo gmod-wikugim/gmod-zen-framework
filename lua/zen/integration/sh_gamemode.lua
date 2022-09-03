@@ -21,16 +21,16 @@ hook.Add("OnHandcuffed", "zen.integration", function(who, target, cuff)
 
             cuff:SetCuffStrength( 2 )
             cuff:SetCuffRegen( 2 )
-        
+
             cuff:SetCuffMaterial( "models/props_lab/warp_sheet" )
             cuff:SetRopeMaterial( "models/props_lab/warp_sheet" )
-        
+
             cuff:SetKidnapper( self.Owner )
             cuff:SetRopeLength( 100 )
-        
+
             cuff:SetCanBlind( true )
             cuff:SetCanGag( true )
-        
+
             cuff.CuffType = ""
 
             self:Uncuff()
@@ -90,7 +90,7 @@ hook.Add("PlayerSwitchWeapon", "zen.integration", function (ply, old, new)
         end
     end
 
-    if ply:izen_HasPerm("gm.ultimate_keys") then
+    if ply:izen_HasPerm("gm.ultimate_keys") and rp and rp.properties and rp.notify then
         if new:GetClass() == "keys" then
             function new:PrimaryAttack()
                 self:SetNextPrimaryFire( CurTime() + 0.5 )
@@ -99,18 +99,18 @@ hook.Add("PlayerSwitchWeapon", "zen.integration", function (ply, old, new)
                     self.Owner:LagCompensation(true)
                     local ent = self.Owner:GetEyeTrace().Entity
                     self.Owner:LagCompensation(false)
-            
-                    if not ent or not ent:IsDoor() then
+
+                    if not ent or not util.IsDoor(ent) then
                         return
                     end
-                    
+
                     if self.Owner:GetPos():DistToSqr(ent:GetPos()) > 10000 then
                         return
                     end
-                    
-                    if ent:IsDoor() then
+
+                    if util.IsDoor(ent) then
                         rp.properties.close_door(ent)
-                
+
                         rp.notify(self.Owner, 0, 4, "Вы закрыли дверь!")
                         ent:EmitSound( "npc/metropolice/gear".. math.random(1, 6) ..".wav" )
                     elseif ent.FadingDoor then
@@ -118,7 +118,7 @@ hook.Add("PlayerSwitchWeapon", "zen.integration", function (ply, old, new)
                     end
                 end
             end
-            
+
             function new:SecondaryAttack()
                 self:SetNextPrimaryFire( CurTime() + 0.5 )
                 self:SetNextSecondaryFire( CurTime() + 0.5 )
@@ -126,20 +126,20 @@ hook.Add("PlayerSwitchWeapon", "zen.integration", function (ply, old, new)
                     self.Owner:LagCompensation(true)
                     local ent = self.Owner:GetEyeTrace().Entity
                     self.Owner:LagCompensation(false)
-            
+
                     if not ent then
                         return false
                     end
-                    
-                    
-                    if ent:IsDoor() then
-            
+
+
+                    if util.IsDoor(ent) then
+
                         if self.Owner:GetPos():DistToSqr(ent:GetPos()) > 10000 then
                             return
                         end
-                
+
                         rp.properties.open_door(ent)
-                
+
                         rp.notify(self.Owner, 0, 4, "Вы открыли дверь!")
                         ent:EmitSound( "npc/metropolice/gear".. math.random(1, 6) ..".wav" )
                     elseif ent.FadingDoor then
@@ -147,7 +147,7 @@ hook.Add("PlayerSwitchWeapon", "zen.integration", function (ply, old, new)
                         timer.Simple(2, function()
                             if not IsValid(ent) then return end
                             ent:UnFade()
-                        
+
                         end)
                     end
                 end
@@ -251,7 +251,7 @@ icmd.registerCommand("afk", {}, function(ply)
             local ang = tr.Normal:Angle()
             ang.p = 0
             ang.r = 0
-            
+
             doll:SetPos(tr.HitPos)
             doll:SetAngles(ang)
         end)
