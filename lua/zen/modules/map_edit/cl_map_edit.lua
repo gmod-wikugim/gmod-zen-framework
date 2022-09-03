@@ -37,7 +37,7 @@ function map_edit.SetupViewData()
 
 	vw.angles = view.angles
 	vw.origin = view.origin
-	vw.StartAngles = vw.angles
+	vw.StartAngles = Angle(vw.angles)
 
 	map_edit.SetMode(MODE_DEFAULT)
 end
@@ -243,10 +243,10 @@ hook.Add("PlayerButtonPress", "zen.map_edit", function(ply, but)
 	if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_LALT) and but == KEY_APOSTROPHE then
 		map_edit.Toggle()
 	end
+	if not map_edit.IsActive then return end
 
 	local bind = input.GetButtonIN(but)
 
-	if not map_edit.IsActive then return end
 
 	if bind == IN_RELOAD then
 		map_edit.SetMode(MODE_DEFAULT)
@@ -254,14 +254,13 @@ hook.Add("PlayerButtonPress", "zen.map_edit", function(ply, but)
 	end
 
 	hook.Run("zen.map_edit.OnButtonPress", ply, but, bind, vw)
+end)
 
-	if IsValid(vw.hoverEntity) then
-		if input.IsButtonIN(but, IN_USE) then
-			nt.Send("map_edit.use", {"entity"}, {vw.hoverEntity})
-		end
+hook.Add("PlayerButtonUnPress", "zen.map_edit", function(ply, but)
+	if not map_edit.IsActive then return end
+	local bind = input.GetButtonIN(but)
 
-		if input.IsButtonIN(but, IN_ATTACK) then
-			nt.Send("map_edit.set.view.entity", {"entity"}, {vw.hoverEntity})
-		end
-	end
+	if bind == IN_RELOAD then return end
+
+	hook.Run("zen.map_edit.OnButtonUnPress", ply, but, bind, vw)
 end)
