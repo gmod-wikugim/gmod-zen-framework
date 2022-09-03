@@ -33,7 +33,7 @@ nvars.circles[2] ={
 	x = sw*0.1,
 	y = sh*0.85,
 	color = Color(125, 100, 100, 100),
-	max_r = math.min(sw*0.1, sh*0.1),
+	max_r = math.min(sw*0.13, sh*0.13),
 	content = {
 		{
 			text = "Remove",
@@ -42,24 +42,19 @@ nvars.circles[2] ={
 			value = "remove"
 		},
 		{
-			text = "+Freeze",
+			text = "Use",
 			color = color_white,
 			value = "freeze"
 		},
 		{
-			text = "-Freeze",
+			text = "(Un)Freeze",
 			color = color_white,
 			value = "unfreeze"
 		},
 		{
-			text = "-Motion",
+			text = "(Un)Motion",
 			color = color_white,
 			value = "motion_disable"
-		},
-		{
-			text = "+Motion",
-			color = color_white,
-			value = "motion_enable"
 		},
 	},
 }
@@ -103,6 +98,29 @@ nvars.circles[4] ={
 		},
 		{
 			text = "Variables",
+			value = "change_velocity"
+		},
+	},
+}
+nvars.circles[5] ={
+	type = "edit_modes",
+	x = sw*0.95,
+	y = sh*0.095,
+	text = "info",
+	font_size = 6,
+	color = Color(255, 255, 255, 40),
+	max_r = math.min(sw*0.08, sh*0.08),
+	content = {
+		{
+			text = "This",
+			value = "change_pos"
+		},
+		{
+			text = "Parent",
+			value = "change_ang"
+		},
+		{
+			text = "All",
 			value = "change_velocity"
 		},
 	},
@@ -228,13 +246,13 @@ hook.Add("zen.map_edit.Render", "quickmenu", function(rendermode, priority, vw)
 
 			local tx, ty = getCircleItemPos(x, y, r, total, k)
 
-			draw.Text(dat.text or "unknown", 8, tx, ty, dat.color or color_white, 1)
+			draw.Text(dat.text or "unknown", v.font_size or 8, tx, ty, dat.color or color_white, 1, nil, COLOR_BLACK)
 		end
 
 		if total == 0 then
 			draw.Text("Empty", 10, x, y, color_white, 1, 1)
 		elseif v.text then
-			draw.Text(v.text, 6, x, y, color_white, 1, 1)
+			draw.Text(v.text, 6, x, y, COLOR.WHITE, 1, 1, COLOR.BLUE)
 		end
 	end
 end)
