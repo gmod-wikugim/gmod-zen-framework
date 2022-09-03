@@ -1,6 +1,5 @@
-local map_edit = zen.Init("map_edit")
-map_edit.quickmenu = map_edit.quickmenu or {}
-local qcm = map_edit.quickmenu
+zen.nvars = zen.nvars or {}
+local nvars = zen.nvars
 
 local draw_NoTexture = draw.NoTexture
 
@@ -13,52 +12,20 @@ local pi = math.pi
 local blur = Material("pp/blurscreen")
 local tex = surface.GetTextureID("VGUI/white.vmt")
 
-qcm.radial_menu = {}
-qcm.radial_menu.is_opened = false
+nvars.radial_menu = {}
+nvars.radial_menu.is_opened = false
 
 local founded_entity
-local dist = 100
 local _, fontHeight = ui.GetTextSize("W", 11)
 
-local function IsPly(ent)
-	return ent:IsPlayer()
-end
 
-local buttons_cfg = {
-	{
-		name = "Представится",
-		onclick = function()
-			RunConsoleCommand("qcm", "introduce-himself")
-		end,
-		check_ent = IsPly
-	},
-	{
-		name = "Дать денег",
-		onclick = function()
-			Derma_StringRequest("Передать деньги", "Сколько денег вы хотите передать?", "", function(text)
-				RunConsoleCommand("qcm", "givemoney", tonumber(text))
-			end)
-		end,
-		check_ent = IsPly
-	},
-
-	{
-		name = "Открыть",
-		onclick = function(ent)
-            print("Open", ent)
-		end,
-		-- check = function(ent) return qcm.properties.has_access(lp(), ent) end,
-		check_ent = function(ent) return util.IsDoor(ent) end,
-	},
-}
-
-local current_menu = {}
+nvars.mt_EntityButtons = {}
 
 local prevSelected, prevSelectedVertex
 local function getSelected()
 	local mx, my = gui.MousePos()
 	local sw, sh = ScrW(), ScrH()
-	local total = #current_menu
+	local total = #nvars.mt_EntityButtons
 	local w = math.min(sw * 0.45, sh * 0.45)
 	local sx, sy = sw / 2, sh / 2
 	local x2, y2 = mx - sx, my - sy
@@ -83,12 +50,12 @@ end
 local r = 0
 hook.Add("zen.map_edit.Render", "quickmenu", function(rendermode, priority, vw)
     if rendermode != RENDER_2D or priority != RENDER_POST then return end
-    if not qcm.radial_menu.is_opened then return end
+    if not nvars.radial_menu.is_opened then return end
 
 	local ent = founded_entity
 
 	local sw, sh = ScrW(), ScrH()
-	local total = #current_menu
+	local total = #nvars.mt_EntityButtons
 	local w = math.min(sw * 0.4, sh * 0.4)
 	local h = w
 	r = Lerp(0.1, r, w)
@@ -140,14 +107,9 @@ hook.Add("zen.map_edit.Render", "quickmenu", function(rendermode, priority, vw)
 	local add = pi * 1.5 + pi / total
 	local add2 = pi * 1.5 - pi / total
 
-	for k, v in pairs(current_menu) do
-		local ment = buttons_cfg[v]
 
+	for k, v in pairs(nvars.mt_EntityButtons) do
 		local can_use = true
-
-		if ment.check and not ment.check(ent) then
-			can_use = false
-		end
 
 		local x, y = cos((k - 1) / total * pi * 2 + pi * 1.5), sin((k - 1) / total * pi * 2 + pi * 1.5)
 		local lx, ly = cos((k - 1) / total * pi * 2 + add), sin((k - 1) / total * pi * 2 + add)
@@ -200,37 +162,34 @@ hook.Add("zen.map_edit.Render", "quickmenu", function(rendermode, priority, vw)
 			end
 		end
 
-		draw.Text(ment.name, 13, sx + r * 0.6 * x, sy + r * 0.6 * y - fontHeight / 2, textCol, 1)
+		draw.Text(v.string, 13, sx + r * 0.6 * x, sy + r * 0.6 * y - fontHeight / 2, textCol, 1)
 	end
 end)
 
 hook.Add("zen.worldclick.nopanel.onPress", "zen.map_edit.quickmenu", function(code, tr)
-	if qcm.radial_menu.is_opened then
+	if nvars.radial_menu.is_opened then
 		local selected = getSelected()
 
-		if selected and selected > 0 and current_menu[selected] and code == MOUSE_LEFT then
-			if buttons_cfg[current_menu[selected]].check and not buttons_cfg[current_menu[selected]].check(founded_entity) then
-				qcm.radial_menu.Close()
-				return
-			end
+		if selected and selected > 0 and code == MOUSE_LEFT then
+			local tButton = nvars.mt_EntityButtons[selected]
 
-			buttons_cfg[current_menu[selected]].onclick(founded_entity)
+			nt.Send("nvars.run_command", {"entity", "int12", "next", "any"}, {founded_entity, tButton.id, tButton.mode != nil and true or false, tButton.mode})
 		end
 
-		qcm.radial_menu.Close()
+		nvars.radial_menu.Close()
 	end
 end)
 
-function qcm.radial_menu.Open()
-	qcm.radial_menu.is_opened = true
+function nvars.radial_menu.Open()
+	nvars.radial_menu.is_opened = true
 	gui.EnableScreenClicker(true)
 	prevSelected = nil
 end
 
-function qcm.radial_menu.Close()
+function nvars.radial_menu.Close()
 	founded_entity = nil
-	current_menu = {}
-	qcm.radial_menu.is_opened = false
+	nvars.mt_EntityButtons = {}
+	nvars.radial_menu.is_opened = false
 	r = 0
 	gui.EnableScreenClicker(false)
 end
@@ -238,28 +197,24 @@ end
 hook.Add("zen.map_edit.OnButtonPress", "quickmenu", function(ply, but, bind, vw)
 	if IsValid(vw.hoverEntity) then
 		if bind == IN_USE then
-
-            local founded = false
-            for k,v in pairs(buttons_cfg) do
-                if v.check_ent(vw.hoverEntity) then
-                    founded = true
-                    table.insert(current_menu, k)
-                end
-            end
-
-            if not founded then return end
+			nvars.mt_EntityButtons = {}
+			nt.Send("nvars.get_buttons", {"entity"}, {vw.hoverEntity})
 
             founded_entity = vw.hoverEntity
-            qcm.radial_menu.Open()
+            nvars.radial_menu.Open()
             vw.IsRadialMenuOpen = true
 		end
 	end
 end)
 
+nt.Receive("nvars.get_buttons", {"entity", "table"}, function(ent, tButtons)
+    nvars.mt_EntityButtons = tButtons
+end)
+
 hook.Add("zen.map_edit.OnButtonUnPress", "quickmenu", function(ply, but, bind, vw)
     if bind == IN_USE then
-        if qcm.radial_menu.is_opened then
-            qcm.radial_menu.Close()
+        if nvars.radial_menu.is_opened then
+            nvars.radial_menu.Close()
             vw.IsRadialMenuOpen = false
         end
     end
