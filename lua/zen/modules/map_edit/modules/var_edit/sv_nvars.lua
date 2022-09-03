@@ -161,7 +161,7 @@ zen.nvars.RegisterButton{
 }
 
 zen.nvars.RegisterButton{
-    id = 2,
+    id = 3,
     name = "Player Respawn",
     class = "prop_ragdoll",
     fCheck = function(self, ent)
@@ -182,7 +182,7 @@ zen.nvars.RegisterButton{
 }
 
 zen.nvars.RegisterButton{
-    id = 3,
+    id = 4,
     name = "Fading Doors Open",
     class = "prop_physics",
     fCheck = function(self, ent)
@@ -218,7 +218,7 @@ local models_list = {
 
 
 zen.nvars.RegisterButton{
-    id = 4,
+    id = 5,
     name = "Refill",
     class = "item_healthcharger",
     func = function(self, ent)

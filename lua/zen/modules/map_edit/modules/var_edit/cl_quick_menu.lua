@@ -56,6 +56,7 @@ hook.Add("zen.map_edit.Render", "quickmenu", function(rendermode, priority, vw)
 
 	local sw, sh = ScrW(), ScrH()
 	local total = #nvars.mt_EntityButtons
+
 	local w = math.min(sw * 0.4, sh * 0.4)
 	local h = w
 	r = Lerp(0.1, r, w)
@@ -64,6 +65,10 @@ hook.Add("zen.map_edit.Render", "quickmenu", function(rendermode, priority, vw)
 	local circleVertex = {}
 
 	local max = 50
+
+	if total == 0 then
+		r = 50
+	end
 
 	for i = 0, max do
 		local vx, vy = cos((pi * 2) * i / max), sin((pi * 2) * i / max)
@@ -99,7 +104,11 @@ hook.Add("zen.map_edit.Render", "quickmenu", function(rendermode, priority, vw)
 		render.DrawScreenQuad()
 	end
 
-	surface.SetDrawColor(20, 20, 20, 180)
+	if total == 0 then
+		surface.SetDrawColor(20, 20, 20, 25)
+	else
+		surface.SetDrawColor(20, 20, 20, 180)
+	end
 	draw_NoTexture()
 	surface.DrawRect(0, 0, ScrW(), ScrH())
 	render.SetStencilEnable(false)
