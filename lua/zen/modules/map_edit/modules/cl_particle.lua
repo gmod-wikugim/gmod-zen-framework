@@ -83,22 +83,25 @@ function map_edit.CreateParticleViewer(pnlContext, vw)
     })
 
     local tParticles = getFull("particles", "GAME")
-	local tEffects = getFull("effect", "LUA")
+	local tEffects = getFull("effects", "LUA")
 
     if DispatchEffects then
         for k, v in pairs(DispatchEffects) do
-            nav.eff_name:AddChoice(v)
+            local fl_v = string.StripExtension(v)
+            nav.eff_name:AddChoice(fl_v, fl_v, false, "icon16/asterisk_orange.png")
         end
     end
 
     if tParticles then
         for k, v in pairs(tParticles) do
-            nav.eff_name:AddChoice(v, v)
+            local fl_v = string.StripExtension(v)
+            nav.eff_name:AddChoice(fl_v, fl_v, false, "icon16/asterisk_yellow.png")
         end
     end
     if tEffects then
         for k, v in pairs(tEffects) do
-            nav.eff_name:AddChoice(v, v)
+            local fl_v = string.StripExtension(v)
+            nav.eff_name:AddChoice(fl_v, fl_v, false, "icon16/attach.png")
         end
     end
 
@@ -118,11 +121,21 @@ function map_edit.CreateParticleViewer(pnlContext, vw)
         tViewer.EffectData:SetEntity(nav.var_entity:GetValue())
 
         local effect_name = nav.eff_name:GetValue()
-        
+
         -- effect_name = string.gsub(effect_name, "particles/", "")
         effect_name = string.gsub(effect_name, ".pcf", "")
-        
-        util.Effect(effect_name, tViewer.EffectData)
+
+
+
+        if effect_name:find("effects/", 1, true) or effect_name:find("particles/", 1, true) then
+            local args = string.Split(effect_name, "/")
+            table.remove(args, 1)
+            local new_effect_name = table.concat(args, "/")
+
+            ParticleEffect(new_effect_name, nav.var_origin:GetValue(), nav.var_normal:GetValue():Angle(), nav.var_entity:GetValue())
+        else
+            util.Effect(effect_name, tViewer.EffectData)
+        end
     end
 
 end

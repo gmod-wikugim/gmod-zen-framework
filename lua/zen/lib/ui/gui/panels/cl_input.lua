@@ -1,11 +1,42 @@
 local ui, gui = zen.Import("ui", "gui")
 
+
 local func_InitBase = function(self)
     self.pnl_Key = self:zen_AddStyled("text", {"dock_left"})
     self.pnl_Value = self:zen_AddStyled("text", {"dock_right", "input"})
-    self.pnl_Value.DoClick = function()
-        if self.ChangeMode then
-            self:ChangeMode()
+    self.pnl_Value:MouseCapture(true)
+
+    self.pnl_Value.Think = function()
+        if not self.ChangeMode then return end
+
+
+        local x, y = self.pnl_Value:LocalCursorPos()
+        local w, h = self.pnl_Value:GetSize()
+
+        local key_focus = vgui.GetKeyboardFocus()
+
+        local isHasFocus
+        local children = self.pnl_Value:GetChildren()
+
+        for k, cpnl in pairs(children) do
+            if cpnl == key_focus then
+                isHasFocus = true
+                break
+            end
+        end
+
+
+        if isHasFocus or  (x > 0 and y > 0 and x < w and y < h) then
+            if self.pnl_Change:GetAlpha() < 255 then
+                self.pnl_Change:SetAlpha(255)
+                self.pnl_Change:SetKeyboardInputEnabled(true)
+                self.pnl_Change:SetMouseInputEnabled(true)
+                self:ChangeMode()
+            end
+        else
+            if self.pnl_Change:GetAlpha() > 1 then
+                self.pnl_Change:SetAlpha(1)
+            end
         end
     end
 end
@@ -34,7 +65,7 @@ end
 gui.RegisterStylePanel("input_text", {
     Init = function(self)
         func_InitBase(self)
-        self.pnl_Change = self.pnl_Value:zen_Add("DTextEntry", {"dock_fill", visible = false})
+        self.pnl_Change = self.pnl_Value:zen_Add("DTextEntry", {"dock_fill"})
     end,
     ChangeMode = function(self)
         local value = self.pnl_Value.Result
@@ -73,17 +104,15 @@ gui.RegisterStylePanel("input_bool", {
 gui.RegisterStylePanel("input_number", {
     Init = function(self)
         func_InitBase(self)
-        self.pnl_Change = self.pnl_Value:zen_Add("DTextEntry", {"dock_fill", visible = false})
+        self.pnl_Change = self.pnl_Value:zen_Add("DTextEntry", {"dock_fill"})
         self.pnl_Change:SetNumeric(true)
     end,
     ChangeMode = function(self)
         local value = self.pnl_Value.Result
         if value != nil then self.pnl_Change:SetValue(value) end
-        self.pnl_Change:SetVisible(true)
         self.pnl_Change.OnEnter = function() 
             local value = util.StringToTYPE(self.pnl_Change:GetValue(), TYPE.NUMBER )
             if value != nil then self:SetValue(value) end
-            self.pnl_Change:SetVisible(false)
         end
     end,
     SetValue = function(self, value)
@@ -99,19 +128,17 @@ gui.RegisterStylePanel("input_number", {
 gui.RegisterStylePanel("input_arg", {
     Init = function(self)
         func_InitBase(self)
-        self.pnl_Change = self.pnl_Value:zen_Add("DComboBox", {"dock_fill", visible = false})
+        self.pnl_Change = self.pnl_Value:zen_Add("DComboBox", {"dock_fill"})
     end,
-    AddChoice = function(self, v1, v2)
-        self.pnl_Change:AddChoice(v1, v2)
+    AddChoice = function(self, ...)
+        self.pnl_Change:AddChoice(...)
     end,
     ChangeMode = function(self)
         local value = self.pnl_Value.Result
         if value != nil then self.pnl_Change:SetValue(value) end
-        self.pnl_Change:SetVisible(true)
         self.pnl_Change.OnSelect = function(_, name, value)
             local value = value or name
             if value != nil then self:SetValue(value) end
-            self.pnl_Change:SetVisible(false)
         end
     end,
     SetValue = function(self, value)
@@ -127,17 +154,14 @@ gui.RegisterStylePanel("input_arg", {
 gui.RegisterStylePanel("input_vector", {
     Init = function(self)
         func_InitBase(self)
-        self.pnl_Change = self.pnl_Value:zen_Add("DTextEntry", {"dock_fill", visible = false})
+        self.pnl_Change = self.pnl_Value:zen_Add("DTextEntry", {"dock_fill"})
     end,
     ChangeMode = function(self)
         local value = func_get_valueString(self.pnl_Value.Result, TYPE.VECTOR, self.pnl_Value.Result)
         if value != nil then self.pnl_Change:SetValue(value) end
-        self.pnl_Change:SetVisible(true)
         self.pnl_Change.OnEnter = function()
             local value = util.StringToTYPE(self.pnl_Change:GetValue(), TYPE.VECTOR )
             if value != nil then self:SetValue(value) end
-
-            self.pnl_Change:SetVisible(false)
         end
     end,
     SetValue = function(self, value)
@@ -153,16 +177,14 @@ gui.RegisterStylePanel("input_vector", {
 gui.RegisterStylePanel("input_color", {
     Init = function(self)
         func_InitBase(self)
-        self.pnl_Change = self.pnl_Value:zen_Add("DTextEntry", {"dock_fill", visible = false})
+        self.pnl_Change = self.pnl_Value:zen_Add("DTextEntry", {"dock_fill"})
     end,
     ChangeMode = function(self)
         local value = func_get_valueString(self.pnl_Value.Result, TYPE.COLOR, self.pnl_Value.Result)
         if value != nil then self.pnl_Change:SetValue(value) end
-        self.pnl_Change:SetVisible(true)
         self.pnl_Change.OnEnter = function()
             local value = util.StringToTYPE(self.pnl_Change:GetValue(), TYPE.COLOR )
             if value != nil then self:SetValue( value ) end
-            self.pnl_Change:SetVisible(false)
         end
     end,
     SetValue = function(self, value)
@@ -178,13 +200,12 @@ gui.RegisterStylePanel("input_color", {
 gui.RegisterStylePanel("input_entity", {
     Init = function(self)
         func_InitBase(self)
-        self.pnl_Change = self.pnl_Value:zen_Add("DTextEntry", {"dock_fill", visible = false})
+        self.pnl_Change = self.pnl_Value:zen_Add("DTextEntry", {"dock_fill"})
     end,
     ChangeMode = function(self)
         local value = self.pnl_Value.Result
         if isentity(value) then value = tostring(value:EntIndex()) end
         if value != nil then self.pnl_Change:SetValue(value) end
-        self.pnl_Change:SetVisible(true)
         self.pnl_Change.OnEnter = function()
             local ent_id = tonumber(self.pnl_Change:GetValue())
             if ent_id != nil then
@@ -195,7 +216,6 @@ gui.RegisterStylePanel("input_entity", {
                     self:SetValue(nil)
                 end
             end
-            self.pnl_Change:SetVisible(false)
         end
     end,
     SetValue = function(self, value) 
