@@ -16,6 +16,27 @@ end)
 hook.Add("zen.map_edit.OnButtonPress", "paticle_viewer", function(ply, but, bind, vw)
 end)
 
+local DispatchEffects = {"ImpactGauss", "EjectBrass_12Gauge", "ImpactJeep", "AR2Tracer", "GunshipImpact", "BloodImpact", "ShotgunShellEject", "PhyscannonImpact", "WheelDust", "VortDispel", "StriderMuzzleFlash", "Impact", "AirboatMuzzleFlash", "RifleShellEject", "AirboatGunTracer", "ParticleEffectStop", "CommandPointer", "GlassImpact", "GunshipTracer", "Explosion", "AR2Impact", "Sparkle", "GunshipMuzzleFlash", "WaterSurfaceExplosion", "AntlionGib", "waterripple", "ThumperDust", "gunshotsplash", "bloodspray", "Tracer", "AirboatGunHeavyTracer", "RPGShotDown", "AirboatGunImpact", "StunstickImpact", "ParticleTracer", "TeslaHitboxes", "AR2Explosion", "cball_bounce", "HudBloodSplat", "HelicopterTracer", "HelicopterImpact", "ShakeRopes", "GaussTracer", "CrossbowLoad", "HunterMuzzleFlash", "BoltImpact", "TracerSound", "StriderTracer", "EjectBrass_9mm", "HunterDamage", "ManhackSparks", "watersplash", "TeslaZap", "MuzzleFlash", "ShellEject", "StriderBlood", "ParticleEffect", "Smoke", "ImpactGunship", "ChopperMuzzleFlash", "cball_explode", "MyEffectName", "HunterTracer", "HelicopterMegaBomb", "RagdollImpact"}
+
+local function loadFolder(path, tResult, parent_path)
+	local files, folders = file.Find(path .. "/*", parent_path)
+	for k, v in pairs(files) do
+		table.insert(tResult, path .. "/" .. v)
+	end
+	
+	for k, v in pairs(folders) do
+		loadFolder(path .. "/" .. v, tResult)
+	end
+end
+
+local function getFull(path, parent_path)
+	local tResult = {}
+
+	loadFolder(path, tResult, parent_path)
+
+	return tResult
+end
+
 
 map_edit.t_ParticleViewers = {}
 function map_edit.CreateParticleViewer(pnlContext, vw)
@@ -48,7 +69,6 @@ function map_edit.CreateParticleViewer(pnlContext, vw)
                             {{"var_start", "input_vector"}, {"dock_top", tall = 25, text = "Start"}};
                             {{"var_origin", "input_vector"}, {"dock_top", tall = 25, text = "Origin"}};
                             {{"var_normal", "input_vector"}, {"dock_top", tall = 25, text = "Normal"}};
-                            {{"var_color", "input_color"}, {"dock_top", tall = 25, text = "Color"}};
                             {{"var_magnitude", "input_number"}, {"dock_top", tall = 25, text = "Magnitude"}};
                             {{"var_radius", "input_number"}, {"dock_top", tall = 25, text = "Radius"}};
                             {{"var_scale", "input_number"}, {"dock_top", tall = 25, text = "Scale"}};
@@ -62,6 +82,26 @@ function map_edit.CreateParticleViewer(pnlContext, vw)
         }}
     })
 
+    local tParticles = getFull("particles", "GAME")
+	local tEffects = getFull("effect", "LUA")
+
+    if DispatchEffects then
+        for k, v in pairs(DispatchEffects) do
+            nav.eff_name:AddChoice(v)
+        end
+    end
+
+    if tParticles then
+        for k, v in pairs(tParticles) do
+            nav.eff_name:AddChoice(v, v)
+        end
+    end
+    if tEffects then
+        for k, v in pairs(tEffects) do
+            nav.eff_name:AddChoice(v, v)
+        end
+    end
+
     tViewer.nav = nav
 
     nav.main.OnRemove = function()
@@ -72,13 +112,17 @@ function map_edit.CreateParticleViewer(pnlContext, vw)
         tViewer.EffectData:SetStart(nav.var_start:GetValue())
         tViewer.EffectData:SetOrigin(nav.var_origin:GetValue())
         tViewer.EffectData:SetNormal(nav.var_normal:GetValue())
-        tViewer.EffectData:SetColor(nav.var_color:GetValue())
         tViewer.EffectData:SetMagnitude(nav.var_magnitude:GetValue())
         tViewer.EffectData:SetRadius(nav.var_radius:GetValue())
         tViewer.EffectData:SetScale(nav.var_scale:GetValue())
         tViewer.EffectData:SetEntity(nav.var_entity:GetValue())
 
-        util.Effect(nav.eff_name:GetValue(), tViewer.EffectData)
+        local effect_name = nav.eff_name:GetValue()
+        
+        -- effect_name = string.gsub(effect_name, "particles/", "")
+        effect_name = string.gsub(effect_name, ".pcf", "")
+        
+        util.Effect(effect_name, tViewer.EffectData)
     end
 
 end
