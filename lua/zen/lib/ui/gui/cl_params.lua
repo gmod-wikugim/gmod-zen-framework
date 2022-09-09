@@ -1,5 +1,4 @@
-local ui = zen.Init("ui")
-local gui = zen.Init("gui")
+local ui, gui = zen.Init("ui", "gui")
 
 gui.RegisterParam("tPanel", function(pnl, value)
     for k, v in pairs(value) do

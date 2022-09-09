@@ -1,6 +1,4 @@
-local ui = zen.Init("ui")
-local draw = ui.Init("draw")
-local draw3d = ui.Init("draw3d")
+local ui, draw, draw3d = zen.Init("ui", "ui.draw", "ui.draw3d")
 
 function draw3d.GetTextPosition(vec)
     local sc = vec:ToScreen()

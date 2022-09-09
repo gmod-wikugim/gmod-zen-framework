@@ -1,6 +1,4 @@
-local ui = zen.Init("ui")
-local draw = ui.Init("draw")
-local draw3d2d = ui.Init("draw3d2d")
+local ui, draw, draw3d2d = zen.Init("ui", "ui.draw", "ui.draw3d2d")
 
 local cam_Start3D2D = cam.Start3D2D
 local cam_End3D2D = cam.End3D2D

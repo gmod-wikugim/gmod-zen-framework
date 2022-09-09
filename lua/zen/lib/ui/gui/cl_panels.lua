@@ -1,6 +1,4 @@
-local ui = zen.Init("ui")
-local gui = zen.Init("gui")
-local draw = ui.Init("draw")
+local ui, gui, draw = zen.Init("ui", "gui", "ui.draw")
 
 gui.RegisterStylePanel("base", {}, "EditablePanel", {}, {})
 gui.RegisterStylePanel("frame", {}, "DFrame", {title = "zen.frame", size = {300, 300}}, {"frame"})

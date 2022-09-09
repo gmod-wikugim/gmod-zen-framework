@@ -1,5 +1,4 @@
-local ui = zen.Init("ui")
-local gui = zen.Init("gui")
+local ui, gui = zen.Init("ui", "gui")
 
 gui.RegisterPreset("base", nil, {})
 

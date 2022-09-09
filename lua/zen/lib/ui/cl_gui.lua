@@ -1,5 +1,4 @@
-local ui = zen.Init("ui")
-local gui = zen.Init("gui")
+local ui, gui = zen.Init("ui", "gui")
 local sub = string.sub
 
 gui.t_StylePanels =gui.t_StylePanels or {}

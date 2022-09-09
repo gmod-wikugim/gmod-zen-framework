@@ -1,5 +1,4 @@
-local ui = zen.Init("ui")
-local draw = ui.Init("draw")
+local ui, draw = zen.Init("ui", "ui.draw")
 
 local s_SetDrawColor = surface.SetDrawColor
 local s_DrawRect = surface.DrawRect
