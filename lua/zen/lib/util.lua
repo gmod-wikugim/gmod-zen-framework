@@ -1054,6 +1054,108 @@ end
 
 META.ENTITY.GetModelBoundsFixed = util.GetModelBoundsFixed
 
+local Vector = Vector
+
+local cached_bounds = {}
+function util.GetModelMeshBounds(model)
+    if cached_bounds[model] then return Vector(cached_bounds[model][1]), Vector(cached_bounds[model][2]) end
+
+	local meshes = util.GetModelMeshes(model)
+	
+	local min1, max1
+	
+	local count = 0
+	for mesh_id, mesh_data in ipairs(meshes) do
+		for k, dat in ipairs(mesh_data.triangles) do
+			count = count + 1
+			local pos = dat.pos
+			if min1 == nil then min1 = Vector(pos) end
+			if max1 == nil then max1 = Vector(pos) end
+			
+			
+			if min1 then
+				min1.x = math.min(min1.x, pos.x)
+				min1.y = math.min(min1.y, pos.y)
+				min1.z = math.min(min1.z, pos.z)
+			end
+			
+			if max1 then
+				max1.x = math.max(max1.x, pos.x)
+				max1.y = math.max(max1.y, pos.y)
+				max1.z = math.max(max1.z, pos.z)
+			end
+		end
+	end
+
+    cached_bounds[model] = {min1, max1}
+
+	return min1, max1 
+end
+
+local cached_bounds_fixed = {}
+function util.GetModelMeshBoundsFixed(model)
+    if cached_bounds_fixed[model] then return Vector(cached_bounds_fixed[model][1]), Vector(cached_bounds_fixed[model][2]) end
+
+	local min, max = util.GetModelMeshBounds(model)
+	local minn, maxx = Vector(min), Vector(max)
+    if min.x != -max.x then
+		local md_x = max.x - min.x
+		minn.x = -md_x/2
+		maxx.x = md_x/2
+	end
+	if min.y != -max.y then
+		local md_y = max.y - min.y
+		minn.y = -md_y/2
+		maxx.y = md_y/2
+	end
+	if min.z != -max.z then
+		local md_z = max.z - min.z
+		minn.z = -md_z/2
+		maxx.z = md_z/2
+	end
+
+    cached_bounds_fixed[model] = {minn, maxx}
+    return minn, maxx
+end
+
+function util.GetModelCenter(model)
+    local min1 = util.GetModelMeshBounds(model)
+    local min2 = util.GetModelMeshBoundsFixed(model)
+
+    -- Без понятия как это работает, но оно помогает
+    min1 = Vector(min1)
+    min2 = Vector(min2)
+
+    return Vector(0,0,0) + min1 - min2
+end
+
+function util.GetModelOffsetCenter(model)
+    local pos = util.GetModelCenter(model)
+
+    -- Без понятия как это работает, но оно помогает
+    pos = Vector(pos)
+    
+    return Vector(0,0,0) - pos
+end
+
+function util.GetEntityCenter(ent)
+    local min1 = util.GetModelMeshBounds(ent:GetModel())
+    local min2 = util.GetModelMeshBoundsFixed(ent:GetModel())
+
+    -- Без понятия как это работает, но оно помогает
+    min1 = Vector(min1)
+    min2 = Vector(min2)
+
+    local ang = ent:GetAngles()
+
+    min1:Rotate(ang)
+    min2:Rotate(ang)
+
+    local pos = ent:GetPos() + min1 - min2
+
+    return pos
+end
+
 
 function debug.getupvalues(func)
     local info = debug.getinfo( func, "uS" )
