@@ -102,7 +102,7 @@ function ui.ffont(font_fast)
 			font = font or prepare_name
 		end
 	else
-		eror("noFonts")
+		error("noFonts")
 	end
 
 	local font_name = "zen.ui.ffonts." .. font_fast .. "|" .. size .. ":" .. font

@@ -12,6 +12,7 @@ local s_DrawTexturedRect = surface.DrawTexturedRect
 local s_DrawTexturedRectRotated = surface.DrawTexturedRectRotated
 local s_DrawLine = surface.DrawLine
 local s_DrawPoly = surface.DrawPoly
+local s_DrawOutlinedRect = surface.DrawOutlinedRect
 
 local rad = math.rad
 local sin = math.sin
@@ -35,6 +36,15 @@ function draw.Box(x, y, w, h, clr)
         s_SetDrawColor(255, 255, 255, 255)
     end
     s_DrawRect(x, y, w, h)
+end
+
+function draw.BoxOutlined(t, x, y, w, h, clr)
+    if clr then
+        s_SetDrawColor(clr.r, clr.g, clr.b, clr.a)
+    else
+        s_SetDrawColor(255, 255, 255, 255)
+    end
+    s_DrawOutlinedRect(x, y, w, h, t)
 end
 
 function draw.Texture(mat, x, y, w, h, clr)
@@ -104,6 +114,53 @@ function draw.Text(text, font, x, y, clr, xalign, yalign, clrbg)
 	return w, h, x, y
 end
 
+function draw.TextArray(x, y, data)
+    for k, v in ipairs(data) do
+        local text, font, ax, ay, clr, xalign, yalign, clrbg = unpack(v)
+        local w, h = ui.GetTextSize(text, font)
+
+        y = (y + h/2)
+        draw.TextN(text, font, x+ax, y+ay, clr, xalign, yalign, clrbg)
+        y = (y + h/2)
+    end
+end
+
+function draw.TextN(text, font, x, y, clr, xalign, yalign, clrbg)
+    local text_args = string.Explode("%c", text, true)
+    local args_n = #text_args
+
+    if args_n == 1 then
+        draw.Text(text, font, x, y, clr, xalign, yalign, clrbg)
+        return
+    end
+
+
+    local w, h = ui.GetTextSize(text, font)
+    local addh = h/args_n
+    for k, v in ipairs(text_args) do
+        local ly = y - h/2 - addh/2 + addh*k
+        draw.Text(v, font, x, ly, clr, xalign, yalign, clrbg)
+    end
+
+    return w, h, x, y
+end
+
+--[[
+hook.Add("HUDPaint", "test", function()
+    
+    draw.TextArray(100, 100, {
+        {"Sucess", 10, 0, 0, COLOR.G, TEXT_ALIGN_LEFT, 1, COLOR.BLACK},
+        {"testing\n10\n20\n30\n40", 6, 20, 0, COLOR.W, TEXT_ALIGN_LEFT, 1, COLOR.BLACK},
+        {"testing", 6, 20, 0, COLOR.W, TEXT_ALIGN_LEFT, 1, COLOR.BLACK},
+        {"Fail\n1000", 10, 0, 0, COLOR.R, TEXT_ALIGN_LEFT, 1, COLOR.BLACK},
+        {"testing", 6, 20, 0, COLOR.W, TEXT_ALIGN_LEFT, 1, COLOR.BLACK},
+        {"testing", 6, 20, 0, COLOR.W, TEXT_ALIGN_LEFT, 1, COLOR.BLACK},
+    })
+
+end)
+]]--
+
+
 local mat_vgui_white = Material("vgui/white")
 function draw.NoTexture()
     s_SetMaterial(mat_vgui_white)
@@ -124,6 +181,8 @@ function draw.DrawPoly(poly, clr, mat)
 
     s_DrawPoly(poly)
 end
+
+
 
 
 function draw.Circle(x, y, radius, seg, clr, mat)
