@@ -5,6 +5,8 @@ local color_disable = Color(100,100,100,255)
 local color_focus = Color(150,255,150,255)
 local color_nofocus = Color(150,150,150,200)
 local color_bg = Color(80,80,80,255)
+local color_bg2 = Color(70,70,70,255)
+
 local color_text = Color(255,255,255)
 
 local color_bg_succ = Color(80,125,80, 255)
@@ -193,15 +195,8 @@ gui.RegisterStylePanel("input_entry", {
     Paint = function(self, w, h)
         if ( self.m_bBackground ) then
 
-            if ( self:GetDisabled() ) then
+            if ( self:HasFocus() ) then
                 draw.Box(0,0,w,h,self.clr_bg)
-                draw.BoxOutlined(1,0,0,w,h,color_disable)
-            elseif ( self:HasFocus() ) then
-                draw.Box(0,0,w,h,self.clr_bg)
-                draw.BoxOutlined(1,0,0,w,h,color_focus)
-            else
-                draw.Box(0,0,w,h,self.clr_bg)
-                draw.BoxOutlined(1,0,0,w,h,color_nofocus)
             end
         end
     
@@ -235,7 +230,7 @@ gui.RegisterStylePanel("input_entry", {
             draw.Text(self.sHelpText, 6, tx, ty, color_text, 1, 1, COLOR.BLACK)
         end
     end,
-}, "DTextEntry", {"input", min_size = {25, 25}}, {})
+}, "DTextEntry", {"input"}, {})
 
 -- Text Input
 gui.RegisterStylePanel("input_text", {
@@ -248,7 +243,7 @@ gui.RegisterStylePanel("input_text", {
             UpdateVar(new_value)
         end
     end,
-}, "EditablePanel", {"input", min_size = {25, 25}}, {})
+}, "EditablePanel", {"input"}, {})
 
 -- Bool Input
 gui.RegisterStylePanel("input_bool", {
@@ -258,7 +253,7 @@ gui.RegisterStylePanel("input_bool", {
     GetValue = function(self) return self.pnl_Value.Result end,
     PerformLayout = func_def_input_PerformLayout,
     SetText = fun_def_input_SetText,
-}, "EditablePanel", {"input", min_size = {25, 25}, text = "zen.input_bool"}, {})
+}, "EditablePanel", {"input", text = "zen.input_bool"}, {})
 
 -- Number Input
 gui.RegisterStylePanel("input_number", {
@@ -271,7 +266,7 @@ gui.RegisterStylePanel("input_number", {
             UpdateVar(new_value)
         end
     end,
-}, "EditablePanel", {"input", min_size = {25, 25}, text = "zen.input_number"}, {})
+}, "EditablePanel", {"input", text = "zen.input_number"}, {})
 
 -- Arg Input
 gui.RegisterStylePanel("input_arg", {
@@ -284,7 +279,7 @@ gui.RegisterStylePanel("input_arg", {
             UpdateVar(new_value)
         end
     end,
-}, "EditablePanel", {"input", min_size = {25, 25}, text = "zen.input_arg"}, {})
+}, "EditablePanel", {"input", text = "zen.input_arg"}, {})
 
 -- Vector Input
 gui.RegisterStylePanel("input_vector", {
@@ -297,7 +292,7 @@ gui.RegisterStylePanel("input_vector", {
             UpdateVar(new_value)
         end
     end,
-}, "EditablePanel", {"input", min_size = {25, 25}}, {})
+}, "EditablePanel", {"input"}, {})
 
 -- Color Input
 gui.RegisterStylePanel("input_color", {
@@ -310,7 +305,7 @@ gui.RegisterStylePanel("input_color", {
             UpdateVar(new_value)
         end
     end,
-}, "EditablePanel", {"input", min_size = {25, 25}}, {})
+}, "EditablePanel", {"input"}, {})
 
 -- Entity Input
 gui.RegisterStylePanel("input_entity", {
@@ -323,7 +318,7 @@ gui.RegisterStylePanel("input_entity", {
             UpdateVar(new_value)
         end
     end,
-}, "EditablePanel", {"input", min_size = {25, 25}}, {})
+}, "EditablePanel", {"input"}, {})
 
 gui.RegisterStylePanel("input_player", {
     Setup = function(self, tInfo, UpdateVar)
@@ -335,7 +330,7 @@ gui.RegisterStylePanel("input_player", {
             UpdateVar(new_value)
         end
     end,
-}, "EditablePanel", {"input", min_size = {25, 25}}, {})
+}, "EditablePanel", {"input"}, {})
 
 
 
@@ -364,9 +359,17 @@ gui.RegisterStylePanel("mass_input", {
             local sStyleName = supported_input_panel_styles[iType]
             assert(sStyleName, "Style not exists for type: ", iType)
 
-            local pnlHandler = self.pnlList:zen_AddStyled("base", {"dock_top", tall = 30, "input"})
+            local pnlHandler = self.pnlList:zen_AddStyled("base", {"dock_top", tall = 15, "input"})
+            pnlHandler:DockPadding(0,0,0,0)
+            pnlHandler.Paint = function(self, w, h)
+                if k % 2 == 0 then
+                    draw.Box(0,0,w,h,color_bg)
+                else
+                    draw.Box(0,0,w,h,color_bg2)
+                end
+            end
             
-            pnlHandler.pnlKey = pnlHandler:zen_AddStyled("text", {"dock_left", wide = wide/2-5, "input", text = Name})
+            pnlHandler.pnlKey = pnlHandler:zen_AddStyled("text", {"dock_left", font = ui.ffont(6), wide = wide/2-5, "input", content_align = 4, text = " " .. Name})
             pnlHandler.pnlValue = pnlHandler:zen_AddStyled("base", {"dock_right", wide = wide/2-5, "input"})
 
             pnlHandler.pnlChange = pnlHandler.pnlValue:zen_AddStyled(sStyleName, {"dock_fill", "input"})
