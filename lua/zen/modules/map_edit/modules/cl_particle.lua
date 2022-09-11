@@ -61,19 +61,9 @@ function map_edit.CreateParticleViewer(pnlContext, vw)
                 {};
                 {
                     {
-                        {"items", "list"};
+                        {"inputer", "mass_input"};
                         {};
                         {};
-                        {
-                            {{"eff_name", "input_arg"}, {"dock_top", tall = 25, text = "Start"}};
-                            {{"var_start", "input_vector"}, {"dock_top", tall = 25, text = "Start"}};
-                            {{"var_origin", "input_vector"}, {"dock_top", tall = 25, text = "Origin"}};
-                            {{"var_normal", "input_vector"}, {"dock_top", tall = 25, text = "Normal"}};
-                            {{"var_magnitude", "input_number"}, {"dock_top", tall = 25, text = "Magnitude"}};
-                            {{"var_radius", "input_number"}, {"dock_top", tall = 25, text = "Radius"}};
-                            {{"var_scale", "input_number"}, {"dock_top", tall = 25, text = "Scale"}};
-                            {{"var_entity", "input_entity"}, {"dock_top", tall = 25, text = "Entity"}};
-                        };
                     };
                     {{"particle_id", "text"}, {"dock_top"}};
                     {{"but_emit", "button"}, {"dock_bottom", text = "Emit"}}
@@ -85,31 +75,42 @@ function map_edit.CreateParticleViewer(pnlContext, vw)
     local tParticles = getFull("particles", "GAME")
 	local tEffects = getFull("effects", "LUA")
 
-    if DispatchEffects then
-        for k, v in pairs(DispatchEffects) do
-            local fl_v = string.StripExtension(v)
-            nav.eff_name:AddChoice(fl_v, fl_v, false, "icon16/asterisk_orange.png")
-        end
-    end
+    -- if DispatchEffects then
+    --     for k, v in pairs(DispatchEffects) do
+    --         local fl_v = string.StripExtension(v)
+    --         nav.eff_name:AddChoice(fl_v, fl_v, false, "icon16/asterisk_orange.png")
+    --     end
+    -- end
 
-    if tParticles then
-        for k, v in pairs(tParticles) do
-            local fl_v = string.StripExtension(v)
-            nav.eff_name:AddChoice(fl_v, fl_v, false, "icon16/asterisk_yellow.png")
-        end
-    end
-    if tEffects then
-        for k, v in pairs(tEffects) do
-            local fl_v = string.StripExtension(v)
-            nav.eff_name:AddChoice(fl_v, fl_v, false, "icon16/attach.png")
-        end
-    end
+    -- if tParticles then
+    --     for k, v in pairs(tParticles) do
+    --         local fl_v = string.StripExtension(v)
+    --         nav.eff_name:AddChoice(fl_v, fl_v, false, "icon16/asterisk_yellow.png")
+    --     end
+    -- end
+    -- if tEffects then
+    --     for k, v in pairs(tEffects) do
+    --         local fl_v = string.StripExtension(v)
+    --         nav.eff_name:AddChoice(fl_v, fl_v, false, "icon16/attach.png")
+    --     end
+    -- end
 
     tViewer.nav = nav
 
     nav.main.OnRemove = function()
         vw.t_ParticleViewers[particle_id] = nil
     end
+
+
+    nav.inputer:Setup({
+        {name = "Start", type = TYPE.VECTOR, optional = true, default = Vector(0,0,0)},
+        {name = "Origin", type = TYPE.VECTOR, optional = true},
+        {name = "Normal", type = TYPE.VECTOR, optional = true},
+        {name = "Magnitude", type = TYPE.VECTOR, optional = true, min = 1, max = 9990},
+        {name = "Radius", type = TYPE.VECTOR, min = 1, max = 9999},
+        {name = "Scale", type = TYPE.NUMBER, min = 1, max = 1000},
+        {name = "Entity", type = TYPE.ENTITY, optional = true, noplayer = true},
+    })
 
     nav.but_emit.DoClick = function()
         tViewer.EffectData:SetStart(nav.var_start:GetValue())
