@@ -715,21 +715,54 @@ function util.IsSteamID(value)
 	end
 end
 
-util.mt_PlayerList = {}
+util.mt_PlayerList_Entity = {}
+util.mt_PlayerList_SID64 = {}
+util.mt_PlayerList_SID = {}
+util.mt_PlayerList_UserID = {}
 function util.PlayerList_Remove(ply)
     local sid64 = ply.zen_sSteamID64 or ply:SteamID64()
     local sid64_n = tonumber(sid64)
     local sid = ply.zen_sSteamID or ply:SteamID()
     local userid = ply.zen_iUserID or ply:UserID()
+    local userid_str = "#" .. userid
 
-    util.mt_PlayerList[ply] = nil
+    -- Entity
+    util.mt_PlayerList_Entity[ply] = nil
+    util.mt_PlayerList_SID64[ply] = nil
+    util.mt_PlayerList_SID[ply] = nil
+    util.mt_PlayerList_UserID[ply] = nil
+
+    -- Sids
     if not ply:IsBot() then
-        util.mt_PlayerList[sid64] = nil
-        util.mt_PlayerList[sid64_n] = nil
-        util.mt_PlayerList[sid] = nil
+        util.mt_PlayerList_Entity[sid64] = nil
+        util.mt_PlayerList_Entity[sid64_n] = nil
+        util.mt_PlayerList_Entity[sid] = nil
+
+        util.mt_PlayerList_SID64[sid64] = nil
+        util.mt_PlayerList_SID64[sid64_n] = nil
+        util.mt_PlayerList_SID64[sid] = nil
+
+        util.mt_PlayerList_SID[sid64] = nil
+        util.mt_PlayerList_SID[sid64_n] = nil
+        util.mt_PlayerList_SID[sid] = nil
+
+        util.mt_PlayerList_UserID[sid64] = nil
+        util.mt_PlayerList_UserID[sid64_n] = nil
+        util.mt_PlayerList_UserID[sid] = nil
     end
-    util.mt_PlayerList[userid] = nil
-    util.mt_PlayerList["#" .. userid] = nil
+
+    -- UserID
+    util.mt_PlayerList_Entity[userid] = nil
+    util.mt_PlayerList_Entity[userid_str] = nil
+
+    util.mt_PlayerList_SID64[userid] = nil
+    util.mt_PlayerList_SID64[userid_str] = nil
+
+    util.mt_PlayerList_SID[userid] = nil
+    util.mt_PlayerList_SID[userid_str] = nil
+
+    util.mt_PlayerList_UserID[userid] = nil
+    util.mt_PlayerList_UserID[userid_str] = nil
 end
 
 
@@ -738,24 +771,54 @@ function util.PlayerList_Add(ply)
     local sid64_n = tonumber(sid64)
     local sid = ply:SteamID()
     local userid = ply:UserID()
+    local userid_str = "#" .. userid
 
+    -- Entity
+    util.mt_PlayerList_Entity[ply] = ply
+    util.mt_PlayerList_UserID[ply] = userid
 
-    util.mt_PlayerList[ply] = ply
     if not ply:IsBot() then
-        util.mt_PlayerList[sid64] = ply
-        util.mt_PlayerList[sid64_n] = ply
-        util.mt_PlayerList[sid] = ply
+        util.mt_PlayerList_SID64[ply] = sid64
+        util.mt_PlayerList_SID[ply] = sid
+
+
+        util.mt_PlayerList_Entity[sid64] = ply
+        util.mt_PlayerList_Entity[sid64_n] = ply
+        util.mt_PlayerList_Entity[sid] = ply
+
+        util.mt_PlayerList_SID64[sid64] = sid64
+        util.mt_PlayerList_SID64[sid64_n] = sid64
+        util.mt_PlayerList_SID64[sid] = sid64
+
+        util.mt_PlayerList_SID[sid64] = sid
+        util.mt_PlayerList_SID[sid64_n] = sid
+        util.mt_PlayerList_SID[sid] = sid
+
+        util.mt_PlayerList_UserID[sid64] = userid
+        util.mt_PlayerList_UserID[sid64_n] = userid
+        util.mt_PlayerList_UserID[sid] = userid
+
         ply.zen_sSteamID64 = sid64
         ply.zen_sSteamID = sid
-    end
-    util.mt_PlayerList[userid] = ply
-    util.mt_PlayerList["#" .. userid] = ply
-    ply.zen_iUserID = userid
+
+        util.mt_PlayerList_SID64[userid] = sid64
+        util.mt_PlayerList_SID64[userid_str] = sid64
     
+        util.mt_PlayerList_SID[userid] = sid
+        util.mt_PlayerList_SID[userid_str] = sid
+    end
+    ply.zen_iUserID = userid
+
+    -- UserID
+    util.mt_PlayerList_UserID[userid] = userid
+    util.mt_PlayerList_UserID[userid_str] = userid
+
+    util.mt_PlayerList_Entity[userid] = ply
+    util.mt_PlayerList_Entity[userid_str] = ply
 end
 
 function util.UpdatePlayerList()
-    util.mt_PlayerList = {}
+    util.mt_PlayerList_Entity = {}
     for k, v in pairs(player.GetAll()) do
         util.PlayerList_Add(v)
     end
@@ -781,31 +844,15 @@ if CLIENT then
 end
 
 function util.GetPlayerEntity(plyOrSid)
-    return util.mt_PlayerList[plyOrSid]
+    return util.mt_PlayerList_Entity[plyOrSid]
 end
 
----@param plyOrSid PlayerOrSteamID
----@return SteamID64|nil
 function util.GetPlayerSteamID64(plyOrSid)
-    if isentity(plyOrSid) then
-        if IsValid(plyOrSid) and plyOrSid:IsPlayer() then
-            return plyOrSid:SteamID64()
-        else
-            return nil, "Entity not is player" -- nil
-        end
-    elseif isstring(plyOrSid) then
-        if util.IsSteamID(plyOrSid) then
-            return util.SteamIDTo64(plyOrSid)
-        else
-            if util.IsSteamID64(plyOrSid) then
-                return plyOrSid
-            else
-                return nil, "It's not steamid64"
-            end
-        end
-    else
-        return nil, "Unkown type"
-    end
+    return util.mt_PlayerList_SID64[plyOrSid]
+end
+
+function util.GetPlayerSteamID(plyOrSid)
+    return util.mt_PlayerList_SID[plyOrSid]
 end
 
 ---@param func function
