@@ -855,6 +855,100 @@ function util.GetPlayerSteamID(plyOrSid)
     return util.mt_PlayerList_SID[plyOrSid]
 end
 
+local self_tags = {
+    ["^"] = true,
+    ["@me"] = true,
+    ["@self"] = true,
+    ["@yourself"] = true,
+}
+
+local function getPlayerListFromEntList(ent_list)
+    local tResult = {}
+    for k, ent in pairs(ent_list) do
+        if IsValid(ent) and ent:IsPlayer() then
+            table.insert(tResult, ent)
+        end
+    end
+
+    return tResult
+end
+
+function util.FindPlayerEntity(str, who)
+    local ply = util.GetPlayerEntity(str)
+
+    local res = {}
+    
+    if ply then res = {ply} goto result end
+
+    if CLIENT and who == nil then
+        who = LocalPlayer()
+    end
+
+    if IsValid(who) then
+        local who_origin = util.GetPlayerTraceSource(who)
+        if self_tags[str] then
+            res = {who}
+            goto result
+        end
+
+        local sub1 = str:sub(1,1)
+
+
+        if sub1 == "@" then
+            if str == "@" then
+                local trace, ent = who:zen_GetEyeTrace()
+
+                if IsValid(ent) and ent:IsPlayer() then
+                    res = {ent}
+                    goto result
+                end
+            end
+            if str == "@we" then
+                res = getPlayerListFromEntList( ents.FindInSphere(who_origin, 400) )
+                goto result
+            end
+            if SERVER then
+                if str == "@pvs" then
+                    res = getPlayerListFromEntList( ents.FindInPVS(who_origin) )
+                    goto result
+                end
+            end
+            if str == "@all" then
+                res = player.GetAll()
+                goto result
+            end
+            if str == "@humans" then
+                res = player.GetHumans()
+                goto result
+            end
+
+            goto result
+        end
+    end
+
+    do -- By Nicks
+        local tResult = {}
+
+        for k, ply in pairs(player.GetAll()) do
+            if string.find(ply:GetName(), str) then
+                table.insert(tResult, ply)
+            end
+        end
+
+        res = tResult
+        goto result
+    end
+
+
+    ::result::
+    if table.IsEmpty(res) then return nil end
+
+    if #res == 1 then return res[1] end
+
+    return res
+end
+
+
 ---@param func function
 ---@return boolean sucess, string? err
 function pcallNoHalt(func,...)
@@ -1336,4 +1430,32 @@ function util.GetPlayerTraceSource(ply, noCursor)
 
         return ply:EyePos(), ply:GetAimVector()
     end
+end
+
+function util.GetPlayerEyeTrace(ply, noCursor)
+    local origin, dir = util.GetPlayerTraceSource(ply, noCursor)
+
+    local trace = util.TraceLine({
+        start = origin,
+        endpos = origin + dir*9999999,
+        filter = ply,
+        mask = MASK_SOLID
+    })
+
+    if trace.Hit and not trace.HitWorld and IsValid(trace.Entity) then
+        return trace, trace.Entity
+    end
+
+    local trace = util.TraceLine({
+        start = origin,
+        endpos = origin + dir*9999999,
+        filter = ply,
+        mask = MASK_ALL
+    })
+
+    return trace, trace.Entity
+end
+
+function META.PLAYER:zen_GetEyeTrace(noCursor)
+    return util.GetPlayerEyeTrace(self, noCursor)
 end
