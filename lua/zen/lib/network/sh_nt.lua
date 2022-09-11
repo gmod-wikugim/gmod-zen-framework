@@ -62,7 +62,7 @@ function nt.RegisterChannel(channel_name, flags, data)
         end
 
         if SERVER and nt.mt_Channels["channels"] then
-            nt.SendToChannel("channels", channel_name, channel_id)
+            nt.SendToChannel("channels", nil, channel_name, channel_id)
         end
     end
 
@@ -152,7 +152,7 @@ function nt.RegisterChannel(channel_name, flags, data)
     return channel_id, tChannel, tChannel.tContent
 end
 
-function nt.SendToChannel(channel_name, ...)
+function nt.SendToChannel(channel_name, target, ...)
     local tChannel = nt.mt_Channels[channel_name]
     assert(tChannel, "channel not exists \"" .. channel_name .. "\"")
     assert(istable(tChannel.types) or isfunction(tChannel.fWriter) , "tChannel.types should be tChannel.types || tChannel.fWriter should be function")
@@ -188,7 +188,11 @@ function nt.SendToChannel(channel_name, ...)
             tChannel.fWriter(tChannel, unpack(data))
             
             if SERVER then
-                net.Broadcast()
+                if target then
+                    net.Send(target)
+                else
+                    net.Broadcast()
+                end
             else
                 net.SendToServer()
             end

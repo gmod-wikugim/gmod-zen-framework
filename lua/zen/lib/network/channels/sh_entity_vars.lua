@@ -93,11 +93,11 @@ function META.ENTITY:zen_GetVar(key)
     return nt.mt_EntityVars[self][key]
 end
 
-function META.ENTITY:zen_SetVar(key, value)
+function META.ENTITY:zen_SetVar(key, value, target)
     if CLIENT then
         nt.mt_EntityVars[self][key] = value
     end
     if SERVER then
-        nt.SendToChannel("entity_var", self:EntIndex(), key, value)
+        nt.SendToChannel("entity_var", target, self:EntIndex(), key, value)
     end
 end

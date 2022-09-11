@@ -50,13 +50,13 @@ function nt.RegisterStringNumbers(word, new_id)
 	-- 	tWord.sep = true
 	-- 	tWord.count = of_count
     --     if SERVER then
-    --         nt.SendToChannel("string_id.multi_word", word_id, tWord) -- TODO: Fix and return string_id.multi_word
+    --         nt.SendToChannel("string_id.multi_word", nil, word_id, tWord) -- TODO: Fix and return string_id.multi_word
     --     end
     -- else
         nt.mt_StringNumbersSingle[word_id] = tWord
         nt.iStringNumbersSingle_Counter = nt.iStringNumbersSingle_Counter + 1
         if SERVER then
-            nt.SendToChannel("string_id.single_word", word_id, lower_case)
+            nt.SendToChannel("string_id.single_word", nil, word_id, lower_case)
         end
     -- end
 
