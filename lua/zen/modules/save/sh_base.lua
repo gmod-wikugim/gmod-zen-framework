@@ -10,7 +10,7 @@ local F_WHERE = function(var1, var2) return F("${column:1} IS ${auto:2}", {var1,
 local F_SET = function(var1, var2) return F("${column:1} = ${auto:2}", {var1, var2}) end
 
 sql.QueryErrorLogInterpolate([[
-    DROP TABLE `zen_SaveValue`;
+    --DROP TABLE `zen_SaveValue`;
     CREATE TABLE IF NOT EXISTS
         `zen_SaveValue`
     (
