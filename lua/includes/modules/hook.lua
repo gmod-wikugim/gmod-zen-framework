@@ -111,7 +111,7 @@ function hook.Add_Internal(event_name, hook_id, func, level, IsListener)
     Hooks[event_name][hook_id] = {
         id = hook_id,
         func = func,
-        level = level,
+        level = level or HOOK_LEVEL_DEFAULT,
         IsValidCheck = IsValidCheck,
         ValidFunc = hook_id.IsValid,
         IsListener = IsListener,
@@ -140,12 +140,12 @@ function hook.Remove_Internal(event_name, hook_id)
 end
 
 
-function hook.Add( event_name, identify, func, level ) hook.Add_Internal(event_name, identify, func, level or HOOK_LEVEL_DEFAULT) end
+function hook.Add( event_name, identify, func, level ) hook.Add_Internal(event_name, identify, func, level) end
 function hook.Remove( event_name, identify ) hook.Remove_Internal(event_name, identify) end
 
 hook.Call = hook_Call
 function hook.Run( name, ... ) return hook_Call( name, gmod and gmod.GetGamemode() or nil, ... ) end
 
 -- New Stuff
-function hook.Listen(name, identify, level, func) hook.Add_Internal(name, identify, func, level, true) end
-function hook.Handler(name, identify, level, func) hook.Add_Internal(name, identify, func, level) end
+function hook.Listen(name, identify, func, level) hook.Add_Internal(name, identify, func, level, true) end
+function hook.Handler(name, identify, func, level) hook.Add_Internal(name, identify, func, level) end
