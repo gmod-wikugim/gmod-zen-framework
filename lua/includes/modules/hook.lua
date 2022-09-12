@@ -52,38 +52,41 @@ function hook.Error(err, name, identify)
 end
 local hook_Error = hook.Error
 
-local i
+local i = 0
 local sucRun, a1, a2, a3, a4, a5, a6, a7, a8, a9
 function hook.Call_Internal(event_name, gm, ...)
     local tHookClears = Hook_Cleared[event_name]
 
-    i = 0
-    ::go_next::
-    i = i + 1
+    if tHookClears != nil then
+        i = 0
+        ::go_next::
+        i = i + 1
 
-    local tHook = tHookClears[i]
-    if tHook != nil then
-        if tHook.IsValidCheck == true then
-            local id = tHook.id
-            if IsValid(id) then
-                sucRun, a1, a2, a3, a4, a5, a6, a7, a8, a9 = pcall(tHook.func, id, ...)
-                goto check_result
+        local tHook = tHookClears[i]
+        if tHook != nil then
+            if tHook.IsValidCheck == true then
+                local id = tHook.id
+                if IsValid(id) then
+                    sucRun, a1, a2, a3, a4, a5, a6, a7, a8, a9 = pcall(tHook.func, id, ...)
+                    goto check_result
+                else
+                    hook.Remove(event_name, id)
+                    goto go_next
+                end
             else
-                goto go_next
+                sucRun, a1, a2, a3, a4, a5, a6, a7, a8, a9 = pcall(tHook.func, ...)
             end
-        else
-            sucRun, a1, a2, a3, a4, a5, a6, a7, a8, a9 = pcall(tHook.func, ...)
+
+            ::check_result::
+
+            if sucRun == false then hook_Error(a1, event_name, tHook.id) goto go_next end
+
+            if tHook.IsListener != true and a1 != nil then
+                return a1, a2, a3, a4, a5, a6, a7, a8, a9
+            end
+
+            goto go_next
         end
-
-        ::check_result::
-
-        if sucRun == false then hook_Error(a1, event_name, tHook.id) goto go_next end
-
-        if tHook.IsListener != true and a1 != nil then
-            return sucRun, a1, a2, a3, a4, a5, a6, a7, a8, a9
-        end
-
-        goto go_next
     end
 
 
@@ -103,7 +106,7 @@ function hook.Add_Internal(event_name, hook_id, level, func, IsListener)
     Hooks[event_name] = Hooks[event_name] or {}
     Hooks_GetTable[event_name] = Hooks_GetTable[event_name] or {}
 
-    local IsValidCheck = hook_id.IsValid and true or false
+    local IsValidCheck = isstring(hook_id) and true or false
 
     Hooks[event_name][hook_id] = {
         id = hook_id,
