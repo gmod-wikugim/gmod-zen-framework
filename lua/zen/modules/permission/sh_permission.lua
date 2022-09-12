@@ -96,7 +96,8 @@ function iperm.PlayerCanTarget(w_sid64, iTFlags, tTargets)
 end
 
 function iperm.PlayerHasPermission(sid64, perm_name, target, isSilent)
-    if icfg.Admins[sid64] then return true end
+    if perm_name == "public" then goto success end
+    if icfg.Admins[sid64] then goto success end
     local tPlayerPerm = iperm.PlayerGetPermission(sid64, perm_name)
     local sError = "unknown"
     local tPermission = iperm.mt_Permissions[perm_name]
@@ -242,7 +243,9 @@ function iperm.RegisterPermission(perm_name, flags, description)
 end
 
 function META.PLAYER:zen_HasPerm(perm, target)
+    if perm == "public" then return true end
     if SERVER and not self:IsFullyAuthenticated() then return false end
+    if self:zen_GetVar("auth") != true then return false end
     return iperm.PlayerHasPermission(self:SteamID64(), perm, target)
 end
 
