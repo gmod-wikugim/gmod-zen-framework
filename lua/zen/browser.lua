@@ -1,5 +1,6 @@
 zen.IncludeSH("zen/config.lua")
 zen.IncludeSH("zen/lib/util.lua")
+zen.IncludeSH("zen/lib/hook.lua")
 zen.IncludeSH("zen/lib/string.lua")
 zen.IncludeSH("zen/lib/sql.lua")
 zen.IncludeCL("zen/lib/cl_input.lua")
