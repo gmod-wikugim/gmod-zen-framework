@@ -19,6 +19,8 @@ HOOK_LEVEL_DEFAULT_POST = 1
 
 HOOK_LEVEL_LAST = 1000
 
+ZEN_HOOKS = true
+
 hook = hook or {}
 
 local clr_red = Color(255,0,0)
@@ -135,7 +137,7 @@ function hook.Remove_Internal(event_name, hook_id)
 end
 
 
-function hook.Add( event_name, name, func ) hook.Add_Internal(event_name, name, HOOK_LEVEL_DEFAULT, func) end
+function hook.Add( event_name, name, func, level ) hook.Add_Internal(event_name, name, level or HOOK_LEVEL_DEFAULT, func) end
 function hook.Remove( event_name, name ) hook.Remove_Internal(event_name, name) end
 
 hook.Call = hook_Call
