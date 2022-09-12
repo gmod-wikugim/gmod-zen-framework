@@ -96,110 +96,114 @@ function iperm.PlayerCanTarget(w_sid64, iTFlags, tTargets)
 end
 
 function iperm.PlayerHasPermission(sid64, perm_name, target, isSilent)
+    local sError = "unknown"
+
     if perm_name == "public" then goto success end
     if icfg.Admins[sid64] then goto success end
-    local tPlayerPerm = iperm.PlayerGetPermission(sid64, perm_name)
-    local sError = "unknown"
-    local tPermission = iperm.mt_Permissions[perm_name]
-    local who = util.GetPlayerEntity(sid64)
-    local iUniqueFlags = tPlayerPerm and tPlayerPerm.unique_flags or iperm.unique_flags.BASE
-    local iPermissionFlags = tPermission and tPermission.flags or iperm.flags.BASE
 
-    -- Personal block checking
-    do
-        if tPlayerPerm and tPlayerPerm.bAvaliable == false then
-            sError = "This action was blocked for you"
-            goto error
-        end
-    end
+    do -- Advanced Check
+        local tPlayerPerm = iperm.PlayerGetPermission(sid64, perm_name)
+        local tPermission = iperm.mt_Permissions[perm_name]
+        local who = util.GetPlayerEntity(sid64)
+        local iUniqueFlags = tPlayerPerm and tPlayerPerm.unique_flags or iperm.unique_flags.BASE
+        local iPermissionFlags = tPermission and tPermission.flags or iperm.flags.BASE
 
-    -- Check Basics
-    do
-        if isFlagSet(iPermissionFlags, iperm.flags.PUBLIC) then 
-            goto success
+        -- Personal block checking
+        do
+            if tPlayerPerm and tPlayerPerm.bAvaliable == false then
+                sError = "This action was blocked for you"
+                goto error
+            end
         end
 
-        if not tPlayerPerm then
-            sError = "This action not avaliable for you. Don't have permission"
-            goto error
-        end
-    end
+        -- Check Basics
+        do
+            if isFlagSet(iPermissionFlags, iperm.flags.PUBLIC) then 
+                goto success
+            end
 
-    -- Check Unique Flags
-    do
-        if isSilent and not isFlagSet(iUniqueFlags, iperm.unique_flags.SILENT) then
-            sError = "You can't use this command as silent"
-            goto error
+            if not tPlayerPerm then
+                sError = "This action not avaliable for you. Don't have permission"
+                goto error
+            end
         end
 
-        if isFlagSet(iUniqueFlags, iperm.unique_flags.FUN_ONLY) then
-            local who = util.GetPlayerEntity(sid64)
-            if who then
-                local inFunMode = (target.zen_IsFun and target:zen_IsFun())
-                if not inFunMode then
-                    sError = "You can use this command only in fun mode"
+        -- Check Unique Flags
+        do
+            if isSilent and not isFlagSet(iUniqueFlags, iperm.unique_flags.SILENT) then
+                sError = "You can't use this command as silent"
+                goto error
+            end
+
+            if isFlagSet(iUniqueFlags, iperm.unique_flags.FUN_ONLY) then
+                local who = util.GetPlayerEntity(sid64)
+                if who then
+                    local inFunMode = (target.zen_IsFun and target:zen_IsFun())
+                    if not inFunMode then
+                        sError = "You can use this command only in fun mode"
+                        goto error
+                    end
+                else
+                    sError = "You need be online for use this action in fun mode"
                     goto error
                 end
-            else
-                sError = "You need be online for use this action in fun mode"
-                goto error
-            end
 
+            end
         end
-    end
 
-    -- Check Target Flags
-    do
-        if target then
-            if isFlagSet(iPermissionFlags, iperm.flags.NO_TARGET) then
-                target = {}
-                goto success
-            end
-            local tTargets = {}
-            if not istable(target) then target = {target} end
-            if istable(target) then
-                for k, v in pairs(target) do
-                    local ply
-                    if isnumber(k) and isnumber(v) then continue end
+        -- Check Target Flags
+        do
+            if target then
+                if isFlagSet(iPermissionFlags, iperm.flags.NO_TARGET) then
+                    target = {}
+                    goto success
+                end
+                local tTargets = {}
+                if not istable(target) then target = {target} end
+                if istable(target) then
+                    for k, v in pairs(target) do
+                        local ply
+                        if isnumber(k) and isnumber(v) then continue end
 
-                    local ent = isentity(k) and k or (isentity(v) and v or false)
-                    
-                    if isentity(ent) and IsValid(ent) and ent:IsPlayer() then
-                        tTargets[ent:SteamID64()] = ent
-                        continue
-                    end
+                        local ent = isentity(k) and k or (isentity(v) and v or false)
+                        
+                        if isentity(ent) and IsValid(ent) and ent:IsPlayer() then
+                            tTargets[ent:SteamID64()] = ent
+                            continue
+                        end
 
-                    local str = isstring(k) and k or (isstring(v) and v or false)
+                        local str = isstring(k) and k or (isstring(v) and v or false)
 
-                    local ply = util.GetPlayerEntity(str)
-                    if ply then
-                        tTargets[ply:SteamID64()] = ply
-                        continue
+                        local ply = util.GetPlayerEntity(str)
+                        if ply then
+                            tTargets[ply:SteamID64()] = ply
+                            continue
+                        end
                     end
                 end
-            end
 
-            if next(tTargets) == nil then
-                sError = "Target is not found or corrupted"
-                goto error
-            end
+                if next(tTargets) == nil then
+                    sError = "Target is not found or corrupted"
+                    goto error
+                end
 
-            target = tTargets
+                target = tTargets
 
 
-            local iTFlags = tPlayerPerm and tPlayerPerm.target_flags
+                local iTFlags = tPlayerPerm and tPlayerPerm.target_flags
 
-            local res
-            res, target = iperm.PlayerCanTarget(sid64, iTFlags, target)
-            if res == false then
-                sError = "You can't target this person"
-                goto error
-            elseif res == true then
+                local res
+                res, target = iperm.PlayerCanTarget(sid64, iTFlags, target)
+                if res == false then
+                    sError = "You can't target this person"
+                    goto error
+                elseif res == true then
+                    goto success
+                end
+
+            else
                 goto success
             end
-
-        else
-            goto success
         end
     end
 
