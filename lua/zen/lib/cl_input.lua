@@ -75,18 +75,23 @@ ihook.Listen("PlayerButtonUp", "fast_console_phrase", function(ply, but)
 		end
 		ihook.Run("PlayerButtonUnPress", ply, but)
 	end
-end)
+
+	if ihook.Run("PlayerButtonUp.SupperessNext") then return true end
+end, HOOK_HIGH)
+
 ihook.Listen("PlayerButtonDown", "fast_console_phrase", function(ply, but)
-	if KeyPressed[but] then return end
-	KeyPressed[but] = true
-	
-	for name, keys in pairs(KeyCombinations) do
-		if keys[but] then
-			KeyCombinationsMass[name] = KeyCombinationsMass[name] + 1
+	if !KeyPressed[but] then
+		KeyPressed[but] = true
+
+		for name, keys in pairs(KeyCombinations) do
+			if keys[but] then
+				KeyCombinationsMass[name] = KeyCombinationsMass[name] + 1
+			end
 		end
+		ihook.Run("PlayerButtonPress", ply, but)
 	end
 
-	ihook.Run("PlayerButtonPress", ply, but)
-end)
+	if ihook.Run("PlayerButtonDown.SupperessNext") then return true end
+end, HOOK_HIGH)
 
 input.SetupCombination("Modificator", KEY_LCONTROL, KEY_RCONTROL, KEY_LSHIFT, KEY_RSHIFT)

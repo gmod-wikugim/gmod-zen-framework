@@ -65,11 +65,6 @@ function map_edit.Render(rendermode, priority)
 	return true
 end
 
-
-function map_edit.HUDShouldDraw()
-	return false
-end
-
 function map_edit.GenerateGUI(pnlContext, mark_panels)
 
 	pnlContext:SetMouseInputEnabled(true)
@@ -151,21 +146,21 @@ function map_edit.Toggle()
 	-- map_edit.GenerateGUI(g_ContextMenu, map_edit.t_Panels)
 
 
-	ihook.Handler("PlayerBindPress", map_edit.hookName, map_edit.PlayerBindPress, HOOK_HIGH)
+	ihook.Handler("PlayerBindPress", map_edit.hookName, map_edit.ReturnTrue, HOOK_HIGH)
 	ihook.Handler("CalcView", map_edit.hookName, map_edit.CalcView, HOOK_HIGH)
-	ihook.Handler("CreateMove", map_edit.hookName, map_edit.CreateMove, HOOK_HIGH)
+	ihook.Handler("CreateMove", map_edit.hookName, map_edit.ReturnTrue, HOOK_HIGH)
 	ihook.Handler("StartCommand", map_edit.hookName, map_edit.StartCommand, HOOK_HIGH)
-	ihook.Handler("PlayerSwitchWeapon", map_edit.hookName, map_edit.PlayerSwitchWeapon, HOOK_HIGH)
+	ihook.Handler("PlayerSwitchWeapon", map_edit.hookName, map_edit.ReturnTrue, HOOK_HIGH)
 	ihook.Handler("Render", map_edit.hookName, map_edit.Render, HOOK_HIGH)
-	ihook.Handler("HUDShouldDraw", map_edit.hookName, map_edit.HUDShouldDraw, HOOK_HIGH)
+	ihook.Handler("HUDShouldDraw", map_edit.hookName, map_edit.ReturnFalse, HOOK_HIGH)
+	ihook.Handler("PlayerButtonUp.SupperessNext", map_edit.hookName, map_edit.ReturnTrue, HOOK_HIGH)
+	ihook.Handler("PlayerButtonDown.SupperessNext", map_edit.hookName, map_edit.ReturnTrue, HOOK_HIGH)
 
 	nt.Send("map_edit.status", {"bool"}, {true})
 end
 
-
-function map_edit.PlayerBindPress(ply, bind, pressed, code) return true end
-function map_edit.CreateMove(cmd) return true end
-function map_edit.PlayerSwitchWeapon(ply, wep) return true end
+function map_edit.ReturnTrue() return true end
+function map_edit.ReturnFalse() return false end
 
 function map_edit.CalcView(ply, origin, angles, fov, znear, zfar)
 	local new_view = {
