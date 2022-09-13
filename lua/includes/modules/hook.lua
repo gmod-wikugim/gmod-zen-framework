@@ -67,7 +67,7 @@ function hook.Call_Internal(event_name, gm, ...)
         if tHook != nil then
             local sucRun, a1, a2, a3, a4, a5, a6, a7, a8, a9
 
-            if ( tHook.IsListener ) then
+            if ( tHook.IsValidCheck ) then
                 local id = tHook.id
                 if ( IsValid(id) ) then
                     sucRun, a1, a2, a3, a4, a5, a6, a7, a8, a9 = pcall(tHook.func, id, ...)
