@@ -360,6 +360,28 @@ META.DLIGHT_T               = _R.dlight_t or {}
 META.CNEWPARTICLEEFFECT     = _R.CNewParticleEffect or {}
 META.IMESH                  = _R.IMesh or {}
 
+local get_jit_info = jit.util.funcinfo
+local get_info = debug.getinfo
+local getlocal = debug.getlocal
+
+local get_up_values = function(func, info, jit_info)
+    local tResult = {}
+
+    local k = 0
+	while true do
+		k = k + 1
+		local param = getlocal( func, k )
+        if param == nil then break end
+        table.insert(tResult, param)
+	end
+
+    if jit_info.isvararg or info.isvararg then
+        table.insert(tResult, "...")
+    end
+
+    return "(" .. table.concat(tResult, ", ") .. ")"
+end
+
 do
     local object = function() end
     local res, meta =  pcall(function()
@@ -374,7 +396,18 @@ do
     META.FUNCTION = res and meta or {}
     META.FUNCTION.__index = META.FUNCTION
     META.FUNCTION.__tostring = function(self)
-        return "function: " .. debug.getinfo(self, "S")["source"]
+        local info = get_info(self)
+        local jit_info = get_jit_info(self)
+
+        local func_name = info.name
+
+        local name = func_name and func_name .. " " or ""
+
+        if jit_info.addr then
+            return "C_Function: " .. name .. jit_info.addr .. get_up_values(self, info, jit_info)
+        else
+            return "function: " .. name .. jit_info.source .. ":" ..  jit_info.currentline .. get_up_values(self, info, jit_info)
+        end
     end
 end
 
