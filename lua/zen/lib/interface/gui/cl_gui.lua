@@ -1,3 +1,4 @@
+local basegui = gui
 local ui, gui = zen.Init("ui", "gui")
 local sub = string.sub
 
@@ -12,6 +13,10 @@ gui.proxySkip = gui.proxySkip or newproxy(true)
 
 debug.setmetatable(gui.proxyEmpty, {__tostring = function() return "<gui.proxyEmpty>" end})
 debug.setmetatable(gui.proxySkip, {__tostring = function() return "<gui.proxySkip>" end})
+
+setmetatable(gui, {
+    __index = basegui
+})
 
 
 
