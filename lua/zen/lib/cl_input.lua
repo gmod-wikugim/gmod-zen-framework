@@ -43,6 +43,17 @@ for k, v in pairs(BindList) do
 	BindList[v] = k
 end
 
+local BindPressed = {}
+local KeyINPressed = {}
+
+function input.IsPressedBind(bind_string)
+	return BindPressed[bind_string]
+end
+
+function input.IsPressedIN(key_in)
+	return KeyINPressed[key_in]
+end
+
 function input.GetButtonIN(BUTTON_ID)
 	local bind = input.LookupKeyBinding(BUTTON_ID)
 	if bind and BindList[bind] then
@@ -57,6 +68,7 @@ function input.IsButtonIN(BUTTON_ID, BUTTON_IN)
 end
 
 function input.IsButtonPressedIN(BUTTON_IN)
+	if KeyINPressed[BUTTON_IN] then return true end
 	local BIND = BindList[BUTTON_IN]
 	if not BIND then return end
 	local CHAR = input.LookupBinding(BIND)
@@ -68,12 +80,20 @@ end
 ihook.Listen("PlayerButtonUp", "fast_console_phrase", function(ply, but)
 	if KeyPressed[but] then
 		KeyPressed[but] = nil
+		local bind_name = input.LookupKeyBinding(but)
+		if bind_name then
+			BindPressed[bind_name] = nil
+		end
+		local in_key = input.GetButtonIN(but)
+		if KeyINPressed then
+			KeyINPressed[in_key] = nil
+		end
 		for name, keys in pairs(KeyCombinations) do
 			if keys[but] then
 				KeyCombinationsMass[name] = math.max(0, KeyCombinationsMass[name] - 1)
 			end
 		end
-		ihook.Run("PlayerButtonUnPress", ply, but)
+		ihook.Run("PlayerButtonUnPress", ply, but, in_key, bind_name)
 	end
 
 	if ihook.Run("PlayerButtonUp.SupperessNext") then return true end
@@ -83,12 +103,21 @@ ihook.Listen("PlayerButtonDown", "fast_console_phrase", function(ply, but)
 	if !KeyPressed[but] then
 		KeyPressed[but] = true
 
+		local bind_name = input.LookupKeyBinding(but)
+		if bind_name then
+			BindPressed[bind_name] = true
+		end
+		local in_key = input.GetButtonIN(but)
+		if KeyINPressed then
+			KeyINPressed[in_key] = true
+		end
+
 		for name, keys in pairs(KeyCombinations) do
 			if keys[but] then
 				KeyCombinationsMass[name] = KeyCombinationsMass[name] + 1
 			end
 		end
-		ihook.Run("PlayerButtonPress", ply, but)
+		ihook.Run("PlayerButtonPress", ply, but, in_key, bind_name)
 	end
 
 	if ihook.Run("PlayerButtonDown.SupperessNext") then return true end
