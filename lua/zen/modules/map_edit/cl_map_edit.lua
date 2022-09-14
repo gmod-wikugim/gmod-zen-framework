@@ -4,7 +4,6 @@ map_edit.t_Panels = map_edit.t_Panels or {}
 local ui, draw, draw3d, draw3d2d = zen.Import("ui", "ui.draw", "ui.draw3d", "ui.draw3d2d")
 local gui = zen.Import("gui")
 
-map_edit.IsActive = false
 map_edit.hookName = "zen.map_edit"
 
 map_edit.t_Mods = map_edit.t_Mods or {}

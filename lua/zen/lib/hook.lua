@@ -9,10 +9,11 @@ function ihook.Handler(hook_name, hook_id, func, level)
 end
 
 function ihook.Listen(hook_name, hook_id, func, level)
+    local no_return_func = function(...) func(...) end
     if hook.Listen then
-        hook.Listen(hook_name, hook_id, func, level)
+        hook.Listen(hook_name, hook_id, no_return_func, level)
     else
-        hook.Add(hook_name, hook_id, func, level)
+        hook.Add(hook_name, hook_id, no_return_func, level)
     end
 end
 
