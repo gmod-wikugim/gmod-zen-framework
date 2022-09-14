@@ -130,19 +130,31 @@ function map_edit.GenerateGUI(mark_panels)
 end
 
 
+local HookStateMent = {
+	["HUDPaint"] = true,
+	["HUDPaintBackground"] = true,
+	["PlayerButtonUp.SupperessNext"] = true,
+	["PlayerButtonDown.SupperessNext"] = true,
+	["HUDShouldDraw"] = false,
+	["PlayerSwitchWeapon"] = true,
+	["CreateMove"] = true,
+	["PlayerBindPress"] = true,
+
+}
+
+
 function map_edit.Toggle()
 	map_edit.IsActive = not map_edit.IsActive
 
 	if not map_edit.IsActive then
-		ihook.Remove("PlayerBindPress", map_edit.hookName)
+		for k, val in pairs(HookStateMent) do
+			ihook.Remove(k, map_edit.hookName)
+		end
+
+
 		ihook.Remove("CalcView", map_edit.hookName)
-		ihook.Remove("CreateMove", map_edit.hookName)
 		ihook.Remove("StartCommand", map_edit.hookName)
-		ihook.Remove("PlayerSwitchWeapon", map_edit.hookName)
 		ihook.Remove("Render", map_edit.hookName)
-		ihook.Remove("HUDShouldDraw", map_edit.hookName)
-		ihook.Remove("PlayerButtonUp.SupperessNext", map_edit.hookName)
-		ihook.Remove("PlayerButtonDown.SupperessNext", map_edit.hookName)
 
 		if IsValid(map_edit.pnl_Context) then map_edit.pnl_Context:Remove() end
 		nt.Send("map_edit.status", {"bool"}, {false})
@@ -155,16 +167,13 @@ function map_edit.Toggle()
 
 	map_edit.GenerateGUI()
 
-
-	ihook.Handler("PlayerBindPress", map_edit.hookName, map_edit.ReturnTrue, HOOK_HIGH)
+	for k, val in pairs(HookStateMent) do
+		local func = val and map_edit.ReturnTrue or map_edit.ReturnFalse
+		ihook.Handler(k, map_edit.hookName, func, HOOK_HIGH)
+	end
 	ihook.Handler("CalcView", map_edit.hookName, map_edit.CalcView, HOOK_HIGH)
-	ihook.Handler("CreateMove", map_edit.hookName, map_edit.ReturnTrue, HOOK_HIGH)
 	ihook.Handler("StartCommand", map_edit.hookName, map_edit.StartCommand, HOOK_HIGH)
-	ihook.Handler("PlayerSwitchWeapon", map_edit.hookName, map_edit.ReturnTrue, HOOK_HIGH)
 	ihook.Handler("Render", map_edit.hookName, map_edit.Render, HOOK_HIGH)
-	ihook.Handler("HUDShouldDraw", map_edit.hookName, map_edit.ReturnFalse, HOOK_HIGH)
-	ihook.Handler("PlayerButtonUp.SupperessNext", map_edit.hookName, map_edit.ReturnTrue, HOOK_HIGH)
-	ihook.Handler("PlayerButtonDown.SupperessNext", map_edit.hookName, map_edit.ReturnTrue, HOOK_HIGH)
 
 	nt.Send("map_edit.status", {"bool"}, {true})
 end
