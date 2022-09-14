@@ -748,152 +748,157 @@ function util.IsSteamID(value)
 	end
 end
 
-util.mt_PlayerList_Entity = {}
-util.mt_PlayerList_SID64 = {}
-util.mt_PlayerList_SID = {}
-util.mt_PlayerList_UserID = {}
-util.mt_PlayerList_Address = {}
 
-local function AddPlayerIDValue(tbl, value, isbot, sid64, sid64_n, sid, userid, userid_str, address)
-    if value == nil then return end
-    if userid then tbl[userid] = value end
-    if userid_str then tbl[userid_str] = value end
-    if not isbot then
-        if address then tbl[address] = value end
-        if sid64 then tbl[sid64] = value end
-        if sid64_n then tbl[sid64_n] = value end
-        if sid then tbl[sid] = value end
+util.mt_PlayerList_Browse = util.mt_PlayerList_Browse or {}
+function util.GetPlayerTBrowse(pid, forceCreate)
+    if forceCreate and not util.mt_PlayerList_Browse[pid] then
+        util.mt_PlayerList_Browse[pid] = {
+            _aliases = {}
+        }
     end
+    return util.mt_PlayerList_Browse[pid]
 end
 
-local function RemovePlayerIDValue(tbl, isbot, sid64, sid64_n, sid, userid, userid_str, address)
-    if userid then tbl[userid] = nil end
-    if userid_str then tbl[userid_str] = nil end
-    if not isbot then
-        if address then tbl[address] = nil end
-        if sid64 then tbl[sid64] = nil end
-        if sid64_n then tbl[sid64_n] = nil end
-        if sid then tbl[sid] = nil end
-    end
+function util.GetPlayerTBrowseKey(pid, key)
+    return util.mt_PlayerList_Browse[pid] and util.mt_PlayerList_Browse[pid][key]
 end
 
 
-function util.PlayerList_Remove(ply)
-    local sid64 = ply.zen_sSteamID64 or ply:SteamID64()
-    local sid64_n = tonumber(sid64)
-    local sid = ply.zen_sSteamID or ply:SteamID()
-    local userid = ply.zen_iUserID or ply:UserID()
-    local userid_str = "#" .. userid
-    local address = ply.zen_sAddress or (ply.IPAddress and ply:IPAddress())
+function util.OnPlayerTBrowserUpdate(tBrowse, pid, key, value)
+    if key == "userid" then
+        util.SetPlayetTBrowseKey(pid, "userid_str", "#" .. value, true)
+    elseif key == "sid64" then
+        util.SetPlayetTBrowseKey(pid, "sid64_n", tonumber(value), true)
+    elseif key == "networkid" then
+        util.SetPlayetTBrowseKey(pid, "sid64", util.SteamIDTo64(value), true)
+        util.SetPlayetTBrowseKey(pid, "sid", value, true)
+    elseif key == "entity" then
+        util.SetPlayetTBrowseKey(pid, "userid", value:UserID(), true)
+        util.SetPlayetTBrowseKey(pid, "nick", value:Nick())
+        util.SetPlayetTBrowseKey(pid, "ent_index", value:EntIndex())
 
-    local isbot = ply.zen_bIsBot or ply:IsBot()
+        if SERVER then
+            if tBrowse.userid then
+                local hammer_name = "zen_player_" .. tBrowse.userid
+                META.ENTITY.SetName(value, hammer_name)
+                util.SetPlayetTBrowseKey(pid, "hammen_name", hammer_name)
+            end
+        end
 
-    RemovePlayerIDValue(util.mt_PlayerList_Entity, isbot, sid64, sid64_n, sid, userid, userid_str, address)
-    RemovePlayerIDValue(util.mt_PlayerList_UserID, isbot, sid64, sid64_n, sid, userid, userid_str, address)
-
-    if not isbot then
-        RemovePlayerIDValue(util.mt_PlayerList_SID, isbot, sid64, sid64_n, sid, userid, userid_str, address)
-        RemovePlayerIDValue(util.mt_PlayerList_SID64, isbot, sid64, sid64_n, sid, userid, userid_str, address)
-        RemovePlayerIDValue(util.mt_PlayerList_Address, isbot, sid64, sid64_n, sid, userid, userid_str, address)
+        if not value:IsBot() then
+            if SERVER then
+                util.SetPlayetTBrowseKey(pid, "address", value:IPAddress(), true)
+            end
+            util.SetPlayetTBrowseKey(pid, "networkid", value:SteamID(), true)
+        end
     end
 end
 
 
-function util.PlayerList_Add(ply)
-    local sid64 = ply:SteamID64()
-    local sid64_n = tonumber(sid64)
-    local sid = ply:SteamID()
-    local userid = ply:UserID()
-    local userid_str = "#" .. userid
-    local address = ply.IPAddress and ply:IPAddress()
-    local isbot = ply:IsBot()
+function util.SetPlayetTBrowseKey(pid, key, value, useAsAlias)
+    if value == "none" or value == "BOT" then return end
 
-    ply.zen_sSteamID64 = sid64
-    ply.zen_sSteamID = sid
-    ply.zen_iUserID = userid
-    ply.zen_bIsBot = isbot
-    ply.zen_sAddress = address
-    
-
-    AddPlayerIDValue(util.mt_PlayerList_Entity, ply, isbot, sid64, sid64_n, sid, userid, userid_str, address)
-    AddPlayerIDValue(util.mt_PlayerList_UserID, userid, isbot, sid64, sid64_n, sid, userid, userid_str, address)
-    
-    if not isbot then
-        AddPlayerIDValue(util.mt_PlayerList_SID, sid, isbot, sid64, sid64_n, sid, userid, userid_str, address)
-        AddPlayerIDValue(util.mt_PlayerList_SID64, sid64, isbot, sid64, sid64_n, sid, userid, userid_str, address)
-        AddPlayerIDValue(util.mt_PlayerList_Address, address, isbot, sid64, sid64_n, sid, userid, userid_str, address)
+    local tBrowse = util.GetPlayerTBrowse(pid, true)
+    tBrowse[key] = value
+    if useAsAlias then
+        tBrowse._aliases[value] = true
+        util.mt_PlayerList_Browse[value] = tBrowse
     end
+
+    util.OnPlayerTBrowserUpdate(tBrowse, pid, key, value)
+end
+
+function util.RemovePlayerTBrowser(pid)
+    local tBrowse = util.mt_PlayerList_Browse[pid]
+    if not tBrowse then return end
+    timer.Simple(1, function()
+        for key in pairs(tBrowse._aliases) do
+            util.mt_PlayerList_Browse[key] = nil
+        end
+    end)
 end
 
 function util.UpdatePlayerList()
-    util.mt_PlayerList_Entity = {}
     for k, v in pairs(player.GetAll()) do
-        util.PlayerList_Add(v)
+        util.SetPlayetTBrowseKey(v, "entity", v, true)
     end
 end
 util.UpdatePlayerList()
+ihook.Listen("InitPostEntity", "zen.util.PlayerList", function()
+    util.UpdatePlayerList()
+end)
 
 if SERVER then
     ihook.Listen("PlayerInitialSpawn", "zen.util.PlayerList", function(ply)
-        util.PlayerList_Add(ply)
+        util.SetPlayetTBrowseKey(ply, "entity", ply, true)
     end)
     ihook.Listen("PlayerDisconnected", "zen.util.PlayerList", function(ply)
-        util.PlayerList_Remove(ply)
+        util.RemovePlayerTBrowser(ply)
     end)
 
     gameevent.Listen("player_connect")
     ihook.Listen("player_connect", "zen.util.PlayerList", function(tbl)
-        local sid = tbl.networkid
-        local sid64 = util.SteamIDTo64(sid)
-        local sid64_n = tonumber(sid64)
         local userid = tbl.userid
-        local userid_str = "#" .. userid
-        local address = tbl.address
-        local isbot = tbl.bot == 1
-
-        AddPlayerIDValue(util.mt_PlayerList_SID64, sid64, isbot, sid64, sid64_n, sid, userid, userid_str, address)
-        AddPlayerIDValue(util.mt_PlayerList_SID, sid64, isbot, sid64, sid64_n, sid, userid, userid_str, address)
-        AddPlayerIDValue(util.mt_PlayerList_UserID, sid64, isbot, sid64, sid64_n, sid, userid, userid_str, address)
-        AddPlayerIDValue(util.mt_PlayerList_Address, sid64, isbot, sid64, sid64_n, sid, userid, userid_str, address)
+        util.SetPlayetTBrowseKey(userid, "userid", userid, true)
+        util.SetPlayetTBrowseKey(userid, "ent_index", tbl.index + 1)
+        util.SetPlayetTBrowseKey(userid, "name", tbl.name)
+        
+        if tbl.networkid then
+            util.SetPlayetTBrowseKey(userid, "networkid", tbl.networkid, true)
+        end
+        if tbl.address then
+            util.SetPlayetTBrowseKey(userid, "address", tbl.address, true)
+        end
     end, HOOK_HIGH)
 
     gameevent.Listen("player_disconnect")
     ihook.Listen("player_disconnect", "zen.util.PlayerList", function(tbl)
-        local userid = tbl.userid
-        local userid_str = "#" .. tbl.userid
-        local sid64 = util.GetPlayerSteamID64(userid)
-        local sid64_n = tonumber(sid64)
-        local sid = util.GetPlayerSteamID(userid)
-        local address = util.mt_PlayerList_Address[userid]
-        local isbot = tbl.bot == 1
-
-
-        RemovePlayerIDValue(util.mt_PlayerList_SID64, isbot, sid64, sid64_n, sid, userid, userid_str, address)
-        RemovePlayerIDValue(util.mt_PlayerList_SID, isbot, sid64, sid64_n, sid, userid, userid_str, address)
-        RemovePlayerIDValue(util.mt_PlayerList_UserID, isbot, sid64, sid64_n, sid, userid, userid_str, address)
-        RemovePlayerIDValue(util.mt_PlayerList_Address, isbot, sid64, sid64_n, sid, userid, userid_str, address)
+        util.RemovePlayerTBrowser(tbl.userid)
     end, HOOK_HIGH)
 end
 
 if CLIENT then
+    gameevent.Listen("player_connect_client")
+    ihook.Listen("player_connect_client", "zen.util.PlayerList", function(tbl)
+        local userid = tbl.userid
+        util.SetPlayetTBrowseKey(userid, "userid", userid, true)
+        util.SetPlayetTBrowseKey(userid, "ent_index", tbl.index + 1)
+        util.SetPlayetTBrowseKey(userid, "name", tbl.name)
+        if tbl.networkid then
+            util.SetPlayetTBrowseKey(userid, "networkid", tbl.networkid, true)
+        end
+    end, HOOK_HIGH)
+
     ihook.Listen("OnEntityCreated", "zen.util.PlayerList", function(ent)
-        if ent:IsPlayer() then util.PlayerList_Add(ent) end
+        if ent:IsPlayer() then util.SetPlayetTBrowseKey(ent, "entity", ent, true) end
     end)
     ihook.Listen("EntityRemoved", "zen.util.PlayerList", function(ent)
-        if ent:IsPlayer() then util.PlayerList_Remove(ent) end
+        if ent:IsPlayer() then util.RemovePlayerTBrowser(ent) end
     end)
 end
 
 function util.GetPlayerEntity(plyOrSid)
-    return util.mt_PlayerList_Entity[plyOrSid]
+    return util.GetPlayerTBrowseKey(plyOrSid, "entity")
 end
 
 function util.GetPlayerSteamID64(plyOrSid)
-    return util.mt_PlayerList_SID64[plyOrSid]
+    return util.GetPlayerTBrowseKey(plyOrSid, "sid64")
 end
 
 function util.GetPlayerSteamID(plyOrSid)
-    return util.mt_PlayerList_SID[plyOrSid]
+    return util.GetPlayerTBrowseKey(plyOrSid, "sid")
+end
+
+function util.GetPlayerUserID(plyOrSid)
+    return util.GetPlayerTBrowseKey(plyOrSid, "userid")
+end
+
+function util.GetPlayerAddress(plyOrSid)
+    return util.GetPlayerTBrowseKey(plyOrSid, "address")
+end
+
+function util.GetPlayerNick(plyOrSid)
+    return util.GetPlayerTBrowseKey(plyOrSid, "nick")
 end
 
 local self_tags = {
@@ -1499,4 +1504,121 @@ end
 
 function META.PLAYER:zen_GetEyeTrace(noCursor)
     return util.GetPlayerEyeTrace(self, noCursor)
+end
+
+
+
+local lastCalcX = {}
+local lastCalcY = {}
+local lastCalcZ = {}
+local lastMin = Vector(0,0,0)
+local lastMax = Vector(0,0,0)
+
+local Angles = {
+	Vector(0,0,1),Vector(0,0,-1),
+	Vector(1,0,0),Vector(-1,0,0),Vector(0,1,0),Vector(0,-1,0),Vector(1,1,0),Vector(-1,-1,0),
+	Vector(1,-1,0),Vector(-1,1,0),Vector(1,0,1),Vector(-1,0,1),Vector(0,1,1),Vector(0,-1,1),
+	Vector(1,1,1),Vector(-1,-1,1),Vector(1,-1,1),Vector(-1,1,1),Vector(1,0,-1),Vector(-1,0,-1),
+	Vector(0,1,-1),Vector(0,-1,-1),Vector(1,1,-1),Vector(-1,-1,-1),Vector(1,-1,-1),Vector(-1,1,-1),
+}
+
+
+local min = math.min
+local max = math.max
+
+
+local floor = math.floor
+local function vector_equal(vec1, vec2)
+	return floor(vec1.x) == floor(vec2.x) or floor(vec1.y) == floor(vec2.y) or floor(vec1.z) == floor(vec2.z)
+end
+
+local insert = table.insert
+local function TraceRoom(pos, tResult, loop, filter)
+	if loop > 3 then return end
+
+	loop = loop + 1
+
+
+	for k, dir in pairs(Angles) do
+		local new_pos = pos + dir*1000
+
+		local trace = util.TraceLine{
+			start = pos,
+			endpos = new_pos,
+			mask = MASK_SOLID,
+            filter = filter,
+		}
+
+		local hitpos = trace.HitPos
+		if not trace.Hit then continue end
+
+		local hitPosX = floor(hitpos.x)
+		local hitPosY = floor(hitpos.y)
+		local hitPosZ = floor(hitpos.z)
+
+		insert(tResult, {hitpos, trace.HitNormal})
+
+		if lastCalcX[hitPosX] and lastCalcY[hitPosY] and lastCalcZ[hitPosZ] then continue end
+
+		lastCalcX[hitPosX] = true
+		lastCalcY[hitPosY] = true
+		lastCalcZ[hitPosZ] = true
+
+		local lastMinX = floor(lastMin.x)
+		local lastMinY = floor(lastMin.y)
+		local lastMinZ = floor(lastMin.z)
+
+		local lastMaxX = floor(lastMax.x)
+		local lastMaxY = floor(lastMax.y)
+		local lastMaxZ = floor(lastMax.z)
+
+
+		lastMin.x = min(lastMinX, hitPosX)
+		lastMin.y = min(lastMinY, hitPosY)
+		lastMin.z = min(lastMinZ, hitPosZ)
+
+		lastMax.x = max(lastMaxX, hitPosX)
+		lastMax.y = max(lastMaxY, hitPosY)
+		lastMax.z = max(lastMaxZ, hitPosZ)
+
+		if vector_equal(pos, Vector(hitPosX, hitPosY, hitPosZ)) then continue end
+
+		TraceRoom(hitpos, tResult, loop)
+	end
+end
+
+function util.GetRoomBounds(pos, filter)
+    assert(isvector(pos), "pos not is vector")
+
+    lastCalcX = {}
+    lastCalcY = {}
+    lastCalcZ = {}
+    lastMin = Vector(pos)
+    lastMax = Vector(pos)
+
+    TraceRoom(pos, {}, 0, filter)
+
+    return lastMin, lastMax
+end
+
+
+function util.GetRoomEntities(pos, filter)
+    local min, max = util.GetRoomBounds(pos, filter)
+
+    return ents.FindInBox(min, max)
+end
+
+function util.GetRoomPlayers(pos, filter)
+    local min, max = util.GetRoomBounds(pos, filter)
+
+    local tResult = {}
+
+    local ent_list = ents.FindInBox(min, max)
+    for k, v in pairs(ent_list) do
+        if v:IsPlayer() then
+            insert(tResult, v)
+        end
+    end
+
+    return tResult
 end
