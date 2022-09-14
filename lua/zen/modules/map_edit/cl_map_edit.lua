@@ -66,15 +66,26 @@ function map_edit.Render(rendermode, priority)
 	return true
 end
 
-function map_edit.GenerateGUI(pnlContext, mark_panels)
+function map_edit.GenerateGUI(mark_panels)
 
-	pnlContext:SetMouseInputEnabled(true)
+	if IsValid(map_edit.pnl_Context) then
+		map_edit.pnl_Context:Remove()
+	end
+
+
+
+	map_edit.pnl_Context = vgui.Create("EditablePanel")
+	map_edit.pnl_Context:SetSize(ScrW(), ScrH())
+	map_edit.pnl_Context:SetMouseInputEnabled(true)
+	map_edit.pnl_Context:SetKeyboardInputEnabled(true)
+	map_edit.pnl_Context:SetVisible(false)
+
 
 	local nav = gui.SuperCreate(
 	{
 		{
 			{"main", "frame"};
-			{size = {300, 400}, "center", sizable = true, parent = pnlContext, popup = gui.proxySkip, title = "MapEdit", "save_pos"};
+			{size = {300, 400}, "center", sizable = true, parent = map_edit.pnl_Context, popup = gui.proxySkip, "save_pos", "input"};
 			{};
 			{
 				{"content", "content"};
@@ -98,7 +109,6 @@ function map_edit.GenerateGUI(pnlContext, mark_panels)
 			}
 		}
 	}, "map_edit")
-	table.insert(mark_panels, nav.main)
 
 	function nav.mode_status:SetMode(mode)
 		mode = mode or vw.mode
@@ -116,7 +126,7 @@ function map_edit.GenerateGUI(pnlContext, mark_panels)
 	end)
 
 
-	ihook.Run("zen.map_edit.GenerateGUI", nav, pnlContext, vw)
+	ihook.Run("zen.map_edit.GenerateGUI", nav, vw)
 end
 
 
@@ -134,10 +144,7 @@ function map_edit.Toggle()
 		ihook.Remove("PlayerButtonUp.SupperessNext", map_edit.hookName)
 		ihook.Remove("PlayerButtonDown.SupperessNext", map_edit.hookName)
 
-		for k, v in pairs(map_edit.t_Panels) do
-			if IsValid(v) then v:Remove() end
-			map_edit.t_Panels[k] = nil
-		end
+		if IsValid(map_edit.pnl_Context) then map_edit.pnl_Context:Remove() end
 		nt.Send("map_edit.status", {"bool"}, {false})
 		return
 	end
@@ -146,7 +153,7 @@ function map_edit.Toggle()
 
 	map_edit.SetupViewData()
 
-	-- map_edit.GenerateGUI(g_ContextMenu, map_edit.t_Panels)
+	map_edit.GenerateGUI()
 
 
 	ihook.Handler("PlayerBindPress", map_edit.hookName, map_edit.ReturnTrue, HOOK_HIGH)
@@ -254,30 +261,44 @@ function map_edit.StartCommand(ply, cmd)
 	return true
 end
 
-ihook.Listen("PlayerButtonPress", "zen.map_edit", function(ply, but)
+ihook.Handler("PlayerButtonPress", "zen.map_edit", function(ply, but, in_key, bind_name)
 	if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_LALT) and but == KEY_APOSTROPHE then
 		map_edit.Toggle()
 	end
 	if not map_edit.IsActive then return end
 
-	local bind = input.GetButtonIN(but)
+	if bind_name == "+menu_context" then
+		if IsValid(map_edit.pnl_Context) then
+			map_edit.pnl_Context:MakePopup()
+			map_edit.pnl_Context:SetVisible(true)
+			map_edit.pnl_Context:SetMouseInputEnabled(true)
+			map_edit.pnl_Context:SetKeyboardInputEnabled(false)
+			gui.EnableScreenClicker(true)
+		end
+	end
 
 
-	if bind == IN_RELOAD then
+	if in_key == IN_RELOAD then
 		map_edit.SetMode(MODE_DEFAULT)
 		return
 	end
 
-	ihook.Run("zen.map_edit.OnButtonPress", ply, but, bind, vw)
+	ihook.Run("zen.map_edit.OnButtonPress", ply, but, in_key, bind_name, vw)
 	return true
 end)
 
-ihook.Listen("PlayerButtonUnPress", "zen.map_edit", function(ply, but)
+ihook.Handler("PlayerButtonUnPress", "zen.map_edit", function(ply, but, in_key, bind_name)
 	if not map_edit.IsActive then return end
-	local bind = input.GetButtonIN(but)
 
-	if bind == IN_RELOAD then return end
+	if bind_name == "+menu_context" then
+		if IsValid(map_edit.pnl_Context) then
+			map_edit.pnl_Context:SetVisible(false)
+			gui.EnableScreenClicker(false)
+		end
+	end
 
-	ihook.Run("zen.map_edit.OnButtonUnPress", ply, but, bind, vw)
+	if in_key == IN_RELOAD then return end
+
+	ihook.Run("zen.map_edit.OnButtonUnPress", ply, but, in_key, bind_name, vw)
 	return true
 end)

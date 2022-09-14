@@ -31,7 +31,7 @@ ihook.Listen("zen.map_edit.Render", "draw_entities", function(rendermode, priori
 				
 
 				local model = ent:GetModel()
-				if model and model != "" then
+				if model and model != "" and util.IsValidModel(model) then
 					render.SetBlend(0.2)
 					render.ModelMaterialOverride(mat_wireframe)
 					render.SetColorModulation(1,0,0)
