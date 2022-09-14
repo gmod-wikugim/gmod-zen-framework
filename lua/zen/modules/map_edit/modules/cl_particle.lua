@@ -13,7 +13,7 @@ ihook.Listen("zen.map_edit.OnModeChange", "paticle_viewer", function(vw, old, ne
 end)
 
 
-ihook.Listen("zen.map_edit.OnButtonPress", "paticle_viewer", function(ply, but, bind, vw)
+ihook.Listen("zen.map_edit.OnButtonPress", "paticle_viewer", function(ply, but, in_key, bind_name, vw)
 end)
 
 local DispatchEffects = {"ImpactGauss", "EjectBrass_12Gauge", "ImpactJeep", "AR2Tracer", "GunshipImpact", "BloodImpact", "ShotgunShellEject", "PhyscannonImpact", "WheelDust", "VortDispel", "StriderMuzzleFlash", "Impact", "AirboatMuzzleFlash", "RifleShellEject", "AirboatGunTracer", "ParticleEffectStop", "CommandPointer", "GlassImpact", "GunshipTracer", "Explosion", "AR2Impact", "Sparkle", "GunshipMuzzleFlash", "WaterSurfaceExplosion", "AntlionGib", "waterripple", "ThumperDust", "gunshotsplash", "bloodspray", "Tracer", "AirboatGunHeavyTracer", "RPGShotDown", "AirboatGunImpact", "StunstickImpact", "ParticleTracer", "TeslaHitboxes", "AR2Explosion", "cball_bounce", "HudBloodSplat", "HelicopterTracer", "HelicopterImpact", "ShakeRopes", "GaussTracer", "CrossbowLoad", "HunterMuzzleFlash", "BoltImpact", "TracerSound", "StriderTracer", "EjectBrass_9mm", "HunterDamage", "ManhackSparks", "watersplash", "TeslaZap", "MuzzleFlash", "ShellEject", "StriderBlood", "ParticleEffect", "Smoke", "ImpactGunship", "ChopperMuzzleFlash", "cball_explode", "MyEffectName", "HunterTracer", "HelicopterMegaBomb", "RagdollImpact"}

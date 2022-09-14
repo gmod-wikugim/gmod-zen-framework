@@ -272,18 +272,18 @@ ihook.Listen("zen.map_edit.OnModeChange", "points", function(vw, old, new)
 end)
 
 
-ihook.Listen("zen.map_edit.OnButtonPress", "points", function(ply, but, bind, vw)
+ihook.Listen("zen.map_edit.OnButtonPress", "points", function(ply, but, in_key, bind_name, vw)
     if vw.mode != MODE_EDIT_POINT then return end
 
 
-    if bind == IN_ATTACK then
+    if in_key == IN_ATTACK then
         if vw.edit_point then
             vw.t_Positions[vw.edit_point] = vw.hoverOrigin
             vw.edit_point = nil
         else
             table.insert(vw.t_Positions, vw.hoverOrigin)
         end
-    elseif bind == IN_ATTACK2 then
+    elseif in_key == IN_ATTACK2 then
         if vw.edit_point then
             vw.edit_point = nil
         else
@@ -291,7 +291,7 @@ ihook.Listen("zen.map_edit.OnButtonPress", "points", function(ply, but, bind, vw
                 table.remove(vw.t_Positions, vw.nearPositionID)
             end
         end
-    elseif bind == IN_USE then
+    elseif in_key == IN_USE then
         if input.IsButtonPressedIN(IN_WALK) then
             if vw.nearPositionID then
                 local newTable = {}

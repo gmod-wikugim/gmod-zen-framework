@@ -257,24 +257,6 @@ ihook.Listen("zen.map_edit.Render", "quickmenu", function(rendermode, priority, 
 	end
 end)
 
-ihook.Listen("zen.worldclick.nopanel.onPress", "zen.map_edit.quickmenu", function(code, tr)
-	if code != MOUSE_LEFT then return end
-	if not nvars.radial_menu.is_opened then return end
-
-	for k, v in pairs(nvars.circles) do
-		local selID = v.SelectID
-		local selValue = v.SelectValue
-
-		if v.type == "nvars" then
-			local id, mode = selValue, v.value_mode
-
-			nt.Send("nvars.run_command", {"entity", "int12", "next", "any"}, {nvars.hoverEntity, id, mode != nil and true or false, mode})
-		end
-	end
-
-	nvars.radial_menu.Close()
-end)
-
 function nvars.radial_menu.Open()
 	nvars.radial_menu.is_opened = true
 	gui.EnableScreenClicker(true)
@@ -285,15 +267,31 @@ function nvars.radial_menu.Close()
 	gui.EnableScreenClicker(false)
 end
 
-ihook.Listen("zen.map_edit.OnButtonPress", "quickmenu", function(ply, but, bind, vw)
-	if bind != IN_USE then return end
-	if not IsValid(vw.hoverEntity) then return end
+ihook.Listen("zen.map_edit.OnButtonPress", "quickmenu", function(ply, but, in_key, bind_name, vw)
+	if in_key == IN_USE then
+		if not IsValid(vw.hoverEntity) then return end
 
-	nvars.circles.content = {}
-	nt.Send("nvars.get_buttons", {"entity"}, {vw.hoverEntity})
+		nvars.circles.content = {}
+		nt.Send("nvars.get_buttons", {"entity"}, {vw.hoverEntity})
 
-	nvars.hoverEntity = vw.hoverEntity
-	nvars.radial_menu.Open()
+		nvars.hoverEntity = vw.hoverEntity
+		nvars.radial_menu.Open()
+	elseif in_key == IN_ATTACK then
+		if not nvars.radial_menu.is_opened then return end
+
+		for k, v in pairs(nvars.circles) do
+			local selID = v.SelectID
+			local selValue = v.SelectValue
+
+			if v.type == "nvars" then
+				local id, mode = selValue, v.value_mode
+
+				nt.Send("nvars.run_command", {"entity", "int12", "next", "any"}, {nvars.hoverEntity, id, mode != nil and true or false, mode})
+			end
+		end
+
+		nvars.radial_menu.Close()
+	end
 end)
 
 nt.Receive("nvars.get_buttons", {"entity", "table"}, function(ent, tButtons)
@@ -308,8 +306,8 @@ nt.Receive("nvars.get_buttons", {"entity", "table"}, function(ent, tButtons)
 	end
 end)
 
-ihook.Listen("zen.map_edit.OnButtonUnPress", "quickmenu", function(ply, but, bind, vw)
-    if bind != IN_USE then return end
+ihook.Listen("zen.map_edit.OnButtonUnPress", "quickmenu", function(ply, but, in_key, bind_name, vw)
+    if in_key != IN_USE then return end
 
 	if nvars.radial_menu.is_opened then
 		nvars.radial_menu.Close()
