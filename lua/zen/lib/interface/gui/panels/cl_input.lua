@@ -247,12 +247,54 @@ gui.RegisterStylePanel("input_text", {
 
 -- Bool Input
 gui.RegisterStylePanel("input_bool", {
-    Init = function(self)
-        func_InitBase(self, TYPE.BOOL)
+    Setup = function(self, tInfo, UpdateVar)
+        if IsValid(self.pnl_Value) then return end
+
+        
+        self.pnl_Value = self:zen_AddStyled("base", {"dock_fill"})
+        self.pnl_Value.bValue = tInfo.default
+        self.pnl_Value.CheckValue = function()
+
+            local tsArray = {}
+            local function AddInfo(data) table.insert(tsArray, data) end
+
+            AddInfo{"BOOL", 10, 0, 0, COLOR.W}
+            AddInfo{": " .. tostring(self.pnl_Value.bValue), 8, 0, 0, color_result, nil, nil, COLOR.BLACK}
+
+            self.pnl_Value:zen_SetHelpTextArray(tsArray)
+        end
+
+
+        self.pnl_Value.Paint = function(_, w, h)
+            local value = self.pnl_Value.bValue
+            if value then
+                draw.Text("true", 6, 2, h/2, color_text, 0, 1, COLOR.BLACK)
+            elseif value == nil then
+                draw.Text("nil", 6, 2, h/2, color_text, 0, 1, COLOR.BLACK)
+            else
+                draw.Text("false", 6, 2, h/2, color_text, 0, 1, COLOR.BLACK)
+            end
+        end
+
+        self.pnl_Value:CheckValue()
+
+        self.pnl_Value.OnMousePressed = function(_, code)
+            if code == MOUSE_LEFT then
+                local value = self.pnl_Value.bValue
+                self.pnl_Value.bValue = not value
+                self.pnl_Value:CheckValue()
+                self.pnl_Value:ChangeInputValue(self.pnl_Value.bValue)
+            elseif code == MOUSE_RIGHT then
+                self.pnl_Value.bValue = nil
+                self.pnl_Value:CheckValue()
+                self.pnl_Value:ChangeInputValue(self.pnl_Value.bValue)
+            end
+        end
+
+        self.pnl_Value.ChangeInputValue = function(self, new_value)
+            UpdateVar(new_value)
+        end
     end,
-    GetValue = function(self) return self.pnl_Value.Result end,
-    PerformLayout = func_def_input_PerformLayout,
-    SetText = fun_def_input_SetText,
 }, "EditablePanel", {"input", text = "zen.input_bool"}, {})
 
 -- Number Input
