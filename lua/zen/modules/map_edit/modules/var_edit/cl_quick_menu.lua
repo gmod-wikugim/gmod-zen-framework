@@ -37,9 +37,15 @@ nvars.circles[2] ={
 	content = {
 		{
 			text = "Remove",
+			value = "remove",
 			color = COLOR.RED,
 			hover_color = clr_selected_red,
-			value = "remove"
+		},
+		{
+			text = "Dissolve",
+			value = "dissolve",
+			color = COLOR.RED,
+			hover_color = clr_selected_red,
 		},
 		{
 			text = "Use",
@@ -49,12 +55,12 @@ nvars.circles[2] ={
 		{
 			text = "(Un)Freeze",
 			color = color_white,
-			value = "unfreeze"
+			value = "freeze",
 		},
 		{
 			text = "(Un)Motion",
 			color = color_white,
-			value = "motion_disable"
+			value = "motion"
 		},
 	},
 }
@@ -68,15 +74,15 @@ nvars.circles[3] ={
 	content = {
 		{
 			text = "Origin",
-			value = "change_pos"
+			value = "edit.pos"
 		},
 		{
 			text = "Angle",
-			value = "change_ang"
+			value = "edit.angle"
 		},
 		{
 			text = "Velocity",
-			value = "change_velocity"
+			value = "edit.velocity"
 		},
 	},
 }
@@ -90,15 +96,15 @@ nvars.circles[4] ={
 	content = {
 		{
 			text = "Physics",
-			value = "change_pos"
+			value = "edit.physics"
 		},
 		{
 			text = "Bones",
-			value = "change_ang"
+			value = "edit.bones"
 		},
 		{
 			text = "Variables",
-			value = "change_velocity"
+			value = "edit.variables"
 		},
 	},
 }
@@ -113,15 +119,15 @@ nvars.circles[5] ={
 	content = {
 		{
 			text = "This",
-			value = "change_pos"
+			value = "info.this"
 		},
 		{
 			text = "Parent",
-			value = "change_ang"
+			value = "info.parent"
 		},
 		{
 			text = "All",
-			value = "change_velocity"
+			value = "info.all"
 		},
 	},
 }

@@ -230,6 +230,8 @@ zen.nvars.RegisterButton{
 
 
 nt.RegisterStringNumbers("remove")
+nt.RegisterStringNumbers("freeze")
+nt.RegisterStringNumbers("motion")
 nt.RegisterStringNumbers("dissolve")
 nt.RegisterStringNumbers("edit.pos")
 nt.RegisterStringNumbers("edit.angle")
@@ -246,6 +248,18 @@ nt.RegisterStringNumbers("info.all")
 zen.nvars.commands = {}
 zen.nvars.commands["remove"] = function(ply, ent, mode)
     ent:Remove()
+end
+zen.nvars.commands["dissolve"] = function(ply, ent, mode)
+    local name = "disolve_" .. SysTime()
+
+    META.ENTITY.SetName(ent, name)
+    
+    
+    local desolver = ents.Create("env_entity_dissolver")
+    desolver:SetKeyValue( "dissolvetype", 3 )
+    desolver:Spawn()
+    desolver:Activate()
+    desolver:Fire("Dissolve", name)
 end
 
 nt.Receive("nvars.run_command.extra", {"entity", "string_id", "any"}, function(ply, ent, command, mode)
