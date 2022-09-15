@@ -1028,52 +1028,52 @@ end
 ---@param value any
 ---@param variableName? string
 function assertNumber(value, variableName)
-    assert(isnumber(value), (variableName or "variable") .. " not is number")
+    assert(isnumber(value), "bad argument: " .. (variableName or "variable") .. " number expected (got " .. type(value) .. ")")
 end
 
 ---@param value any
 ---@param variableName? string
 function assertString(value, variableName)
-    assert(isstring(value), (variableName or "variable") .. " not is string")
+    assert(isstring(value), "bad argument: " .. (variableName or "variable") .. " string expected (got " .. type(value) .. ")")
 end
 
 ---@param value any
 ---@param variableName? string
 function assertStringNice(value, variableName)
-    assert(isstring(value), (variableName or "variable") .. " not is string")
-    assert(value != "" and value != " ", (variableName or "variable") .. " not is empty")
+    assert(isstring(value), "bad argument: " .. (variableName or "variable") .. " string expected (got " .. type(value) .. ")")
+    assert(value != "" and value != " ", "bad argument: " .. (variableName or "variable") .. " empty expected (got " .. type(value) .. ")")
     assert(string.format(value, "%w+"), (variableName or "variable") .. " not has words or numbers")
 end
 
 ---@param value any
 ---@param variableName? string
 function assertTable(value, variableName)
-    assert(istable(value), (variableName or "variable") .. " not is table")
+    assert(istable(value), "bad argument: " .. (variableName or "variable") .. " table expected (got " .. type(value) .. ")")
 end
 
 ---@param value any
 ---@param variableName? string
 function assertTableNice(value, variableName)
-    assert(istable(value), (variableName or "variable") .. " not is table")
+    assert(istable(value), "bad argument: " .. (variableName or "variable") .. " table expected (got " .. type(value) .. ")")
     assert(next(value), (variableName or "variable") .. " is empty")
 end
 
 ---@param value any
 ---@param variableName? string
 function assertEntity(value, variableName)
-    assert(isentity(value) and IsValid(value), (variableName or "variable") .. " not is entity")
+    assert(isentity(value) and IsValid(value), "bad argument: " .. (variableName or "variable") .. " entity expected (got " .. type(value) .. ")")
 end
 
 ---@param value any
 ---@param variableName? string
 function assertPlayer(value, variableName)
-    assert(isentity(value) and IsValid(value) and value:IsPlayer(), (variableName or "variable") .. " not is player")
+    assert(isentity(value) and IsValid(value) and value:IsPlayer(), "bad argument: " .. (variableName or "variable") .. " player expected (got " .. type(value) .. ")")
 end
 
 ---@param value any
 ---@param variableName? string
 function assertFunction(value, variableName)
-    assert(isfunction(value), (variableName or "variable") .. " not is player")
+    assert(isfunction(value), "bad argument: " .. (variableName or "variable") .. " function expected (got " .. type(value) .. ")")
 end
 
 local _I = table.concat
