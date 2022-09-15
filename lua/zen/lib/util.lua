@@ -1492,3 +1492,5 @@ end
 function META.PLAYER:zen_GetEyeTrace(noCursor)
     return util.GetPlayerEyeTrace(self, noCursor)
 end
+
+cleanup.Register("zen")
