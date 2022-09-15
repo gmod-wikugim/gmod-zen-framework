@@ -5,10 +5,8 @@ nt.mt_StringNumbers = nt.mt_StringNumbers or {}
 nt.iStringNumbers_Counter = nt.iStringNumbers_Counter or 0
 
 nt.mt_StringNumbersSingle = nt.mt_StringNumbersSingle or {}
-nt.iStringNumbersSingle_Counter = nt.iStringNumbersSingle_Counter or 0
 
 nt.mt_StringNumbersMulti = nt.mt_StringNumbersMulti or {}
-nt.iStringNumbersMulti_Counter = nt.iStringNumbersMulti_Counter or 0
 
 local _find = string.find
 local _lower = string.lower
@@ -47,13 +45,11 @@ function nt.RegisterStringNumbers(word, new_id)
 
 	if of_count == 0 then
         nt.mt_StringNumbersSingle[word_id] = tWord
-        nt.iStringNumbersSingle_Counter = nt.iStringNumbersSingle_Counter + 1
         if SERVER then
             nt.SendToChannel("string_id.single_word", nil, word_id, word)
         end
     elseif of_count > 0 then
         nt.mt_StringNumbersMulti[word_id] = tWord
-        nt.iStringNumbersMulti_Counter = nt.iStringNumbersMulti_Counter + 1
 
 		tWord.content = of
 		tWord.sep = true
@@ -69,7 +65,7 @@ end
 
 
 nt.mt_listReader["string_id"] = function()
-    local word_id = net.ReadUInt(12)
+    local word_id = net.ReadUInt(16)
     local tWord = nt.mt_StringNumbers[word_id]
     if not tWord then
         MsgC(clr_red, "[NT-Predicted-Error] READ: Word id not exists: ", word_id, "\n")
@@ -79,7 +75,7 @@ nt.mt_listReader["string_id"] = function()
 end
 
 nt.mt_listWriter["string_id"] = function(var)
-    net.WriteUInt(nt.RegisterStringNumbers(var), 12)
+    net.WriteUInt(nt.RegisterStringNumbers(var), 16)
 end
 
 util.RegisterTypeConvert("string_id", TYPE.STRING)
@@ -87,14 +83,14 @@ util.RegisterTypeConvert("string_id", TYPE.STRING)
 nt.RegisterChannel("string_id.single_word", nt.t_ChannelFlags.PUBLIC, {
     id = 3,
     priority = 3,
-    types = {"uint12", "string"},
+    types = {"uint16", "string"},
     fPostReader = function(tChannel, word_id, word)
         if CLIENT then
             nt.RegisterStringNumbers(word, word_id)
         end
     end,
     fPullWriter = function(tChannel, _, ply)
-        net.WriteUInt(nt.iStringNumbersSingle_Counter, 16)
+        net.WriteUInt(table.Count(nt.mt_StringNumbersSingle), 16)
         for word_id, tWord in pairs(nt.mt_StringNumbersSingle) do
             nt.Write(tChannel.types, {tWord.id, tWord.word})
         end
@@ -112,7 +108,7 @@ nt.RegisterChannel("string_id.single_word", nt.t_ChannelFlags.PUBLIC, {
 nt.RegisterChannel("string_id.multi_word", nt.t_ChannelFlags.PUBLIC, { -- TODO: Fix multi_word
     id = 4,
     priority = 4,
-    types = {"uint6", "array:int12"},
+    types = {"uint16", "array:uint16"},
     fPostReader = function(tChannel, word_id, tWordArray)
         if CLIENT then
             local full_word = {}
@@ -124,7 +120,7 @@ nt.RegisterChannel("string_id.multi_word", nt.t_ChannelFlags.PUBLIC, { -- TODO: 
         end
     end,
     fPullWriter = function(tChannel, _, ply)
-        net.WriteUInt(nt.iStringNumbersSingle_Counter, 16)
+        net.WriteUInt(table.Count(nt.mt_StringNumbersMulti), 16)
         for word_id, tWord in pairs(nt.mt_StringNumbersMulti) do
             nt.Write(tChannel.types, {word_id, tWord.content})
         end
