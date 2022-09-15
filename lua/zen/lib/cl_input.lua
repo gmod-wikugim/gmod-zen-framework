@@ -77,7 +77,7 @@ function input.IsButtonPressedIN(BUTTON_IN)
 	return input.IsKeyPressed(BUTTON_ID) or input.IsKeyDown(BUTTON_ID)
 end
 
-ihook.Listen("PlayerButtonUp", "fast_console_phrase", function(ply, but)
+ihook.Handler("PlayerButtonUp", "fast_console_phrase", function(ply, but)
 	if KeyPressed[but] then
 		KeyPressed[but] = nil
 		local bind_name = input.LookupKeyBinding(but)
@@ -99,7 +99,7 @@ ihook.Listen("PlayerButtonUp", "fast_console_phrase", function(ply, but)
 	if ihook.Run("PlayerButtonUp.SupperessNext") then return true end
 end, HOOK_HIGH)
 
-ihook.Listen("PlayerButtonDown", "fast_console_phrase", function(ply, but)
+ihook.Handler("PlayerButtonDown", "fast_console_phrase", function(ply, but)
 	if !KeyPressed[but] then
 		KeyPressed[but] = true
 
