@@ -2,6 +2,8 @@ local basegui = gui
 local ui, gui = zen.Init("ui", "gui")
 local sub = string.sub
 
+local old = zen.Import("old")
+
 gui.t_StylePanels =gui.t_StylePanels or {}
 gui.t_Commands = gui.t_Commands or {}
 gui.t_CommandsAliases = gui.t_CommandsAliases or {}
@@ -147,8 +149,14 @@ function gui.MergeParams(tSource, tDestination)
     end
 end
 
-local ParamsPriority = {
+local ParamsFirst = { -- 1, 2, 3
     "tPanel",
+
+    "set_text",
+
+    "size_auto",
+    "size_auto_tall",
+    "size_auto_wide",
     "set_size",
     "set_wide",
     "set_tall",
@@ -168,6 +176,12 @@ local ParamsPriority = {
     "make_popup",
     "set_keyboard_input_enabled",
     "set_mouse_input_enabled",
+}
+
+local ParamPost_Repeat = {
+    "size_auto",
+    "size_auto_tall",
+    "size_auto_wide",
 }
 
 function gui.ApplyParam(pnl, param, value)
@@ -231,7 +245,7 @@ function gui.ApplyParams(pnl, data)
 
     pnl.zen_tmp_Params = data
 
-    for _, param in pairs(ParamsPriority) do
+    for _, param in pairs(ParamsFirst) do
         local vParam = tParams[param]
         if vParam then
             tCalled[param] = true
@@ -252,6 +266,17 @@ function gui.ApplyParams(pnl, data)
     if pnl.zen_PostInit and not pnl.zen_bPostInitSucc then
         pnl.zen_bPostInitSucc = true
         pnl:zen_PostInit()
+    end
+
+    for _, param in pairs(ParamPost_Repeat) do
+        local vParam = tParams[param]
+        if vParam then
+            timer.Simple(0, function()
+                if IsValid(pnl) then
+                    gui.ApplyParam(pnl, param, vParam)
+                end
+            end)
+        end
     end
 
     pnl.zen_tmp_Params = nil
@@ -537,3 +562,14 @@ nav.add_point.DoClick = function(self)
     print("Add Point")
 end
 ]]--
+
+
+META.PANEL.zen_IsHovered = function(self)
+    local w, h = self:GetSize()
+    local cx, cy = self:LocalCursorPos()
+    if cx > 0 and cy > 0 and cx < w and cy < h then
+        return true
+    else
+        return false
+    end
+end

@@ -8,7 +8,7 @@ local mat_wireframe2 = Material("phoenix_storms/stripes")
 ihook.Listen("zen.map_edit.Render", "draw_entities", function(rendermode, priority, vw)
 	if priority == RENDER_POST then
 
-		if vw.IsDrawPlayers then
+		if vw.cfg_draw_player then
 			for k, v in pairs(player.GetAll()) do
 				local pos = v:EyePos()
 				pos.z = pos.z + 15
@@ -19,38 +19,34 @@ ihook.Listen("zen.map_edit.Render", "draw_entities", function(rendermode, priori
 			end
 		end
 
-		local ent_list = ents.FindInSphere(vw.lastOrigin, 500)
-		if ent_list then
+		if vw.cfg_draw_nearbly then
+			local ent_list = ents.FindInSphere(vw.lastOrigin, 500)
+			if ent_list then
+				for k, ent in pairs(ent_list) do
+					local pos = ent:GetPos()
+					local ang  = ent:GetAngles()
+					
+
+					local model = ent:GetModel()
+					if model and model != "" and util.IsValidModel(model) then
+						render.SetBlend(0.2)
+						render.ModelMaterialOverride(mat_wireframe)
+						render.SetColorModulation(1,0,0)
+						ent:DrawModel()
+
+						local min, max = ent:GetModelBounds()
+						render.DrawWireframeBox(pos, ang, min, max)
 
 
+						render.ModelMaterialOverride()
+						render.SetBlend(1)
+					else
+						render.DrawWireframeSphere(pos, 1, 5, 5)
+					end
 
-			
-			for k, ent in pairs(ent_list) do
-				local pos = ent:GetPos()
-				local ang  = ent:GetAngles()
-				
-
-				local model = ent:GetModel()
-				if model and model != "" and util.IsValidModel(model) then
-					render.SetBlend(0.2)
-					render.ModelMaterialOverride(mat_wireframe)
-					render.SetColorModulation(1,0,0)
-					ent:DrawModel()
-
-					local min, max = ent:GetModelBounds()
-					render.DrawWireframeBox(pos, ang, min, max)
-
-
-					render.ModelMaterialOverride()
-					render.SetBlend(1)
-				else
-					render.DrawWireframeSphere(pos, 1, 5, 5)
+					draw3d2d.Text(pos, nil, 0.1, true, ent:GetClass(), 20, 0, 0, COLOR.WHITE, 1, 1, COLOR.BLACK)
 				end
-
-				draw3d2d.Text(pos, nil, 0.1, true, ent:GetClass(), 20, 0, 0, COLOR.WHITE, 1, 1, COLOR.BLACK)
 			end
-			
-
 		end
 	end
 end)

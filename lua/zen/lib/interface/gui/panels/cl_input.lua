@@ -6,6 +6,7 @@ local color_focus = Color(150,255,150,255)
 local color_nofocus = Color(150,150,150,200)
 local color_bg = Color(80,80,80,255)
 local color_bg2 = Color(70,70,70,255)
+local color_hover = Color(255,255,50,50)
 
 local color_text = Color(255,255,255)
 
@@ -389,19 +390,19 @@ local supported_input_panel_styles = {
 
 gui.RegisterStylePanel("mass_input", {
     Init = function(self)
-        self.pnlList = self:zen_AddStyled("list", {"dock_fill", "input"})
+        self.pnlList = self:zen_AddStyled("list", {"dock_fill", "input", "auto_size"})
     end,
     Setup = function(self, data, onChanged)
         local wide = self.pnlList:GetWide()
         local tValues = {}
-        for k, v in pairs(data) do
-            local Name = v.name
-            local iType = v.type
+        for k, tInfo in pairs(data) do
+            local Name = tInfo.name
+            local iType = tInfo.type
 
             local sStyleName = supported_input_panel_styles[iType]
             assert(sStyleName, "Style not exists for type: ", iType)
 
-            local pnlHandler = self.pnlList:zen_AddStyled("base", {"dock_top", tall = 15, "input"})
+            local pnlHandler = self.pnlList:zen_AddStyled("base", {"dock_top", tall = 15, "auto_size", "input"})
             pnlHandler:DockPadding(0,0,0,0)
             pnlHandler.Paint = function(self, w, h)
                 if k % 2 == 0 then
@@ -409,16 +410,24 @@ gui.RegisterStylePanel("mass_input", {
                 else
                     draw.Box(0,0,w,h,color_bg2)
                 end
+
+                if self:zen_IsHovered() then
+                    draw.Box(0,0,w,h,color_hover)
+                end
             end
             
-            pnlHandler.pnlKey = pnlHandler:zen_AddStyled("text", {"dock_left", font = ui.ffont(6), wide = wide/2-5, "input", content_align = 4, text = " " .. Name})
-            pnlHandler.pnlValue = pnlHandler:zen_AddStyled("base", {"dock_right", wide = wide/2-5, "input"})
+            pnlHandler.pnlKey = pnlHandler:zen_AddStyled("text", {"dock_left", font = ui.ffont(6), wide = wide/2-5, "auto_size", "input", content_align = 4, text = " " .. Name})
+            pnlHandler.pnlValue = pnlHandler:zen_AddStyled("base", {"dock_right", wide = wide/2-5, "auto_size", "input"})
 
-            pnlHandler.pnlChange = pnlHandler.pnlValue:zen_AddStyled(sStyleName, {"dock_fill", "input"})
-            pnlHandler.pnlChange:Setup(v, function(new_value)
+            pnlHandler.pnlChange = pnlHandler.pnlValue:zen_AddStyled(sStyleName, {"dock_fill", "input", "auto_size"})
+
+            local onChange = function(new_value)
                 tValues[Name] = new_value
-                if onChanged then onChanged(Name, new_value) end
-            end)
+                if onChanged then onChanged(tInfo.value or Name, new_value) end
+            end
+
+            pnlHandler.pnlChange:Setup(tInfo, onChange)
+            if onChanged and tInfo.default != nil then onChange(tInfo.default) end
         end
 
         return tValues

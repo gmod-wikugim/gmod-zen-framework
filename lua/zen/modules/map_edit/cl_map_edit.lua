@@ -77,7 +77,7 @@ function map_edit.GenerateGUI(mark_panels)
 	map_edit.pnl_Context:SetSize(ScrW(), ScrH())
 	map_edit.pnl_Context:MakePopup()
 	map_edit.pnl_Context:SetMouseInputEnabled(true)
-	map_edit.pnl_Context:SetKeyboardInputEnabled(false)
+	map_edit.pnl_Context:SetKeyboardInputEnabled(true)
 	map_edit.pnl_Context:SetVisible(false)
 
 
@@ -85,30 +85,43 @@ function map_edit.GenerateGUI(mark_panels)
 	{
 		{
 			{"main", "frame"};
-			{size = {300, 400}, "center", sizable = true, parent = map_edit.pnl_Context, popup = gui.proxySkip, "save_pos", "input"};
+			{size = {300, 400}, "center", sizable = true, parent = map_edit.pnl_Context, "popup", "save_pos", "input"};
 			{};
 			{
 				{"content", "content"};
-				{};
+				{"dock_fill"};
 				{};
 				{
 					{
-						{"items", "list"};
-						{};
-						{};
+						{"mode_status", "text"};
+						{"dock_top", "auto_size", text = "--Mode Status--"};
 					};
 					{
-						{"mode_status", "text"};
-						{"dock_top", text = "--Mode Status--"};
+						{"config", "mass_input"};
+						{"auto_size", "dock_top"}
+					},
+					{
+						{"items", "list"};
+						{"dock_fill"};
+						{};
+						{}
 					};
 					{
 						{"instructions", "text"};
-						{"dock_bottom", text = "instructions"};
+						{"dock_bottom", "auto_size", text = "instructions"};
 					};
 				}
 			}
 		}
 	}, "map_edit")
+
+	nav.config:Setup({
+		{name = "Draw Nearby", value = "cfg_draw_nearbly", type = TYPE.BOOL, default = false},
+		{name = "Draw Players", value = "cfg_draw_player", type = TYPE.BOOL, default = false},
+	}, function(name, value, isDefault)
+		vw[name] = value
+	end)
+	--nav.config:SizeToChildren(false, true)
 
 	function nav.mode_status:SetMode(mode)
 		mode = mode or vw.mode
