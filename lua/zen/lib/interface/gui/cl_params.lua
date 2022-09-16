@@ -21,6 +21,61 @@ end, {
     "middle_size",
 })
 
+gui.RegisterParam("size_auto", function(pnl, value)
+    local w, h = pnl:GetSize()
+    local w1, h1 = pnl:ChildrenSize()
+    local w2, h2 = pnl:GetContentSize()
+
+    local mw, mh = math.max(w1 or 0, w2 or 0, w), math.max(h1 or 0, h2 or 0, h)
+
+    pnl:SetSize(mw, mh)
+end, {
+    "size_auto",
+    "auto_size",
+})
+
+gui.RegisterParam("size_auto_wide", function(pnl, value)
+    local w, h = pnl:GetSize()
+    local w1, h1 = pnl:ChildrenSize()
+    local w2, h2 = pnl:GetContentSize()
+
+    local mw, mh = math.max(w1 or 0, w2 or 0, w)
+
+    pnl:SetWide(mw)
+end, {
+    "size_auto_wide",
+    "size_auto_width",
+    "auto_wide",
+    "auto_width",
+    "width_auto",
+    "wide_auto",
+})
+
+gui.RegisterParam("size_auto_tall", function(pnl, value)
+    local w, h = pnl:GetSize()
+    local w1, h1 = pnl:ChildrenSize()
+    local w2, h2 = pnl:GetContentSize()
+
+    local mw, mh = math.max(h1 or 0, h2 or 0, h)
+
+    pnl:SetTall(mh)
+end, {
+    "size_auto_tall",
+    "size_auto_height",
+    "auto_tall",
+    "auto_height",
+    "height_auto",
+    "tall_auto",
+})
+
+
+gui.RegisterParam("size_children", function(pnl, value)
+    pnl:SizeToChildren(true, true)
+end, {
+    "children_size",
+    "size",
+})
+
 gui.RegisterParam("set_size", function(pnl, value)
     pnl:SetSize(unpack(value))
 end, {
@@ -626,8 +681,9 @@ end, {
 })
 
 gui.RegisterParam("input", function(pnl, value)
-    pnl:SetKeyboardInputEnabled(true)
-    pnl:SetMouseInputEnabled(true)
+    if value == nil then value = true end
+    pnl:SetKeyboardInputEnabled(value)
+    pnl:SetMouseInputEnabled(value)
 end, {
     "input",
 })
@@ -734,3 +790,129 @@ end, {
     "save_pos",
     "pos_save",
 })
+
+
+gui.mt_ParentVisible = gui.mt_ParentVisible or {}
+
+local IsValid = IsValid
+local table_IsEmpty = table.IsEmpty
+local IsVisible = META.PANEL.IsVisible
+
+ihook.Listen("Think", "zen.gui.ParentParentVisible", function()
+    for pnlParent, childrens in pairs(gui.mt_ParentVisible) do
+        if table_IsEmpty(childrens) then gui.mt_ParentVisible[pnlParent] = nil continue end
+
+        local isRemove = IsValid(pnlParent) != true
+        
+
+        if not isRemove then
+            local isVisible = IsVisible(pnlParent)
+            if pnlParent.zen_bParentVisible != isVisible then
+                pnlParent.zen_bParentVisible = isVisible
+
+                print("Set Visible", isVisible)
+
+                for pnlChildren in pairs(childrens) do
+                    if not IsValid(pnlChildren) then
+                        childrens[pnlChildren] = nil
+                        continue
+                    end
+                    pnlChildren:SetVisible(isVisible)
+                end
+            end
+        else
+            for pnlChildren in pairs(childrens) do
+                if not IsValid(pnlChildren) then continue end
+                pnlChildren:Remove()
+            end
+            gui.mt_ParentVisible[pnlParent] = nil
+        end
+    end
+end)
+
+gui.RegisterParam("visible_parent", function(pnl, pnlParent)
+    assert(ispanel(pnlParent), "pnlParent not is panel")
+    assertValid(pnlParent, "pnlParent")
+
+    pnlParent.zen_bParentVisible = nil
+    gui.mt_ParentVisible[pnlParent] = gui.mt_ParentVisible[pnlParent] or {}
+    gui.mt_ParentVisible[pnlParent][pnl] = true
+end, {
+    "visible_parent",
+    "parent_visible",
+})
+
+
+
+gui.RegisterParam("override_mouse_hooks", function(pnl)
+    pnl.pnlOverRideMouse = pnl:zen_AddStyled("base", {cc = {
+        pnl_Parent = pnl,
+        bLastHover = false,
+        Think = function(self)
+            if not IsValid(self.pnl_Parent) then return end
+            local w, h = self.pnl_Parent:GetSize()
+            self:SetSize(w, h)
+
+            local cx, cy = self:LocalCursorPos()
+            local isHovered = self:zen_IsHovered()
+
+            if self.bLastHover != isHovered then
+                self.bLastHover = isHovered
+
+                if isHovered then
+                    if self.pnl_Parent.OnCursorEntered then
+                        self.pnl_Parent:OnCursorEntered()
+                    end
+                else
+                    if self.pnl_Parent.OnCursorExited then
+                        self.pnl_Parent:OnCursorExited()
+                    end
+                end
+            end
+
+            if self.bLastHover then
+                if self.pnl_Parent.OnCursorMoved then
+                    self.pnl_Parent:OnCursorMoved(cx, cy)
+                end
+            end
+        end,
+    }, input = false})
+
+
+    ihook.Listen("PlayerButtonPress", pnl.pnlOverRideMouse, function(self, ply, but)
+        if but < MOUSE_FIRST or but > MOUSE_LAST then return end
+        if not vgui.CursorVisible() then return end
+
+        if but == MOUSE_WHEEL_DOWN then
+            if self.pnl_Parent.OnMouseWheeled then
+                self.pnl_Parent:OnMouseWheeled(1)
+            end
+            return
+        end
+
+        if but == MOUSE_WHEEL_UP then
+            if self.pnl_Parent.OnMouseWheeled then
+                self.pnl_Parent:OnMouseWheeled(-1)
+            end
+            return
+        end
+
+
+        if self.bLastHover then
+            if self.pnl_Parent.OnMousePressed then
+                self.pnl_Parent:OnMousePressed(but)
+            end
+        end
+    end, HOOK_MONITOR_HIGH)
+    ihook.Listen("PlayerButtonUnPress", pnl.pnlOverRideMouse, function(self, ply, but)
+        if but < MOUSE_FIRST or but > MOUSE_LAST then return end
+        if but == MOUSE_WHEEL_DOWN or but == MOUSE_WHEEL_UP then return end
+        if not vgui.CursorVisible() then return end
+
+        if self.bLastHover then
+            if self.pnl_Parent.OnMouseReleased then
+                self.pnl_Parent:OnMouseReleased(but)
+            end
+        end
+    end, HOOK_MONITOR_HIGH)
+end)
