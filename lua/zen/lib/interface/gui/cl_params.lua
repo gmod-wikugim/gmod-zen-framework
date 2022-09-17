@@ -330,6 +330,9 @@ end, {
 
 gui.RegisterParam("set_font_internal", function(pnl, value)
     pnl:SetFontInternal(value)
+    if pnl.SetFont then
+        pnl:SetFont(value)
+    end
 end, {
     "set_font_internal",
     "font_internal",
@@ -642,6 +645,14 @@ gui.RegisterParam("set_wrap", function(pnl, value)
 end, {
     "set_wrap",
     "wrap",
+})
+
+gui.RegisterParam("set_multiline", function(pnl, value)
+    if value == nil then value = true end
+    pnl:SetMultiline(value)
+end, {
+    "set_multiline",
+    "multiline",
 })
 
 gui.RegisterParam("set_x", function(pnl, value)

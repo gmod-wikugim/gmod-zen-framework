@@ -13,6 +13,7 @@ gui.RegisterStylePanel("content", {}, "EditablePanel", {"dock_fill"}, {})
 gui.RegisterStylePanel("list", {}, "DScrollPanel", {"dock_fill"}, {})
 
 gui.RegisterStylePanel("button", {}, "DButton", {text = "zen.button"}, {})
+gui.RegisterStylePanel("entry", {}, "DTextEntry", {font = ui.ffont(8)}, {})
 
 gui.RegisterStylePanel("func_panel", {}, "EditablePanel", {mouse_input = false})
 
