@@ -116,10 +116,6 @@ ihook.Listen("PlayerButtonPress", "fast_console_phrase", function(ply, but, in_k
 			iconsole.INPUT_MODE = true
 			iconsole.SetPhrase("")
 			iconsole.InitEntry()
-
-			if not iconsole.IsEntryInput then
-				input.StartKeyTrapping()
-			end
 		end
 
 		return
