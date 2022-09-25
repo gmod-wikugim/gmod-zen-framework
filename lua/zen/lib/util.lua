@@ -1652,24 +1652,64 @@ local symbols_upper = {
 	{1040, 1071}, -- ru
 }
 
+local single_lower = {
+	{261,263,281,322,324,243,347,378,380,1118,1110,1111}, -- Slovak ąćęłńóśźżўії
+	{1241,1171,1179,1187,1257,1201,1199,1211}, -- Slovak әғқңөұүһ
+}
+
+local single_upper = {
+	{260,262,280,321,323,211,346,377,379,1038,1030,1031}, -- Slovak ĄĆĘŁŃÓŚŹŻЎІЇ
+	{1240,1170,1178,1186,1256,1200,1198,1210}, -- Slovak ӘҒҚҢӨҰҮҺ
+}
+
+
+local upper_chars = {}
+local lower_chars = {}
 
 local utf8_codepoint = utf8.codepoint
 local utf8_char = utf8.char
 local ipairs = ipairs
+local unpack = unpack
+local insert = table.insert
+local concat = table.concat
 
+
+for k, vl in pairs(symbols_lower) do
+	local vu = symbols_upper[k]
+	
+	local vl_min, vl_max = vl[1], vl[2]
+	local vu_min, vu_max = vu[1], vu[2]
+	
+	local i = 0
+	for cl = vl_min, vl_max do
+		local cu = vu_min + i
+		
+		upper_chars[cl] = cu
+		lower_chars[cu] = cl
+		i = i + 1
+	end
+end
+
+for k, vl in pairs(single_lower) do
+	local vu = single_upper[k]
+	
+	local i = 0
+	for _, cl in pairs(vl) do
+		i = i + 1
+		local cu = vu[i]
+		upper_chars[cl] = cu
+		lower_chars[cu] = cl
+	end
+end
 
 local upper_cache = setmetatable({}, {__mode = "kv"})
 function util.StringUpper(str)
 	if upper_cache[str] then return upper_cache[str] end
 
 	local tResult = {utf8_codepoint(str, 1, -1)}
-	for lang_id, v in ipairs(symbols_lower) do
-		local min, max = v[1], v[2]
-
-		for key_id, id in ipairs(tResult) do
-			if id < min or id > max then continue end	
-			tResult[key_id] = symbols_upper[lang_id][1] + id - min
-		end
+	for id, char in ipairs(tResult) do
+		char = upper_chars[char] or char
+		tResult[id] = char
 	end
 
 	upper_cache[str] = utf8_char(unpack(tResult))
@@ -1682,13 +1722,9 @@ function util.StringLower(str)
 	if lower_cache[str] then return lower_cache[str] end
 
 	local tResult = {utf8_codepoint(str, 1, -1)}
-	for lang_id, v in ipairs(symbols_upper) do
-		local min, max = v[1], v[2]
-		
-		for key_id, id in ipairs(tResult) do
-			if id < min or id > max then continue end	
-			tResult[key_id] = symbols_lower[lang_id][1] + id - min
-		end
+	for id, char in ipairs(tResult) do
+		char = lower_chars[char] or char
+		tResult[id] = char
 	end
 
 	lower_cache[str] = utf8_char(unpack(tResult))
