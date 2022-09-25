@@ -1670,8 +1670,6 @@ local utf8_codepoint = utf8.codepoint
 local utf8_char = utf8.char
 local ipairs = ipairs
 local unpack = unpack
-local insert = table.insert
-local concat = table.concat
 
 
 for k, vl in pairs(symbols_lower) do
