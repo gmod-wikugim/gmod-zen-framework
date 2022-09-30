@@ -1,4 +1,6 @@
-local icmd = zen.Import("command")
+local icmd = zen.Init("command")
+local iconsole = zen.Init("console")
+
 icmd.t_Commands = icmd.t_Commands or {}
 
 local len = string.len
@@ -256,6 +258,7 @@ end
 function icmd.Log(...)
     iconsole.AddConsoleLog(nil, ...)
     MsgC(...)
+    MsgN()
 end
 
 function icmd.OnCommand(str, who)
@@ -266,6 +269,14 @@ function icmd.OnCommand(str, who)
 
     local tCommand = icmd.t_Commands[cmd]
     if tCommand then
+        if tags["help"] then
+            if tCommand.cmd_data.help then
+                icmd.Log(tCommand.cmd_data.help)
+            else
+                icmd.Log("No help exists for command: " .. cmd)
+            end
+        end
+
         local lua_res, resOrErr, com = pcall(tCommand.callback, who, cmd, args, tags)
 
         if lua_res then
@@ -285,18 +296,23 @@ function icmd.OnCommand(str, who)
             icmd.Log(errtext, COLOR.R)
         end
     else
-        icmd.Log("Command not exists:", cmd, COLOR.R)
+        icmd.Log("Command not exists: " .. cmd, COLOR.R)
     end
 end
 ihook.Listen("OnFastConsoleCommand", "fast_console_phrase", icmd.OnCommand)
 
 
 function icmd.Register(cmd_name, cmd_callback, cmd_types, cmd_data)
-    icmd.t_Commands[cmd_name] = {
+    local tCommand = {
         callback = cmd_callback,
-        cmd_types = cmd_types,
-        cmd_data = cmd_data,
+        cmd_types = cmd_types or {},
+        cmd_data = cmd_data or {},
     }
+    if SERVER then tCommand.IsServerCommand = true tCommand.ENV = "Server" end
+    if CLIENT then tCommand.IsClientCommand = true tCommand.ENV = "Client" end
+    if MENU then tCommand.IsMenuCommand = true tCommand.ENV = "Menu" end
+
+    icmd.t_Commands[cmd_name] = tCommand
 end
 
 local COLOR_AUTOCOMPLE_SELECT_ARG = Color(125, 125, 255)

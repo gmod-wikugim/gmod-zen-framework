@@ -34,13 +34,13 @@ zen.IncludeSH("zen/modules/permission/sh_permission.lua")
 zen.IncludeSV("zen/modules/permission/sv_permission.lua")
 zen.IncludeCL("zen/modules/permission/cl_permission.lua")
 
-zen.IncludeSH("zen/modules/permission/command/sh_command.lua")
-zen.IncludeSV("zen/modules/permission/command/sv_permissions.lua")
-
 zen.IncludeSV("zen/modules/console/sv_console.lua")
 zen.IncludeCL("zen/modules/console/cl_console.lua")
-zen.IncludeSH("zen/modules/console/sh_command.lua")
-zen.IncludeCL("zen/modules/console/commands/cl_settings.lua")
+
+zen.IncludeSH("zen/modules/command/sh_command.lua")
+zen.IncludeSV("zen/modules/command/list/sv_perms.lua")
+zen.IncludeSV("zen/modules/command/list/sv_base.lua")
+zen.IncludeCL("zen/modules/command/list/cl_macros.lua")
 
 zen.IncludeCL("zen/modules/hud/cl_hud.lua")
 

@@ -1,5 +1,5 @@
 local iconsole = zen.Init("console")
-local ui = zen.Import("ui")
+local ui, icmd = zen.Import("ui", "command")
 
 iconsole.INPUT_MODE = false
 iconsole.phrase = ""
@@ -148,8 +148,6 @@ ihook.Listen("PlayerButtonPress", "fast_console_phrase", function(ply, but, in_k
             iconsole.SetPhrase(table.concat(args, " "))
 			goto next
 		end
-		if but == KEY_V then
-		end
 	else
 		if but == KEY_BACKSPACE then
 			local lenght = utf8.len(iconsole.phrase)
@@ -157,6 +155,10 @@ ihook.Listen("PlayerButtonPress", "fast_console_phrase", function(ply, but, in_k
             iconsole.SetPhrase(utf8.sub(iconsole.phrase, 0, new_lenght))
 			goto next
 		end
+	end
+
+	if IsDown(KEY_LCONTROL) and but == KEY_L then
+		iconsole.ServerConsoleLog = ""
 	end
 
 	if but == KEY_ENTER then
@@ -238,7 +240,7 @@ ihook.Listen("DrawOverlay", "fast_console_phrase", function()
 		IA{" "}
 	end
 	
-	local inputHelp, fullHelp = iconsole.GetAutoComplete(iconsole.phrase)
+	local inputHelp, fullHelp = icmd.GetAutoComplete(iconsole.phrase)
 	IA{iconsole.AddColorToText(inputHelp or "", COLOR_INPUT_NEXT)}
 	if fullHelp and fullHelp != "" then
 		IAN{}
