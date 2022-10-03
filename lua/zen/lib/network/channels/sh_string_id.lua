@@ -65,29 +65,35 @@ end
 
 
 nt.mt_listReader["string_id"] = function()
-    local isString = net.ReadBool()
+    local isValidString = net.ReadBool()
 
-    local word
-    if isString then
-        word = net.ReadString()
-        MsgC(COLOR.WARN, "[NT-Predicted-Warn] Please register string_id: ", word, "\n")
-    else
-        local word_id = net.ReadUInt(16)
-        local tWord = nt.mt_StringNumbers[word_id]
-        if not tWord then
-            MsgC(COLOR.ERROR, "[NT-Predicted-Error] READ: Word id not exists: ", word_id, "\n")
-            return
+    if isValidString then
+        local isString = net.ReadBool()
+
+        local word
+        if isString then
+            word = net.ReadString()
+            MsgC(COLOR.WARN, "[NT-Predicted-Warn] Please register string_id: ", word, "\n")
+        else
+            local word_id = net.ReadUInt(16)
+            local tWord = nt.mt_StringNumbers[word_id]
+            if not tWord then
+                MsgC(COLOR.ERROR, "[NT-Predicted-Error] READ: Word id not exists: ", word_id, "\n")
+                return
+            end
+            word = tWord.word
         end
-        word = tWord.word
+        return word
+    else
+        return ""
     end
-    return word
 end
 
 nt.mt_listWriter["string_id"] = function(var)
     local id, isString
     if CLIENT then
         local tWord = nt.mt_StringNumbers_IDS[var]
-        if tWord then
+        if tWord and tWord.id > 0 then
             id = tWord.id
             isString = false
         else
@@ -98,13 +104,17 @@ nt.mt_listWriter["string_id"] = function(var)
         id = nt.RegisterStringNumbers(var)
     end
 
+    local isValidString = var != ""
 
-    net.WriteBool(isString)
-    if isString then
-        MsgC(COLOR.WARN, "[NT-Predicted-Warn] Please register string_id: ", var, "\n")
-        net.WriteString(var)
-    else
-        net.WriteUInt(id, 16)
+    net.WriteBool(isValidString)
+    if isValidString then
+        net.WriteBool(isString)
+        if isString then
+            MsgC(COLOR.WARN, "[NT-Predicted-Warn] Please register string_id: ", var, "\n")
+            net.WriteString(var)
+        else
+            net.WriteUInt(id, 16)
+        end
     end
 end
 
