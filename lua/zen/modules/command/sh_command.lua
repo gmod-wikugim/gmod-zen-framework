@@ -315,20 +315,38 @@ local function niceTags(tags)
     return tResult
 end
 
-function icmd.OnCommandResult(cmd, args, tags, who)
+function icmd.CreateCommandQuery(cmd, args, tags_clear, who)
+    local t_CMD_QUERY = {}
+    t_CMD_QUERY.tags_clear = tags_clear
+    t_CMD_QUERY.who = who
+    t_CMD_QUERY.name = cmd
+    t_CMD_QUERY.args = args
+    t_CMD_QUERY.meta = {
+        startTime = os.time()
+    }
+    t_CMD_QUERY.tags = niceTags(tags_clear)
+
+    return t_CMD_QUERY
+end
+
+function icmd.OnCommandResult(cmd, args, tags_clear, who)
     if not cmd then return end
+
+    local QCMD = icmd.CreateCommandQuery(cmd, args, tags_clear, who)
+    local tags = QCMD.tags
 
     local tCommand = icmd.t_Commands[cmd]
     if tCommand then
         if tags["help"] then
-            if tCommand.cmd_data.help then
-                icmd.Log(who, tCommand.cmd_data.help)
+            if tCommand.data.help then
+                icmd.LogArg(who, tCommand.data.help)
             else
-                icmd.Log(who, "No help exists for command: ", cmd)
+                icmd.LogArg(who, concat{"No help exists for command: ", cmd})
             end
+            return
         end
 
-        local hook_can, hook_com = ihook.Run("zen.icmd.CanRun", tCommand, cmd, args, tags, who)
+        local hook_can, hook_com = ihook.Run("zen.icmd.CanRun", tCommand, QCMD, cmd, args, tags, who)
 
         if hook_can == false then
             icmd.LogArg(who, false, hook_com, "not allowed #1")
@@ -336,9 +354,9 @@ function icmd.OnCommandResult(cmd, args, tags, who)
         end
 
 
-        local lua_res, resOrErr, com = pcall(tCommand.callback, who, cmd, args, tags)
+        local lua_res, resOrErr, com = pcall(tCommand.callback, QCMD, who, cmd, args, tags)
         if lua_res == false then
-            icmd.LogArg(who, false, hook_com, "lua error #1")
+            icmd.LogArg(who, false, hook_com, concat{"lua error #1: ", cmd})
             icmd.LogArg(who, false, resOrErr, "unknown lua error #2")
             return
         end

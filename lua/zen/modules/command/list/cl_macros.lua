@@ -5,7 +5,7 @@ Example:
     alias godmode sv "lua_run_sv me:GodEnable()"
     alias hunger zen "hunger ^ 100"]]
 
-icmd.Register("alias", function(who, cmd, args, tags, mode)
+icmd.Register("alias", function(QCMD, who, cmd, args, tags, mode)
     if !args[1] or tags["help"] then
         return alias_help
     end
@@ -21,7 +21,7 @@ end, {
     help = alias_help
 })
 
-icmd.Register("whoam", function(who, cmd, args, tags, mode)
+icmd.Register("whoam", function(QCMD, who, cmd, args, tags, mode)
 
     return {"You are is: ", LocalPlayer():SteamID64()}
 end, {}, {})

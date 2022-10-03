@@ -253,7 +253,7 @@ function META.PLAYER:zen_HasPerm(perm, target, noCheckAuth)
     return iperm.PlayerHasPermission(self:SteamID64(), perm, target)
 end
 
-ihook.Handler("zen.icmd.CanRun", "zen.permission", function(tCommand, cmd, args, tags, who)
+ihook.Handler("zen.icmd.CanRun", "zen.permission", function(tCommand, QCMD, cmd, args, tags, who)
     if not IsValid(who) then return end
     if tCommand.data.perm == nil then return end
     if tCommand.data.perm == "public" then return end

@@ -2,7 +2,7 @@ local icmd = zen.Import("command")
 
 local I = string.Interpolate
 
-icmd.Register("perm.set", function(who, tar_sid64, perm_name, avaliable, target_flags, unique_flags)
+icmd.Register("perm.set", function(QCMD, who, tar_sid64, perm_name, avaliable, target_flags, unique_flags)
     iperm.PlayerSetPermission(tar_sid64, perm_name, avaliable, target_flags, unique_flags)
 
     local sResult = ""

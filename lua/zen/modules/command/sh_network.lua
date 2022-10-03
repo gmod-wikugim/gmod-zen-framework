@@ -17,8 +17,8 @@ nt.RegisterChannel("icmd.register", nt.t_ChannelFlags.PUBLIC, {
             types[k] = {type = v, name = cmd_types_name[k]}
         end
 
-        local function callback(who, cmd, args, tags)
-            nt.SendToChannel("icmd.command", nil, cmd, args, tags)
+        local function callback(QCMD)
+            nt.SendToChannel("icmd.command", nil, QCMD.name, QCMD.args, QCMD.tags_clear)
         end
 
         icmd.RegisterData{

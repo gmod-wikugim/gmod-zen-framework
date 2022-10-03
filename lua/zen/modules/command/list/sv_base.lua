@@ -1,6 +1,6 @@
 local icmd = zen.Import("command")
 
-icmd.Register("auth", function(who)
+icmd.Register("auth", function(QCMD, who)
     if who:zen_GetVar("auth") then
         return "You already authed"
     end
@@ -13,7 +13,7 @@ end, {}, {
     help = "auth - Authorize access"
 })
 
-icmd.Register("unauth", function(who)
+icmd.Register("unauth", function(QCMD, who)
     if not who:zen_GetVar("auth") then
         return "You already unauthed"
     end
@@ -26,7 +26,7 @@ end, {}, {
     help = "unauth - Unauthorize access"
 })
 
-icmd.Register("sudo", function(who, cmd, args, tags)
+icmd.Register("sudo", function(QCMD, who, cmd, args, tags)
     game.ConsoleCommand(args[1] .. "\n")
 end, {
     {type="string", name="command"}
