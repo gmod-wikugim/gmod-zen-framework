@@ -6,8 +6,10 @@ iconsole.phrase = ""
 iconsole.DrawFont = ui.ffont(6)
 iconsole.DrawFont_UnderLine = ui.font("iconsole.underline",6,nil,{underline = true})
 
+local concat = table.concat
+local format = string.format
 
-local _I = table.concat
+local _I = function(data) return concat(data, "") end
 iconsole.InitEntry = function()
 	if IsValid(iconsole.dentry) then iconsole.dentry:Remove() end
 	iconsole.dentry = vgui.Create("DTextEntry")
@@ -62,6 +64,7 @@ local FlagsWithNewLine = {
 }
 
 local COLOR_INPUT_NEXT = Color(100,100,100,100)
+local COLOR_ARG = Color(125,255,125, 100)
 
 function iconsole.AddColorToText(text, color)
 	if color == nil then return text end
@@ -70,18 +73,60 @@ function iconsole.AddColorToText(text, color)
 	return _I{color_start,text,color_end}
 end
 
+local function to_arg(text) return iconsole.AddColorToText(tostring(text), COLOR_ARG) end
+
 iconsole.ServerConsoleLog = iconsole.ServerConsoleLog or ""
-function iconsole.AddConsoleLog(flags, str, clr)
+function iconsole.AddConsoleLog(flags, ...)
+	local args = {...}
 	if flags and bit.band(flags, IS_ERROR) == IS_ERROR then
-		clr = COLOR.RED
+		table.insert(args, 1, COLOR.R)
 	end
-
-	flags = flags or IS_MSGN
-
 
 	local AddText = ""
 
-	AddText = AddText .. str
+	local isColorAdded = false
+	for k, v in pairs(args) do
+		if IsColor(v) then
+			local text_add = _I{"<color=",v.r,",",v.g,",",v.b,",",v.a,">"}
+			AddText = AddText .. text_add
+			isColorAdded = true
+		elseif isstring(v) then
+			if util.IsSteamID64(v) or util.IsSteamID(v) then
+				local nick = util.GetPlayerNick(v)
+				if nick then
+					local text_add = to_arg(nick)
+					AddText = AddText .. to_arg(v) .. "(" .. text_add .. ")"
+				end
+			else
+				AddText = AddText .. v
+			end
+		elseif isentity(v) then
+			if IsValid(v) and v:IsPlayer() then
+				local nick = util.GetPlayerNick(v) or v:Nick()
+				AddText = AddText .. to_arg(nick)
+			else
+				AddText = AddText .. tostring(v)
+			end
+		elseif isnumber(v) then
+			local text_add = to_arg(v)
+			AddText = AddText .. text_add
+		elseif isvector(v) then
+			local text_add = _{math.floor(v.x),",",math.floor(v.y),",",math.floor(v.z)}
+			AddText = AddText .. text_add
+		elseif isangle(v) then
+			local text_add = _{math.floor(v.p or v[1] or v.pitch),",",math.floor(v.y or v[2] or v.yaw ),",",math.floor(v.r or v[3] or v.roll)}
+			AddText = AddText .. text_add
+		elseif isbool(v) then
+			local text_add = to_arg(v)
+			AddText = AddText .. text_add
+		end
+	end
+
+	if isColorAdded then
+		AddText = AddText .. "</color>"
+	end
+
+	flags = flags or IS_MSGN
 
 	if not flags or FlagsWithNewLine[flags] then
 		-- str = string.gsub(str, "\n", "")
@@ -105,16 +150,37 @@ function iconsole.GetConsoleLog(Wide)
 
 	local blocks = console_obj.blocks
 	local block_count = #blocks
-	local start = math.max(1, block_count - 15)
+
+
+	local max_lines = 15
+	local new_lines = 0
+	local block_select = block_count
+	for i = block_count, 1, -1 do
+		local block = blocks[i]
+
+		if block.offset.x == 0 then
+			new_lines = new_lines + 1
+		end
+
+		block_select = i
+
+		if new_lines > max_lines then break end
+	end
 
 	local source = ""
 
-	for i = start, block_count do
+	for i = block_select, block_count do
 		local block = blocks[i]
 
 		local add_text = block.text
 
-		source = source .. add_text .. "\n"
+		if not add_text then continue end
+
+		if source != "" and block.offset.x == 0 then
+			source = source .. "\n"
+		end
+
+		source = source .. add_text
 		source = iconsole.AddColorToText(source, block.colour)
 	end
 	last_result = source
@@ -225,7 +291,7 @@ ihook.Listen("DrawOverlay", "fast_console_phrase", function()
 	IAN{"--- Console ---"}
 
 	do
-		text = text .. iconsole.GetConsoleLog(Wide)
+		text = text .. (iconsole.GetConsoleLog(Wide) or "")
     end
 
 	if text[#text] != "\n" then
@@ -233,13 +299,13 @@ ihook.Listen("DrawOverlay", "fast_console_phrase", function()
 	end
 
 	IA{":",iconsole.phrase}
-	
+
 	if alpha > 25 then
 		IA{"<colour=255,255,255," .. alpha .. ">" .. "|" .. "</colour>"}
 	else
 		IA{" "}
 	end
-	
+
 	local inputHelp, fullHelp = icmd.GetAutoComplete(iconsole.phrase)
 	IA{iconsole.AddColorToText(inputHelp or "", COLOR_INPUT_NEXT)}
 	if fullHelp and fullHelp != "" then
@@ -297,12 +363,12 @@ ihook.Listen("PostDrawOpaqueRenderables", "npc_info", function()
 	end
 end)
 
-nt.Receive("zen.console.message", {"string"}, function(_, var)
-    iconsole.AddConsoleLog(IS_MSGN, var)
+nt.Receive("zen.console.message", {"array:any"}, function(_, args)
+    iconsole.AddConsoleLog(IS_MSGN, unpack(args))
 end)
 
 if epoe then
 	ihook.Listen(epoe.TagHuman, "zen.console_log", function(msg, flags, color)
-		iconsole.AddConsoleLog(flags, msg, color)
+		iconsole.AddConsoleLog(flags, color, msg)
 	end)
 end

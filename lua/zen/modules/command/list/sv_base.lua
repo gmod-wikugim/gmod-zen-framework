@@ -15,7 +15,7 @@ end, {}, {
 
 icmd.Register("unauth", function(who)
     if not who:zen_GetVar("auth") then
-        return false, "You already authed"
+        return false, "You already unauthed"
     end
 
     who:zen_SetVar("auth", false)

@@ -9,7 +9,7 @@ nt.RegisterChannel("icmd.command", nt.t_ChannelFlags.SIMPLE_NETWORK, {
 
 nt.RegisterChannel("icmd.register", nt.t_ChannelFlags.PUBLIC, {
     types = {"string_id", "array:string_id", "array:string_id"},
-    OnWrite = function(self, target, cmd_name, cmd_types, cmd_types_name)
+    OnRead = function(self, target, cmd_name, cmd_types, cmd_types_name)
         if SERVER then return end
 
         local types = {}
@@ -17,10 +17,17 @@ nt.RegisterChannel("icmd.register", nt.t_ChannelFlags.PUBLIC, {
             types[k] = {type = v, name = cmd_types_name[k]}
         end
 
-        icmd.Register(cmd_name, function(who, cmd, args, tags)
+        local function callback(who, cmd, args, tags)
             nt.SendToChannel("icmd.command", nil, cmd, args, tags)
-        end,
-        types)
+        end
+
+        icmd.RegisterData{
+            name = cmd_name,
+            IsServerCommand = true,
+            callback = callback,
+            types = types,
+            data = {}
+        }
     end,
     WritePull = function(self, target)
         local tSend = {}
@@ -51,3 +58,8 @@ nt.RegisterChannel("icmd.register", nt.t_ChannelFlags.PUBLIC, {
         end
     end,
 })
+
+ihook.Listen("zen.icmd.Register", "network", function(name, tCommand)
+    if CLIENT then return end
+    nt.SendToChannel("icmd.register", nil, tCommand.name, tCommand.types_clear, tCommand.types_names)
+end)

@@ -18,3 +18,8 @@ end, {
 }, {
     help = alias_help
 })
+
+icmd.Register("whoam", function(who, cmd, args, tags, mode)
+
+    return {"You are is: ", LocalPlayer():SteamID64()}
+end, {}, {})

@@ -8,8 +8,8 @@ iperm.RegisterPermission("zen.console.server_console", iperm.flags.NO_TARGET, "A
 iperm.RegisterPermission("zen.console.server_log", iperm.flags.NO_TARGET, "Access to view server server after epoe")
 
 function META.PLAYER:zen_console_log(...)
-    local str = table.concat({...})
-    nt.Send("zen.console.message", {"string"}, {str}, self)
+    local args = {...}
+    nt.Send("zen.console.message", {"array:any"}, {args})
 end
 
 nt.Receive("zen.console.command", {"string"}, function(ply, str)

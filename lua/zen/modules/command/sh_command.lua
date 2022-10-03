@@ -254,45 +254,78 @@ function icmd.ServerConsole(str)
     nt.Send("zen.console.server_console", {"string"}, {str})
 end
 
-function icmd.Log(...)
-    iconsole.AddConsoleLog(nil, ...)
-    MsgC(...)
-    MsgN()
+function icmd.Log(who, ...)
+    if CLIENT then
+        iconsole.AddConsoleLog(nil, ...)
+    elseif SERVER then
+        if IsValid(who) then
+            who:zen_console_log(...)
+        else
+            MsgC(...)
+            MsgN()
+        end
+    end
 end
 
+local color_err = Color(255,0,0)
+local color_succ = Color(0,255,0)
+local color_text = Color(255,255,255)
+
 function icmd.OnCommandResult(cmd, args, tags, who)
-    icmd.Log("=" .. str)
+    if not cmd then return end
 
     local tCommand = icmd.t_Commands[cmd]
     if tCommand then
         if tags["help"] then
             if tCommand.cmd_data.help then
-                icmd.Log(tCommand.cmd_data.help)
+                icmd.Log(who, tCommand.cmd_data.help)
             else
-                icmd.Log("No help exists for command: " .. cmd)
+                icmd.Log(who, "No help exists for command: ", cmd)
             end
         end
 
         local lua_res, resOrErr, com = pcall(tCommand.callback, who, cmd, args, tags)
 
+        local args, clr
+
+        if resOrErr != true and resOrErr != false then
+            args = istable(resOrErr) and resOrErr or {resOrErr}
+            clr = color_text
+        elseif resOrErr == nil and com then
+            args = istable(com) and com or {com}
+            clr = color_text
+        elseif resOrErr == true or resOrErr == false and com then
+            args = istable(com) and com or {com}
+            clr = resOrErr and color_succ or color_succ
+        end
+
+
+
+        local skipSuccRunText = CLIENT and tCommand.IsServerCommand
+
         if lua_res then
             if resOrErr != false then
-                if isstring(resOrErr) then
-                    icmd.Log("command information: " .. cmd, Color(255,255,0))
-                    icmd.Log(resOrErr or com, COLOR.W)
-                else
-                    icmd.Log(com or ("Sucessful runned: " .. cmd), COLOR.G)
+                if not skipSuccRunText then
+                    if args then
+                        icmd.Log(who, clr, unpack(args))
+                    else
+                        icmd.Log(who, clr, "Sucessful runned: ", cmd)
+                    end
                 end
             else
-                icmd.Log(com or ("Failed run: " .. cmd), Color(255,255,0))
+                if args then
+                    icmd.Log(who, clr, unpack(args))
+                else
+                    icmd.Log(who, clr, "Failed run: " .. cmd)
+                end
             end
         else
             local errtext = resOrErr .. "\n\t" .. debug.traceback()
-            icmd.Log(("Error run: " .. cmd), COLOR.R)
-            icmd.Log(errtext, COLOR.R)
+            icmd.Log(who, clr, ("Error run: " .. cmd))
+            icmd.Log(who, clr, errtext)
         end
     else
-        icmd.Log("Command not exists: " .. cmd, COLOR.R)
+        icmd.Log(who, clr, "Command not exists: " .. cmd)
     end
 end
 
@@ -305,6 +338,35 @@ end
 ihook.Listen("OnFastConsoleCommand", "fast_console_phrase", icmd.OnCommand)
 
 
+function icmd.RegisterData(tCommand)
+    tCommand.types_clear = {}
+    tCommand.types_names = {}
+
+    for k, v in pairs(tCommand.types) do
+        if not v.type then error("cmd_type not exists for: " .. tCommand.name .. ", id: " .. k) end
+        local funcWriter = nt.GetTypeWriterFunc(v.type)
+        if not funcWriter then error("func writer not exists for: " .. tCommand.name .. ", id: " .. k .. ", type: " .. v.type .. ", name: " .. tostring(v.name) ) end
+        table.insert(tCommand.types_clear, v.type)
+        table.insert(tCommand.types_names, v.name or "")
+    end
+
+    if !tCommand.IsServerCommand and !tCommand.IsClientCommand and !tCommand.IsMenuCommand then
+        if SERVER then tCommand.IsServerCommand = true end
+        if CLIENT_DLL then tCommand.IsClientCommand = true end
+        if MENU_DLL then tCommand.IsMenuCommand = true end
+    end
+
+    if tCommand.IsServerCommand then tCommand.ENV = "Server" end
+    if tCommand.IsClientCommand then tCommand.ENV = "Client" end
+    if tCommand.IsMenuCommand then tCommand.ENV = "Menu" end
+
+    icmd.t_Commands[tCommand.name] = tCommand
+
+    ihook.Run("zen.icmd.Register", tCommand.name, tCommand)
+
+    return tCommand
+end
+
 function icmd.Register(name, callback, types, data)
     local tCommand = {
         callback = callback,
@@ -314,20 +376,8 @@ function icmd.Register(name, callback, types, data)
         types_names = {},
         name = name,
     }
-    for k, v in pairs(tCommand.types) do
-        if not v.type then error("cmd_type not exists for: " .. name .. ", id: " .. k) end
-        local funcWriter = nt.GetTypeWriterFunc(v.type)
-        if not funcWriter then error("func writer not exists for: " .. name .. ", id: " .. k .. ", type: " .. v.type .. ", name: " .. tostring(v.name) ) end
-        table.insert(tCommand.types_clear, v.type)
-        table.insert(tCommand.types_names, v.name or "")
-    end
-    if SERVER then tCommand.IsServerCommand = true tCommand.ENV = "Server" end
-    if CLIENT then tCommand.IsClientCommand = true tCommand.ENV = "Client" end
-    if MENU then tCommand.IsMenuCommand = true tCommand.ENV = "Menu" end
 
-    icmd.t_Commands[name] = tCommand
-
-    ihook.Run("zen.icmd.Register", name, tCommand)
+    return icmd.RegisterData(tCommand)
 end
 
 
@@ -373,7 +423,7 @@ function icmd.AutoCompleteCalc(cmd_name, args, tags, clear_str, source, iEditArg
             end
         end
 
-        local sCommandList = concat{"Commands:", "\n", concat(t_FindCommands), "\n"}
+        local sCommandList = concat{"Commands:", "\n", concat(t_FindCommands, "\n"), "\n"}
 
         return firstCommand, sCommandList
     else
