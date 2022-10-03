@@ -439,8 +439,8 @@ function icmd.AutoCompleteCalc(cmd_name, args, tags, clear_str, source, iEditArg
     else
         local lines = {}
         local t_Types = {}
-        if tCommand.cmd_types then
-            for id, v in pairs(tCommand.cmd_types) do
+        if tCommand.types then
+            for id, v in pairs(tCommand.types) do
                 local str = concat({"[", v.type, " ", v.name, "]"})
 
                 if id == iArgIDEdit then
