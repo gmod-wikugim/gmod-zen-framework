@@ -30,12 +30,12 @@ net.Receive(nt.channels.pullChannels, function(len, ply)
 
             if tChannel.OnRead then
                 for k, result in pairs(tResult) do
-                    ihook.Run("nt.Receive", channel_name, unpack(result))
+                    ihook.Run("nt.Receive", channel_name, ply, unpack(result))
                     tChannel.OnRead(tChannel, ply, unpack(result))
                 end
             else
                 for k, result in pairs(tResult) do
-                    ihook.Run("nt.Receive", channel_name, unpack(result))
+                    ihook.Run("nt.Receive", channel_name, ply, unpack(result))
                 end
             end
         end
