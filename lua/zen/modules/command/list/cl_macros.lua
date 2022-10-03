@@ -10,6 +10,8 @@ icmd.Register("alias", function(who, cmd, args, tags, mode)
         return alias_help
     end
 
+    do return false, "Now alias command in dev" end
+
     return true
 end, {
     {type = "string_id", name = "alias"},

@@ -267,6 +267,7 @@ function icmd.Log(who, ...)
     end
 end
 
+local color_info = Color(255,255,0)
 local color_err = Color(255,0,0)
 local color_succ = Color(0,255,0)
 local color_text = Color(255,255,255)
@@ -286,19 +287,28 @@ function icmd.OnCommandResult(cmd, args, tags, who)
 
         local lua_res, resOrErr, com = pcall(tCommand.callback, who, cmd, args, tags)
 
-        local args, clr
+        local clr, res
 
-        if resOrErr != true and resOrErr != false then
-            args = istable(resOrErr) and resOrErr or {resOrErr}
-            clr = color_text
-        elseif resOrErr == nil and com then
-            args = istable(com) and com or {com}
-            clr = color_text
-        elseif resOrErr == true or resOrErr == false and com then
-            args = istable(com) and com or {com}
-            clr = resOrErr and color_succ or color_succ
+
+        if com != nil and !isbool(com) then res = com end
+        if resOrErr != nil and !isbool(resOrErr) then res = resOrErr end
+
+        if isstring(res) then
+            clr = color_info
         end
 
+        if resOrErr == true then
+            clr = color_succ
+        elseif resOrErr == false then
+            clr = color_err
+        elseif resOrErr == nil then
+            clr = color_info
+        end
+
+        local args
+        if res then
+            args = istable(res) and res or {res}
+        end
 
 
         local skipSuccRunText = CLIENT and tCommand.IsServerCommand
@@ -325,7 +335,7 @@ function icmd.OnCommandResult(cmd, args, tags, who)
             icmd.Log(who, clr, errtext)
         end
     else
-        icmd.Log(who, clr, "Command not exists: " .. cmd)
+        icmd.Log(who, color_err, "Command not exists: " .. cmd)
     end
 end
 
