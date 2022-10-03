@@ -34,11 +34,14 @@ local id, tChannel = nt.RegisterChannel("entity_var", nt.t_ChannelFlags.PUBLIC, 
         end
     end,
     OnRead = function(self, target, ent_id, key, value)
-        if CLIENT then 
+        if CLIENT then
+            nt.mt_EntityVars[ent_id] = nt.mt_EntityVars[ent_id] or {}
+            nt.mt_EntityVars[ent_id][key] = value
+
             local ent = Entity(ent_id)
-            local id = IsValid(ent) and ent or ent_id
-            nt.mt_EntityVars[id] = nt.mt_EntityVars[id] or {}
-            nt.mt_EntityVars[id][key] = value
+            if ent then
+                nt.mt_EntityVars[ent] = nt.mt_EntityVars[ent_id]
+            end
         end
     end,
     WritePull = function(self, target)
@@ -69,15 +72,18 @@ local id, tChannel = nt.RegisterChannel("entity_var", nt.t_ChannelFlags.PUBLIC, 
 local tContent = tChannel.tContent
 
 
-local function RemoveID(self, ent_id)
-    if not tContent[ent_id] then return end
+local function RemoveID(ent_id)
+    if ent_id then
+        nt.mt_EntityVars[ent_id] = nil
+        local ent = Entity(ent_id)
+        if ent then
+            nt.mt_EntityVars[ent] = nil
+        end
 
-    tChannel.iCounter = tChannel.iCounter - 1
-    tContent[ent_id] = nil
-    nt.mt_EntityVars[ent_id] = nil
-    local ent = Entity(ent_id)
-    if ent then
-        nt.mt_EntityVars[ent] = nil
+
+        if not tContent[ent_id] then return end
+        tChannel.iCounter = tChannel.iCounter - 1
+        tContent[ent_id] = nil
     end
 end
 
@@ -106,7 +112,6 @@ if CLIENT then
         local index = ent:EntIndex()
         if nt.mt_EntityVars[index] then
             nt.mt_EntityVars[ent] = nt.mt_EntityVars[index]
-            nt.mt_EntityVars[index] = nil
         end
     end)
 end
