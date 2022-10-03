@@ -193,7 +193,6 @@ local IsDown = input.IsButtonDown
 ihook.Listen("PlayerButtonPress", "fast_console_phrase", function(ply, but, in_key, bind, char)
 	if not iconsole.INPUT_MODE then
 		if (IsDown(KEY_LCONTROL) and IsDown(KEY_LALT) and but == KeyStart) or bind == "zen_console" then
-			nt.Send("zen.console.console_status", {"bool"}, {true})
 			iconsole.INPUT_MODE = true
 			iconsole.SetPhrase("")
 			iconsole.InitEntry()
@@ -245,7 +244,6 @@ ihook.Listen("PlayerButtonPress", "fast_console_phrase", function(ply, but, in_k
 	do return end
 	::stop::
 	iconsole.INPUT_MODE = false
-	nt.Send("zen.console.console_status", {"bool"}, {false})
     if IsValid(iconsole.dentry) then
 	    iconsole.dentry:Remove()
     end

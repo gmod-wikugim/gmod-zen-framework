@@ -272,6 +272,49 @@ local color_err = Color(255,0,0)
 local color_succ = Color(0,255,0)
 local color_text = Color(255,255,255)
 
+local function getArgs(var)
+    if isbool(var) or var == nil then return end
+    if isstring(var) then return {var} end
+    if table(var) then return var end
+    return {var}
+end
+
+local function getColor(resOrCom)
+    local clr
+    if isstring(resOrCom) then
+        clr = color_info
+    end
+
+    if resOrCom == true then
+        clr = color_succ
+    elseif resOrCom == false then
+        clr = color_err
+    elseif resOrCom == nil then
+        clr = color_info
+    elseif clr == nil then
+        clr = color_text
+    end
+
+    return clr
+end
+
+function icmd.LogArg(who, resOrErr, info, default)
+    local clr = getColor(resOrErr)
+    local res = getArgs(info) or getArgs(resOrErr)
+    if res == nil then
+        res = {default or "unknown error zen.command #10"}
+    end
+    icmd.Log(who, clr, unpack(res))
+end
+
+local function niceTags(tags)
+    local tResult = {}
+    for k, v in pairs(tags) do
+        tResult[v] = true
+    end
+    return tResult
+end
+
 function icmd.OnCommandResult(cmd, args, tags, who)
     if not cmd then return end
 
@@ -285,65 +328,40 @@ function icmd.OnCommandResult(cmd, args, tags, who)
             end
         end
 
+        local hook_can, hook_com = ihook.Run("zen.icmd.CanRun", tCommand, cmd, args, tags, who)
+
+        if hook_can == false then
+            icmd.LogArg(who, false, hook_com, "not allowed #1")
+            return
+        end
+
+
         local lua_res, resOrErr, com = pcall(tCommand.callback, who, cmd, args, tags)
-
-        local clr, res
-
-
-        if com != nil and !isbool(com) then res = com end
-        if resOrErr != nil and !isbool(resOrErr) then res = resOrErr end
-
-        if isstring(res) then
-            clr = color_info
+        if lua_res == false then
+            icmd.LogArg(who, false, hook_com, "lua error #1")
+            icmd.LogArg(who, false, resOrErr, "unknown lua error #2")
+            return
         end
-
-        if resOrErr == true then
-            clr = color_succ
-        elseif resOrErr == false then
-            clr = color_err
-        elseif resOrErr == nil then
-            clr = color_info
-        end
-
-        local args
-        if res then
-            args = istable(res) and res or {res}
-        end
-
 
         local skipSuccRunText = CLIENT and tCommand.IsServerCommand
 
-        if lua_res then
-            if resOrErr != false then
-                if not skipSuccRunText then
-                    if args then
-                        icmd.Log(who, clr, unpack(args))
-                    else
-                        icmd.Log(who, clr, "Sucessful runned: ", cmd)
-                    end
-                end
-            else
-                if args then
-                    icmd.Log(who, clr, unpack(args))
-                else
-                    icmd.Log(who, clr, "Failed run: " .. cmd)
-                end
+        if resOrErr != false then
+            if not skipSuccRunText then
+                icmd.LogArg(who, resOrErr, com, concat{"Sucessful runned: ", cmd})
             end
         else
-            local errtext = resOrErr .. "\n\t" .. debug.traceback()
-            icmd.Log(who, clr, ("Error run: " .. cmd))
-            icmd.Log(who, clr, errtext)
+            icmd.LogArg(who, resOrErr, com, concat{"Failed run: ", cmd})
         end
     else
-        icmd.Log(who, color_err, "Command not exists: " .. cmd)
+        icmd.LogArg(who, false, concat{"Command not exists: " .. cmd})
     end
 end
 
-function icmd.OnCommand(str, who)
+function icmd.OnCommand(str)
     local cmd, args, tags = icmd.GetCommandArgs(str)
-    if not who and CLIENT_DLL then who = LocalPlayer() end
+    local who = CLIENT_DLL and LocalPlayer()
 
-    return icmd.OnCommandResult(cmd, args, tags)
+    return icmd.OnCommandResult(cmd, args, tags, who)
 end
 ihook.Listen("OnFastConsoleCommand", "fast_console_phrase", icmd.OnCommand)
 

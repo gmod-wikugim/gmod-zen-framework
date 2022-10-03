@@ -62,13 +62,13 @@ function iperm.PlayerCanTargetPly(w_sid64, iTFlags, t_sid64)
 
         if target.zen_IsFun and target:zen_IsFun() then
             need_flags = iperm.pflags_target.FUNERS
-            goto check 
+            goto check
         end
-        if target:IsSuperAdmin() then 
+        if target:IsSuperAdmin() then
             need_flags = iperm.pflags_target.SUPERADMINS
-            goto check 
+            goto check
         end
-        if target:IsAdmin() then 
+        if target:IsAdmin() then
             need_flags = iperm.pflags_target.ADMINS
             goto check
         end
@@ -118,7 +118,7 @@ function iperm.PlayerHasPermission(sid64, perm_name, target, isSilent)
 
         -- Check Basics
         do
-            if isFlagSet(iPermissionFlags, iperm.flags.PUBLIC) then 
+            if isFlagSet(iPermissionFlags, iperm.flags.PUBLIC) then
                 goto success
             end
 
@@ -166,7 +166,7 @@ function iperm.PlayerHasPermission(sid64, perm_name, target, isSilent)
                         if isnumber(k) and isnumber(v) then continue end
 
                         local ent = isentity(k) and k or (isentity(v) and v or false)
-                        
+
                         if isentity(ent) and IsValid(ent) and ent:IsPlayer() then
                             tTargets[ent:SteamID64()] = ent
                             continue
@@ -218,25 +218,25 @@ function iperm.RegisterPermission(perm_name, flags, description)
     flags = flags or iperm.flags.BASE
     if iperm.mt_Permissions[perm_name] and iperm.mt_Permissions[perm_name].flags == flags then return end
     local perms_point = string.Split(perm_name, ".")
-    
+
     local old_data = iperm.mt_Permissions[perm_name]
     local isEditing = old_data and old_data.flags != flags
-    
+
     if isEditing then -- OnlyEdit
-        old_data.flags = flags 
-        return 
-    end 
+        old_data.flags = flags
+        return
+    end
 
     local last_perm = ""
     local perm = ""
     for k, perm_cat in ipairs(perms_point) do
         perm = (perm == "") and (perm_cat) or (perm .. "." .. perm_cat)
         local perm_data = iperm.mt_Permissions[perm]
-        
+
         if perm_data then continue end
-        
+
         local new_flags = (perm_name == perm) and (flags) or (iperm.flags.BASE)
-		
+
         iperm.mt_Permissions[perm] = {
             parent = (last_perm == "") and perm or last_perm,
             flags = new_flags,
@@ -248,9 +248,20 @@ end
 
 function META.PLAYER:zen_HasPerm(perm, target, noCheckAuth)
     if perm == "public" then return true end
-    if SERVER and not self:IsFullyAuthenticated() then return false end
-    if !noCheckAuth and self:zen_GetVar("auth") != true then return false end
+    if SERVER and not self:IsFullyAuthenticated() then return false, "You are not fully authenticated" end
+    if !noCheckAuth and self:zen_GetVar("auth") != true then return false, "You are not login as admin (auth)" end
     return iperm.PlayerHasPermission(self:SteamID64(), perm, target)
 end
+
+ihook.Handler("zen.icmd.CanRun", "zen.permission", function(tCommand, cmd, args, tags, who)
+    if not IsValid(who) then return end
+    if tCommand.data.perm == nil then return end
+    if tCommand.data.perm == "public" then return end
+
+    local hasAccess, com = who:zen_HasPerm(tCommand.perm)
+    if hasAccess == false then
+        return false, com
+    end
+end)
 
 iperm.RegisterPermission("zen.view")
