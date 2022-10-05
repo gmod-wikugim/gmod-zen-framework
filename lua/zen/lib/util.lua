@@ -263,8 +263,8 @@ function util.CheckTypeTableWithDataTable(types, data, funcValidate, funcValidCu
 
 
             local type_id = util.mt_TD_TypeConvert[human_type]
-            
-            
+
+
             if type_id then
                 if type_id != TYPE.ANY then
                     local type_id_alias = util.mt_TD_TypeBase[type_id]
@@ -399,12 +399,12 @@ do
     local res, meta =  pcall(function()
         local meta = debug.getmetatable(object)
         if meta then return meta end
-        
+
         meta = {}
         debug.setmetatable(object, meta)
         return meta
     end)
-    
+
     META.FUNCTION = res and meta or {}
     META.FUNCTION.__index = META.FUNCTION
     META.FUNCTION.__tostring = function(self)
@@ -428,7 +428,7 @@ do
     local res, meta =  pcall(function()
         local meta = debug.getmetatable(object)
         if meta then return meta end
-        
+
         meta = {}
         debug.setmetatable(object, meta)
         return meta
@@ -456,12 +456,12 @@ do
     local res, meta =  pcall(function()
         local meta = debug.getmetatable(object)
         if meta then return meta end
-        
+
         meta = {}
         debug.setmetatable(object, meta)
         return meta
     end)
-    
+
     META.NUMBER = res and meta or {}
     META.NUMBER.__index = META.NUMBER
 end
@@ -471,12 +471,12 @@ do
     local res, meta =  pcall(function()
         local meta = debug.getmetatable(object)
         if meta then return meta end
-        
+
         meta = {}
         debug.setmetatable(object, meta)
         return meta
     end)
-    
+
     META.BOOLEAN = res and meta or {}
     META.BOOLEAN.__index = META.BOOLEAN
 end
@@ -486,12 +486,12 @@ do
     local res, meta =  pcall(function()
         local meta = debug.getmetatable(object)
         if meta then return meta end
-        
+
         meta = {}
         debug.setmetatable(object, meta)
         return meta
     end)
-    
+
     META.NIL = res and meta or {}
     META.NIL.__index = META.NIL
 end
@@ -576,11 +576,11 @@ function util.PrintTableInfo(tbl, lvl, done)
 
         local sTypeK, sTypeV = type(k), type(v)
         local key, value, bSkip, bTable
-       
+
         if done[v] then continue end
         -- bSkip = done[v] and true or nil
         -- bSkip = bSkip or (sTypeK == "number")
-       
+
         -- if bSkip != true then -- value
         do
             if sTypeV == "table" then
@@ -664,8 +664,8 @@ function util.PrintTableInfo(tbl, lvl, done)
         do -- end of table
             if bTable then
                 util.PrintTableInfo(v, lvl + 1, done)
-            
-                local addPoint = lvl > 0 and "," or ";"
+
+                local addPoint = lvl > 0 and "," or ""
                 Msg(_I{add, "}", addPoint, "\n"})
             end
         end
@@ -856,7 +856,7 @@ if SERVER then
         util.SetPlayetTBrowseKey(userid, "userid", userid, true)
         util.SetPlayetTBrowseKey(userid, "ent_index", tbl.index + 1)
         util.SetPlayetTBrowseKey(userid, "name", tbl.name)
-        
+
         if tbl.networkid then
             util.SetPlayetTBrowseKey(userid, "networkid", tbl.networkid, true)
         end
@@ -941,7 +941,7 @@ function util.FindPlayerEntity(str, who)
     local ply = util.GetPlayerEntity(str)
 
     local res = {}
-    
+
     if ply then res = {ply} goto result end
 
     if CLIENT and who == nil then
@@ -1101,11 +1101,11 @@ function util.PrintTableInfo(tbl, lvl, done)
 
         local sTypeK, sTypeV = type(k), type(v)
         local key, value, bSkip, bTable
-       
+
         if done[v] then continue end
         -- bSkip = done[v] and true or nil
         -- bSkip = bSkip or (sTypeK == "number")
-       
+
         -- if bSkip != true then -- value
         do
             if sTypeV == "table" then
@@ -1189,8 +1189,8 @@ function util.PrintTableInfo(tbl, lvl, done)
         do -- end of table
             if bTable then
                 util.PrintTableInfo(v, lvl + 1, done)
-            
-                local addPoint = lvl > 0 and "," or ";"
+
+                local addPoint = lvl > 0 and "," or ""
                 Msg(_I{add, "}", addPoint, "\n"})
             end
         end
@@ -1266,9 +1266,9 @@ function util.GetModelMeshBounds(model)
     if cached_bounds[model] then return Vector(cached_bounds[model][1]), Vector(cached_bounds[model][2]) end
 
 	local meshes = util.GetModelMeshes(model)
-	
+
 	local min1, max1
-	
+
 	local count = 0
 	for mesh_id, mesh_data in ipairs(meshes) do
 		for k, dat in ipairs(mesh_data.triangles) do
@@ -1276,14 +1276,14 @@ function util.GetModelMeshBounds(model)
 			local pos = dat.pos
 			if min1 == nil then min1 = Vector(pos) end
 			if max1 == nil then max1 = Vector(pos) end
-			
-			
+
+
 			if min1 then
 				min1.x = math.min(min1.x, pos.x)
 				min1.y = math.min(min1.y, pos.y)
 				min1.z = math.min(min1.z, pos.z)
 			end
-			
+
 			if max1 then
 				max1.x = math.max(max1.x, pos.x)
 				max1.y = math.max(max1.y, pos.y)
@@ -1294,7 +1294,7 @@ function util.GetModelMeshBounds(model)
 
     cached_bounds[model] = {min1, max1}
 
-	return min1, max1 
+	return min1, max1
 end
 
 local cached_bounds_fixed = {}
@@ -1339,7 +1339,7 @@ function util.GetModelOffsetCenter(model)
 
     -- Без понятия как это работает, но оно помогает
     pos = Vector(pos)
-    
+
     return Vector(0,0,0) - pos
 end
 
@@ -1674,14 +1674,14 @@ local unpack = unpack
 
 for k, vl in pairs(symbols_lower) do
 	local vu = symbols_upper[k]
-	
+
 	local vl_min, vl_max = vl[1], vl[2]
 	local vu_min, vu_max = vu[1], vu[2]
-	
+
 	local i = 0
 	for cl = vl_min, vl_max do
 		local cu = vu_min + i
-		
+
 		upper_chars[cl] = cu
 		lower_chars[cu] = cl
 		i = i + 1
@@ -1690,7 +1690,7 @@ end
 
 for k, vl in pairs(single_lower) do
 	local vu = single_upper[k]
-	
+
 	local i = 0
 	for _, cl in pairs(vl) do
 		i = i + 1
@@ -1728,4 +1728,113 @@ function util.StringLower(str)
 	lower_cache[str] = utf8_char(unpack(tResult))
 
 	return lower_cache[str]
+end
+
+function util.GetIcoSphereVertex(radius, subdivisions)
+
+    local phi = (1 + math.sqrt(5)) / 2
+
+    local vertices = {
+    { -1,  phi, 0 },
+    {  1,  phi, 0 },
+    { -1, -phi, 0 },
+    {  1, -phi, 0 },
+
+    { 0, -1,  phi },
+    { 0,  1,  phi },
+    { 0, -1, -phi },
+    { 0,  1, -phi },
+
+    {  phi, 0, -1 },
+    {  phi, 0,  1 },
+    { -phi, 0, -1 },
+    { -phi, 0,  1 }
+    }
+
+    local indices = {
+    1, 12, 6,
+    1, 6, 2,
+    1, 2, 8,
+    1, 8, 11,
+    1, 11, 12,
+
+    2, 6, 10,
+    6, 12, 5,
+    12, 11, 3,
+    11, 8, 7,
+    8, 2, 9,
+
+    4, 10, 5,
+    4, 5, 3,
+    4, 3, 7,
+    4, 7, 9,
+    4, 9, 10,
+
+    5, 10, 6,
+    3, 5, 12,
+    7, 3, 11,
+    9, 7, 8,
+    10, 9, 2
+    }
+
+    -- Cache vertex splits to avoid duplicates
+    local splits = {}
+
+    -- Splits vertices i and j, creating a new vertex and returning the index
+    local function split(i, j)
+    local key = i < j and (i .. ',' .. j) or (j .. ',' .. i)
+
+    if not splits[key] then
+        local x = (vertices[i][1] + vertices[j][1]) / 2
+        local y = (vertices[i][2] + vertices[j][2]) / 2
+        local z = (vertices[i][3] + vertices[j][3]) / 2
+        table.insert(vertices, { x, y, z })
+        splits[key] = #vertices
+    end
+
+    return splits[key]
+    end
+
+    -- Subdivide
+    for _ = 1, subdivisions or 0 do
+        for i = #indices, 1, -3 do
+            local v1, v2, v3 = indices[i - 2], indices[i - 1], indices[i - 0]
+            local a = split(v1, v2)
+            local b = split(v2, v3)
+            local c = split(v3, v1)
+
+            table.insert(indices, v1)
+            table.insert(indices, a)
+            table.insert(indices, c)
+
+            table.insert(indices, v2)
+            table.insert(indices, b)
+            table.insert(indices, a)
+
+            table.insert(indices, v3)
+            table.insert(indices, c)
+            table.insert(indices, b)
+
+            table.insert(indices, a)
+            table.insert(indices, b)
+            table.insert(indices, c)
+
+            table.remove(indices, i - 0)
+            table.remove(indices, i - 1)
+            table.remove(indices, i - 2)
+        end
+    end
+
+
+    local vertes = {}
+    -- Normalize
+    for i, v in ipairs(vertices) do
+        local x, y, z = unpack(v)
+        local length = math.sqrt(x * x + y * y + z * z)
+        v[1], v[2], v[3] = x / length, y / length, z / length
+
+        table.insert(vertes, Vector(v[1], v[2], v[3])*radius)
+    end
+
+    return vertes
 end
