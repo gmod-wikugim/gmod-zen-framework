@@ -4,9 +4,12 @@ zone.t_Zones = zone.t_Zones or {}
 zone.t_ZonesBoxes = zone.t_ZonesBoxes or {}
 zone.t_ZonesSphere = zone.t_ZonesSphere or {}
 zone.t_EntitityClasses = zone.t_EntitityClasses or {}
+zone.t_EntitityZones = zone.t_EntitityZones or {}
+
 local zones = zone.t_Zones
 local box_zones = zone.t_ZonesBoxes
 local sphere_zones = zone.t_ZonesSphere
+local zones_entities = zone.t_EntitityZones
 
 local ent_classes = zone.t_EntitityClasses
 
@@ -30,15 +33,12 @@ function zone.RemoveZone(uniqueID)
     local ZONE = zones[uniqueID]
     if ZONE then
         local entities = ZONE.entities
-        local players = ZONE.players
 
         for ent in pairs(entities) do
             zone.OnEntityExit(ZONE, uniqueID, ent)
         end
 
-        for ent in pairs(players) do
-            zone.OnPlayerExit(ZONE, uniqueID, ent)
-        end
+        if IsValid(ZONE.ent) then ZONE.ent:Remove() end
 
         ZONE = nil
         zone.t_ZonesBoxes[uniqueID] = nil
@@ -47,7 +47,9 @@ function zone.RemoveZone(uniqueID)
 end
 
 function zone.InitEmpty(uniqueID)
-    zone.t_Zones[uniqueID] = {
+    if zones[uniqueID] then zone.RemoveZone(uniqueID) end
+
+    local ZONE = {
         uniqueID = uniqueID,
         entities = {},
         class_entities = {},
@@ -61,6 +63,19 @@ function zone.InitEmpty(uniqueID)
         onExitSolid = function() end,
         onExitCollision = function() end,
     }
+    zone.t_Zones[uniqueID] = ZONE
+
+    if CLIENT_DLL then
+        ZONE.ent = ents.CreateClientside("base_anim")
+    elseif SERVER then
+        ZONE.ent = ents.Create("base_anim")
+    end
+
+    if IsValid(ZONE.ent) then
+        ZONE.ent.zen_IsZone = true
+        zones_entities[ZONE.ent] = uniqueID
+    end
+
     return zone.t_Zones[uniqueID]
 end
 
@@ -76,13 +91,56 @@ function zone.InitBox(uniqueID, vec_min, vec_max)
     return ZONE
 end
 
-function zone.InitSphere(uniqueID, origin , radius)
+function zone.InitSphere(uniqueID, origin, radius)
     local ZONE = zone.InitEmpty(uniqueID)
     ZONE.origin = origin
     ZONE.radius = radius
 
     zone.t_ZonesBoxes[uniqueID] = nil
     zone.t_ZonesSphere[uniqueID] = ZONE
+
+    ZONE.vertices = util.GetIcoSphereVertex(radius, 2)
+
+    if CLIENT then
+        ZONE.Mesh = Mesh()
+        ZONE.Mesh:BuildFromTriangles(ZONE.vertices)
+    end
+
+    if IsValid(ZONE.ent) then
+        local ent = ZONE.ent
+        ent:SetAngles(angle_zero)
+        ent:SetPos(origin)
+
+        if SERVER then
+            ent:SetUseType(SIMPLE_USE)
+        end
+        if CLIENT then
+            function ent:Draw()
+            -- self:DrawModel()
+            end
+        end
+
+        ent:SetNoDraw(true)
+
+        ent:SetModel( "models/combine_helicopter/helicopter_bomb01.mdl" )
+        ent:PhysicsInit(SOLID_VPHYSICS);
+
+        ent:PhysicsInitConvex( ZONE.vertices )
+
+
+        ent:SetMoveType(MOVETYPE_NONE)
+        local phys = ent:GetPhysicsObject()
+        if (phys:IsValid()) then
+            phys:SetMaterial("default_silent");
+            phys:EnableMotion(false)
+        end
+
+		-- ent:SetCustomCollisionCheck(true);
+		ent:EnableCustomCollisions(true);
+
+        ent:Spawn()
+        -- ent:Activate()
+    end
 
     return ZONE
 end
@@ -237,6 +295,7 @@ end)
 if CLIENT then
     local color_white = Color(255,255,255,20)
     local angle_zero = angle_zero
+    local render_DrawWireframeSphere = render.DrawWireframeSphere
 
     ihook.Listen("PostDrawTranslucentRenderables", "zen.zone.drawZones", function()
         render_SetColorModulation(1,1,1)
@@ -246,9 +305,12 @@ if CLIENT then
             render_DrawBox(ZONE.origin, angle_zero, ZONE.vec_min, ZONE.vec_max, color_white)
         end
         for k, ZONE in pairs(sphere_zones) do
-            render_DrawSphere(ZONE.origin, ZONE.radius, 20, 20, color_white)
-            render_DrawSphere(ZONE.origin, -ZONE.radius, 20, 20, color_white)
+            render_DrawSphere(ZONE.origin, ZONE.radius, 21, 21, color_white)
+            render_DrawSphere(ZONE.origin, -ZONE.radius, 21, 21, color_white)
+            -- local origin = ZONE.origin
+            -- for k, pos in pairs(ZONE.vertices) do
+            --     render_DrawWireframeSphere(origin+pos, 1, 5, 5)
+            -- end
         end
     end)
 end
-
