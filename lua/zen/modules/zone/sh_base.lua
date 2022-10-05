@@ -3,20 +3,28 @@ local zone = zen.Init("zone")
 zone.t_Zones = zone.t_Zones or {}
 zone.t_ZonesBoxes = zone.t_ZonesBoxes or {}
 zone.t_ZonesSphere = zone.t_ZonesSphere or {}
+zone.t_EntitityClasses = zone.t_EntitityClasses or {}
 local zones = zone.t_Zones
 local box_zones = zone.t_ZonesBoxes
 local sphere_zones = zone.t_ZonesSphere
 
+local ent_classes = zone.t_EntitityClasses
+
 local ents_FindInSphere = ents.FindInSphere
 local ents_FindInBox = ents.FindInBox
 local SysTime = SysTime
-local IsPlayer = META.ENTITY.IsPlayer
 local GetClass = META.ENTITY.GetClass
 local pairs = pairs
 local GetSolid = META.ENTITY.GetSolid
 local GetCollisionGroup = META.ENTITY.GetCollisionGroup
 local SOLID_NONE = SOLID_NONE
+local IsSolid = META.ENTITY.IsSolid
 local SysTime = SysTime
+local render_DrawSphere = render.DrawSphere
+local render_DrawBox = render.DrawBox
+local render_SetColorModulation = render.SetColorModulation
+local render_SetColorMaterial = render.SetColorMaterial
+local ErrorNoHaltWithStack = ErrorNoHaltWithStack
 
 function zone.RemoveZone(uniqueID)
     local ZONE = zones[uniqueID]
@@ -47,7 +55,11 @@ function zone.InitEmpty(uniqueID)
         solid_entities = {},
         collision_entities = {},
         onJoin = function() end,
+        onJoinSolid = function() end,
+        onJoinCollision = function() end,
         onExit = function() end,
+        onExitSolid = function() end,
+        onExitCollision = function() end,
     }
     return zone.t_Zones[uniqueID]
 end
@@ -56,6 +68,7 @@ function zone.InitBox(uniqueID, vec_min, vec_max)
     local ZONE = zone.InitEmpty(uniqueID)
     ZONE.vec_min = vec_min
     ZONE.vec_max = vec_max
+    ZONE.origin = (vec_min + vec_max)/2
 
     zone.t_ZonesBoxes[uniqueID] = ZONE
     zone.t_ZonesSphere[uniqueID] = nil
@@ -95,8 +108,10 @@ function zone.OnEntityJoin(ZONE, uniqueID, ent)
     class_entities[ent_class][ent] = SysTime()
     class_counter[ent_class] = class_counter[ent_class] + 1
 
+    ent_classes[ent] = ent_class
+
     local isSolid
-    if ent_solid != SOLID_NONE then
+    if IsSolid(ent) then
         solid_entities[ent] = SysTime()
         isSolid = true
     end
@@ -120,11 +135,14 @@ function zone.OnEntityJoin(ZONE, uniqueID, ent)
         RunSecure('zen.zone.OnEntityJoinCollision.' .. uniqueID, ZONE, uniqueID, ent, ent_class)
     end
 
-    ZONE.onJoin(ZONE, ent, ent_class)
+    xpcall(ZONE.onJoin, ErrorNoHaltWithStack, ZONE, ent, ent_class)
+    xpcall(ZONE.onJoinSolid, ErrorNoHaltWithStack, ZONE, ent, ent_class)
+    xpcall(ZONE.onJoinCollision, ErrorNoHaltWithStack, ZONE, ent, ent_class)
 end
 
 function zone.OnEntityExit(ZONE, uniqueID, ent)
-    local ent_class = GetClass(ent)
+    local ent_class = ent_classes[ent]
+    ent_classes[ent] = nil
 
     local class_entities = ZONE.class_entities
     local class_counter = ZONE.class_counter
@@ -158,7 +176,9 @@ function zone.OnEntityExit(ZONE, uniqueID, ent)
         RunSecure('zen.zone.OnEntityJoinCollision.' .. uniqueID, ZONE, uniqueID, ent, ent_class)
     end
 
-    ZONE.onExit(ZONE, ent, ent_class)
+    xpcall(ZONE.onExit, ErrorNoHaltWithStack, ZONE, ent, ent_class)
+    xpcall(ZONE.onExitSolid, ErrorNoHaltWithStack, ZONE, ent, ent_class)
+    xpcall(ZONE.onExitCollision, ErrorNoHaltWithStack, ZONE, ent, ent_class)
 end
 
 ihook.Handler("Think", "zen.Zones.Box", function()
@@ -212,4 +232,23 @@ ihook.Handler("Think", "zen.Zones.Sphere", function()
         end
     end
 end)
+
+
+if CLIENT then
+    local color_white = Color(255,255,255,20)
+    local angle_zero = angle_zero
+
+    ihook.Listen("PostDrawTranslucentRenderables", "zen.zone.drawZones", function()
+        render_SetColorModulation(1,1,1)
+        render_SetColorMaterial()
+
+        for k, ZONE in pairs(box_zones) do
+            render_DrawBox(ZONE.origin, angle_zero, ZONE.vec_min, ZONE.vec_max, color_white)
+        end
+        for k, ZONE in pairs(sphere_zones) do
+            render_DrawSphere(ZONE.origin, ZONE.radius, 20, 20, color_white)
+            render_DrawSphere(ZONE.origin, -ZONE.radius, 20, 20, color_white)
+        end
+    end)
+end
 
