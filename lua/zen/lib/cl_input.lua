@@ -32,8 +32,6 @@ local LastKeysPhrase = ""
 local len = utf8.len
 local sub = utf8.sub
 
-local util_StringUpper = util.StringUpper
-local util_StringLower = util.StringLower
 local concat = table.concat
 
 function input.GetPressedButtons()
@@ -130,7 +128,7 @@ local KEY_SINGLE_REPLACER = {
 
 function input.GetButtonChar(but)
 	local char = KEY_SINGLE_REPLACER[but] or input.GetKeyName(but)
-	if len(char) == 1 then
+	if isstring(char) and len(char) == 1 then
 		if input_IsShiftDown() then
 			char = util.StringUpper(char)
 		end
@@ -155,8 +153,7 @@ local function playerButtonUp(ply, but)
 	end
 
 	local char = KeyPressed_Chars[but]
-
-	if KeyPressed_Chars[but] then
+	if char then
 		KeyPressed_Chars[but] = nil
 		ihook.Run("PlayerButtonUnPress.char", ply, but, in_key, bind_name, char)
 	end
