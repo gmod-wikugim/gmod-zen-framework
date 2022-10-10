@@ -4,7 +4,7 @@ local floor = math.floor
 local concat = table.concat
 
 local vector_floor = function(vec)
-    return '"' .. concat({floor(vec.x), floor(vec.y), floor(vec.z)}, ", ") .. '"'
+    return '"' .. concat({floor(vec.x), floor(vec.y), floor(vec.z)}, " ") .. '"'
 end
 
 icmd.RegisterAutoCompleteTypeN(TYPE.VECTOR, function(typen, value, text_next, addSelect)

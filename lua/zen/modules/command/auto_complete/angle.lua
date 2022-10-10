@@ -4,7 +4,7 @@ local floor = math.floor
 local concat = table.concat
 
 local angle_floor = function(ang)
-    return '"' .. concat({floor(ang[1]), floor(ang[2]), floor(ang[3])}, ", ") .. '"'
+    return '"' .. concat({floor(ang[1]), floor(ang[2]), floor(ang[3])}, " ") .. '"'
 end
 
 icmd.RegisterAutoCompleteTypeN(TYPE.ANGLE, function(typen, value, text_next, addSelect)

@@ -109,7 +109,7 @@ function util.TYPEToString(value, nType)
         elseif nType == TYPE.VECTOR then
             return value.x .. " " .. value.y .. " " .. value.z
         elseif nType == TYPE.ANGLE then
-            return value.p .. " " .. value.y .. " " .. value.r
+            return value[1] .. " " .. value[2] .. " " .. value[3]
         elseif nType == TYPE.COLOR then
             return value.r .. " " .. value.g .. " " .. value.b .. " " .. value.a
         elseif nType == TYPE.SQLSTRING then
@@ -157,21 +157,24 @@ function util.StringToTYPE(value, value_type)
             return util.JSONToTable(value)
         elseif nType == TYPE.VECTOR then
             if value == nil or value == "" then return Vector(0, 0, 0) end
-            local dat = string.Explode(" ", value)
+            local dat = string.Split(value, " ")
             dat[1] = dat[1] or 0
             dat[2] = dat[2] or 0
             dat[3] = dat[3] or 0
+            dat[1] = tonumber(dat[1])
+            dat[2] = tonumber(dat[2])
+            dat[3] = tonumber(dat[3])
             return Vector( unpack(dat) )
         elseif nType == TYPE.ANGLE then
             if value == nil or value == "" then return Angle(0, 0, 0) end
-            local dat = string.Explode(" ", value)
+            local dat = string.Split(value, " ")
             dat[1] = dat[1] or 0
             dat[2] = dat[2] or 0
             dat[3] = dat[3] or 0
             return Angle( unpack(dat) )
         elseif nType == TYPE.COLOR then
             if value == nil or value == "" then return Color(255, 255, 255, 255) end
-            local dat = string.Explode(" ", value)
+            local dat = string.Split(value, " ")
             dat[1] = dat[1] or 255
             dat[2] = dat[2] or 255
             dat[3] = dat[3] or 255
@@ -195,6 +198,7 @@ end
 
 util.mt_TD_TypeConvert = util.mt_TD_TypeConvert or {}
 util.mt_TD_TypeConvert["angle"] = TYPE.ANGLE
+util.mt_TD_TypeConvert["Angle"] = TYPE.ANGLE
 util.mt_TD_TypeConvert["bit"] = TYPE.BIT
 util.mt_TD_TypeConvert["boolean"] = TYPE.BOOLEAN
 util.mt_TD_TypeConvert["bool"] = TYPE.BOOLEAN
@@ -208,6 +212,7 @@ util.mt_TD_TypeConvert["normal"] = TYPE.NORMAL
 util.mt_TD_TypeConvert["string"] = TYPE.STRING
 util.mt_TD_TypeConvert["table"] = TYPE.TABLE
 util.mt_TD_TypeConvert["vector"] = TYPE.VECTOR
+util.mt_TD_TypeConvert["Vector"] = TYPE.VECTOR
 util.mt_TD_TypeConvert["int"] = TYPE.INT
 util.mt_TD_TypeConvert["uint"] = TYPE.UINT
 util.mt_TD_TypeConvert["number"] = TYPE.NUMBER
@@ -356,7 +361,7 @@ function util.AutoConvertValueToType(types, data)
 
     local tResult2
     if bResult then
-        local res, sErrorOrCount, tNextResult = util.CheckTypeTableWithDataTable(human_types, tResult)
+        local res, idProcess, sErrorOrCount, tNextResult = util.CheckTypeTableWithDataTable(human_types, tResult)
         if res == false then
             bResult = false
             sError = sErrorOrCount

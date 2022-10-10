@@ -549,7 +549,7 @@ function icmd.AutoCompleteCalc(cmd_name, args, tags, clear_str, source, iEditArg
 
 
         local t_Info = {}
-        local res, last_id, sError, _, tResult = util.AutoConvertValueToType(t_ProcessTypes, t_ProcessValues)
+        local res, last_id, sError, tResult, tResult2 = util.AutoConvertValueToType(t_ProcessTypes, t_ProcessValues)
         if res == false then
             addLine(text_selected(last_id), ": ", text_error(sError))
         else
