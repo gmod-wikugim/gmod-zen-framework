@@ -266,7 +266,6 @@ ihook.Listen("PlayerButtonPress", "fast_console_phrase", function(ply, but, in_k
 				local tSelectItem = t_Select[num]
 				if tSelectItem then
 
-					print(iconsole.phrase, activeText)
 					local add_tex = #activeText == " " and "" or " "
 					local new_string = sub(iconsole.phrase, 1, #iconsole.phrase - #activeText-1) .. add_tex .. tSelectItem.value .. " "
 					iconsole.SetPhrase_ByAutoComplete(new_string)

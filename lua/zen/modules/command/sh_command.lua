@@ -336,10 +336,28 @@ function icmd.CreateCommandQuery(tCommand, cmd, args, tags_clear, who)
     t_CMD_QUERY.tags = niceTags(tags_clear)
 
     if tCommand then
-        local res, sError, tResult = util.AutoConvertValueToType(tCommand.types_clear, t_CMD_QUERY.args)
+        local res, sError, _, tResult = util.AutoConvertValueToType(tCommand.types_clear, t_CMD_QUERY.args)
         t_CMD_QUERY.bConvertResult = res
         t_CMD_QUERY.sConvertError = sError
         t_CMD_QUERY.args_converted = tResult
+        t_CMD_QUERY.args_by_name = {}
+        if t_CMD_QUERY.args_converted then
+            for k, v in pairs(t_CMD_QUERY.args_converted) do
+                local name = tCommand.types_names[k]
+
+                t_CMD_QUERY.args_by_name[name] = v
+            end
+        end
+    end
+
+    function t_CMD_QUERY:Get(key)
+        if isnumber(key) then
+            return t_CMD_QUERY.args_converted[key]
+        elseif isstring(key) then
+            return t_CMD_QUERY.args_by_name[key]
+        else
+            error("error not get")
+        end
     end
 
     return t_CMD_QUERY
@@ -350,46 +368,54 @@ function icmd.OnCommandResult(cmd, args, tags_clear, who)
 
     local tCommand = icmd.t_Commands[cmd]
 
+    if !tCommand then
+        icmd.LogArg(who, false, concat{"Command not exists: " .. cmd})
+        return
+    end
+
     local QCMD = icmd.CreateCommandQuery(tCommand, cmd, args, tags_clear, who)
     local tags = QCMD.tags
+    local args = QCMD.args_converted
 
-    if tCommand then
-        if tags["help"] then
-            if tCommand.data.help then
-                icmd.LogArg(who, tCommand.data.help)
-            else
-                icmd.LogArg(who, concat{"No help exists for command: ", cmd})
-            end
-            return
-        end
+    if !QCMD.bConvertResult or not args then
+        icmd.LogArg(who, false, concat{"Converting Error!"})
+        return
+    end
 
-        local hook_can, hook_com = ihook.Run("zen.icmd.CanRun", tCommand, QCMD, cmd, args, tags, who)
-
-        if hook_can == false then
-            icmd.LogArg(who, false, hook_com, "not allowed #1")
-            return
-        end
-
-
-        local lua_res, resOrErr, com = pcall(tCommand.callback, QCMD, who, cmd, args, tags)
-        if lua_res == false then
-            icmd.LogArg(who, false, hook_com, concat{"lua error #1: ", cmd})
-            icmd.LogArg(who, false, resOrErr, "unknown lua error #2")
-            return
-        end
-
-        local skipSuccRunText = CLIENT and tCommand.IsServerCommand
-
-        if resOrErr != false then
-            if not skipSuccRunText then
-                icmd.LogArg(who, resOrErr, com, concat{"Sucessful runned: ", cmd})
-            end
+    if tags["help"] then
+        if tCommand.data.help then
+            icmd.LogArg(who, tCommand.data.help)
         else
-            icmd.LogArg(who, resOrErr, com, concat{"Failed run: ", cmd})
+            icmd.LogArg(who, concat{"No help exists for command: ", cmd})
+        end
+        return
+    end
+
+    local hook_can, hook_com = ihook.Run("zen.icmd.CanRun", tCommand, QCMD, cmd, args, tags, who)
+
+    if hook_can == false then
+        icmd.LogArg(who, false, hook_com, "not allowed #1")
+        return
+    end
+
+
+    local lua_res, resOrErr, com = pcall(tCommand.callback, QCMD, who, cmd, args, tags)
+    if lua_res == false then
+        icmd.LogArg(who, false, hook_com, concat{"lua error #1: ", cmd})
+        icmd.LogArg(who, false, resOrErr, "unknown lua error #2")
+        return
+    end
+
+    local skipSuccRunText = CLIENT and tCommand.IsServerCommand
+
+    if resOrErr != false then
+        if not skipSuccRunText then
+            icmd.LogArg(who, true, com, concat{"Sucessful runned: ", cmd})
         end
     else
-        icmd.LogArg(who, false, concat{"Command not exists: " .. cmd})
+        icmd.LogArg(who, false, com, concat{"Failed run: ", cmd})
     end
+
 end
 
 function icmd.OnCommand(str)
