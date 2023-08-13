@@ -625,7 +625,7 @@ function icmd.AutoCompleteCalc(cmd_name, args, tags, clear_str, source, iEditArg
             end
 
             if next(t_Select) then
-                addLine("Search (PAD 1-9):", tAutoComplete.activeText)
+                addLine("Search (PAD 1-9) | (ALT 1-9):", tAutoComplete.activeText)
                 for k = 1, 9 do
                     local dat = t_Select[k]
                     if not dat then continue end

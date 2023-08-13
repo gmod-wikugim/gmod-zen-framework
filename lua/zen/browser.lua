@@ -49,6 +49,7 @@ zen.IncludeCL("zen/modules/command/auto_complete/player.lua")
 zen.IncludeCL("zen/modules/command/auto_complete/permissions.lua")
 zen.IncludeCL("zen/modules/command/auto_complete/vector.lua")
 zen.IncludeCL("zen/modules/command/auto_complete/angle.lua")
+zen.IncludeCL("zen/modules/command/auto_complete/boolean.lua")
 
 zen.IncludeCL("zen/modules/hud/cl_hud.lua")
 

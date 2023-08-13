@@ -249,6 +249,7 @@ ihook.Listen("PlayerButtonPress", "fast_console_phrase", function(ply, but, in_k
 
 	do
 		local is_numpad = but >= KEY_PAD_0 and but <= KEY_PAD_9
+		local is_number_alt = isnumber(tonumber(char)) and (IsDown(KEY_LALT) or IsDown(KEY_RALT))
 
 
 		local help = iconsole.auto_complete_help
@@ -260,7 +261,7 @@ ihook.Listen("PlayerButtonPress", "fast_console_phrase", function(ply, but, in_k
 
 
 
-		if is_numpad and t_Select and #t_Select > 0 then
+		if (is_numpad and t_Select and #t_Select > 0) or (is_number_alt) then
 			local num = tonumber(char)
 			if num then
 				local tSelectItem = t_Select[num]
