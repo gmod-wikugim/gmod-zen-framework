@@ -61,6 +61,10 @@ function input.GetLastPhrase()
 	return LastKeysPhrase
 end
 
+function input.ClearLastPhrase()
+	LastKeysPhrase = ""
+end
+
 function input.IsLastPhrase(str)
 	return sub(LastKeysPhrase, -len(str)) == str
 end
