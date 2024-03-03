@@ -11,21 +11,23 @@ icfg = zen.config
 icfg.colors = icfg.colors or {}
 iclr = icfg.colors
 
-iclr.main = Color(125, 0, 0, 255)
+iclr.main = Color(0, 255, 0, 255)
 iclr.console_default = Color(200, 200, 200)
 
 icfg.console_space = " "
 
 local string_Split = string.Split
 
+_print = _print or print
+
 local i
-function zen.print(...)
+function print(...)
     local args = {...}
     local count = #args
 
     i = 0
 
-    MsgC(iclr.main, "[zen]", iclr.console_default)
+    MsgC(iclr.main, "z> ", iclr.console_default)
     if count > 0 then
         while i < count do
             i = i + 1

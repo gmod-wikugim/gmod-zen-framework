@@ -12,7 +12,7 @@ ihook.Listen("ReadyForNetwork.Pre", "nt.SendAllNetworkChannels", function(ply)
         if not tChannel then continue end
 
         if nt.i_debug_lvl >= 2 then
-            zen.print("[nt.debug] Player ", ply:SteamID64(), " start pull ", channel_name)
+            print("[nt.debug] Player ", ply:SteamID64(), " start pull ", channel_name)
         end
 
         net.Start(nt.channels.pullChannels)
@@ -23,12 +23,12 @@ ihook.Listen("ReadyForNetwork.Pre", "nt.SendAllNetworkChannels", function(ply)
         net.Send(ply)
 
         if nt.i_debug_lvl >= 2 then
-            zen.print("[nt.debug] Player ", ply:SteamID64(), " end pull ", channel_name)
+            print("[nt.debug] Player ", ply:SteamID64(), " end pull ", channel_name)
         end
     end
 
     if nt.i_debug_lvl >= 1 then
-        zen.print("[nt.debug] All channels sent to player ", ply:SteamID64())
+        print("[nt.debug] All channels sent to player ", ply:SteamID64())
     end
 end)
 
@@ -40,7 +40,7 @@ end)
 
 ihook.Listen("nt.Receive", "zen.nt.logs", function(channel_name, ply, ...)
     if nt.i_debug_lvl >= 1 then
-        zen.print("[nt.received] ", channel_name)
+        print("[nt.received] ", channel_name)
         print(...)
     end
 end)

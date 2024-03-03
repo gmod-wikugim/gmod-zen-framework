@@ -58,6 +58,6 @@ end)
 
 ihook.Listen("nt.Receive", "zen.Channels", function(channel_name, ply, v1, v2)
     if channel_name == "channels" then
-        zen.print("NT-Channel: ", v1, " - ", v2)
+        print("NT-Channel: ", v1, " - ", v2)
     end
 end)

@@ -23,9 +23,9 @@ CreateConVar("zen_network_debug", 0, FCVAR_ARCHIVE, "Enable network debugging!",
 cvars.AddChangeCallback("zen_network_debug", function(var, old_value, new_value)
     nt.i_debug_lvl = tonumber(new_value)
     if nt.i_debug_lvl > 0 then
-        zen.print("[nt.debug] Debugging started, \"zen_network_debug 0\" to stop!")
+        print("[nt.debug] Debugging started, \"zen_network_debug 0\" to stop!")
     else
-        zen.print("[nt.debug] Debugging stoped, \"zen_network_debug 1\" to start again!")
+        print("[nt.debug] Debugging stoped, \"zen_network_debug 1\" to start again!")
     end
 end, "nt.OnChange")
 nt.i_debug_lvl = GetConVar("zen_network_debug"):GetInt() or 0
@@ -169,7 +169,7 @@ function nt.SendToChannel(channel_name, target, ...)
         nt.Send(channel_name, tChannel.types, data)
     elseif tChannel.fWriter then
         if nt.i_debug_lvl >= 2 then
-            zen.print("[nt.debug] Start \"",channel_name,"\"")
+            print("[nt.debug] Start \"",channel_name,"\"")
         end
 
         if tChannel.customNetworkString then
@@ -181,7 +181,7 @@ function nt.SendToChannel(channel_name, target, ...)
 
         if nt.i_debug_lvl >= 2 then
             for k, v in pairs(data) do
-                zen.print("[nt.debug] Pre-Write \"",type(v),"\"", " \"",tostring(v),"\"")
+                print("[nt.debug] Pre-Write \"",type(v),"\"", " \"",tostring(v),"\"")
             end
         end
 
@@ -198,11 +198,11 @@ function nt.SendToChannel(channel_name, target, ...)
         end
 
         if nt.i_debug_lvl >= 2 then
-            zen.print("[nt.debug] End \"",channel_name,"\"")
+            print("[nt.debug] End \"",channel_name,"\"")
         end
 
         if nt.i_debug_lvl >= 1 then
-            zen.print("[nt.debug] Sent network \"",channel_name,"\" to server/players")
+            print("[nt.debug] Sent network \"",channel_name,"\" to server/players")
         end
     else
         MsgC(COLOR.ERROR, "[NT-Predicted-Error] Channel not have send option", channel_name, "\n")
@@ -523,7 +523,7 @@ function nt.Send(channel_name, types, data, target)
     end
 
     if nt.i_debug_lvl >= 2 then
-        zen.print("[nt.debug] Start \"",channel_name,"\"")
+        print("[nt.debug] Start \"",channel_name,"\"")
     end
 
     if tChannel and tChannel.customNetworkString then
@@ -540,7 +540,7 @@ function nt.Send(channel_name, types, data, target)
                 local value = data[id]
 
                 if nt.i_debug_lvl >= 2 then
-                    zen.print("[nt.debug] Write \"",net_type,"\"", " \"",tostring(value),"\"")
+                    print("[nt.debug] Write \"",net_type,"\"", " \"",tostring(value),"\"")
                 end
 
                 fWriter(value, a1, a2, a3, a4, a5)
@@ -562,13 +562,13 @@ function nt.Send(channel_name, types, data, target)
     end
 
     if nt.i_debug_lvl >= 2 then
-        zen.print("[nt.debug] End \"",channel_name,"\"")
+        print("[nt.debug] End \"",channel_name,"\"")
     end
 
     ihook.Run("nt.Send", {channel_name, types, data, target})
 
     if nt.i_debug_lvl >= 1 then
-        zen.print("[nt.debug] Sent network \"",channel_name,"\" to ", to)
+        print("[nt.debug] Sent network \"",channel_name,"\" to ", to)
     end
 end
 
@@ -591,13 +591,13 @@ net.Receive(nt.channels.sendMessage, function(len, ply)
     local bWaitingInspect = true
 
     if nt.i_debug_lvl >= 2 then
-        zen.print("[nt.debug] Received \"",channel_name,"\" from ", from)
+        print("[nt.debug] Received \"",channel_name,"\" from ", from)
     end
 
 
     if bSuccess and bWaitingInspect and tChannel and (tChannel.fReader or tChannel.types) then
         if nt.i_debug_lvl >= 2 then
-            zen.print("[nt.debug] Start Read \"",channel_name,"\"")
+            print("[nt.debug] Start Read \"",channel_name,"\"")
         end
 
         if tChannel.fReader then
@@ -609,7 +609,7 @@ net.Receive(nt.channels.sendMessage, function(len, ply)
 
             if nt.i_debug_lvl >= 2 then
                 for k, v in pairs(result) do
-                    zen.print("[nt.debug]   Read \"",type(v),"\"", " \"",tostring(v),"\"")
+                    print("[nt.debug]   Read \"",type(v),"\"", " \"",tostring(v),"\"")
                 end
             end
 
@@ -632,7 +632,7 @@ net.Receive(nt.channels.sendMessage, function(len, ply)
                 table.insert(result, read_result)
 
                 if nt.i_debug_lvl >= 2 then
-                    zen.print("[nt.debug]   Read \"",net_type,"\"", " \"",tostring(read_result),"\"")
+                    print("[nt.debug]   Read \"",net_type,"\"", " \"",tostring(read_result),"\"")
                 end
 
                 if net_type == "next" and read_result == false then break end
@@ -648,11 +648,11 @@ net.Receive(nt.channels.sendMessage, function(len, ply)
         end
 
         if nt.i_debug_lvl >= 2 then
-            zen.print("[nt.debug] End Read \"",channel_name,"\"")
+            print("[nt.debug] End Read \"",channel_name,"\"")
         end
 
         if nt.i_debug_lvl >= 1 then
-            zen.print("[nt.debug] GET: Received network \"",channel_name,"\" from ", from)
+            print("[nt.debug] GET: Received network \"",channel_name,"\" from ", from)
         end
     end
 
