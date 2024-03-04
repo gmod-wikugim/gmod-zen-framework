@@ -1,6 +1,6 @@
 module("zen", package.seeall)
 
-local ui, gui, map_edit = zen.Init("ui", "gui", "map_edit")
+local ui, gui, draw, map_edit = zen.Init("ui", "gui", "ui.draw", "map_edit")
 
 
 ihook.Handler("zen.map_edit.OnButtonPress", "toolmode.Toggle", function(ply, but, in_key, bind_name, vw)
@@ -58,22 +58,39 @@ end
 function map_edit.LoadToolMode()
     if IsValid(map_edit.pnlToolMode) then map_edit.pnlToolMode:Remove() end
 
-    map_edit.pnlToolMode = gui.Create("DPanel", nil, {
-        tall = 50, "dock_bottom", "popup"
+    map_edit.pnlToolMode = gui.Create("EditablePanel", nil, {
+        wide = 50, "dock_left", "popup"
     }, "Tool Menu")
+    map_edit.pnlToolMode.Paint = function(self, w, h)
+        draw.Box(0,0,w,h,COLOR.BLACK)
+    end
 
     local layout = gui.Create("DIconLayout", map_edit.pnlToolMode, {"dock_fill"})
     layout:SetSpaceY( 5 )
     layout:SetSpaceX( 5 )
 
 
-    local function CreateMode(name, DoClick)
+    local function CreateMode(name, icon, DoClick)
         local newBtn = layout:Add("DButton")
         map_edit.tToolMode_PanelList[name] = newBtn
-        -- newBtn:SetImage("icon16/cog.png")
-        newBtn:SetTooltip(name)
-        newBtn:SetText(name)
+        newBtn:SetImage(icon)
+        newBtn:SetText("")
         newBtn:SetCursor("hand")
+        newBtn.Paint = function (self, w, h)
+            -- draw.Box(0,0,w,h,COLOR.)
+            if self:IsHovered() then
+                draw.BoxOutlined(2,0,0,w,h,COLOR.W)
+            end
+        end
+
+        local tsArray = {}
+        local function AddInfo(data) table.insert(tsArray, data) end
+
+        AddInfo{name, 10, 0, 0, COLOR.W}
+
+
+        newBtn:zen_SetHelpTextArray(tsArray)
+        -- newBtn:SetTex
         newBtn.DoClick = function ()
             map_edit.SetSelectedMode(name)
 
@@ -84,6 +101,11 @@ function map_edit.LoadToolMode()
         newBtn:SetSize(50,50)
     end
 
-    CreateMode("Paint", function() end)
-    CreateMode("Move", function() end)
+    CreateMode("Create Entity", "zen/map_edit/ent_create.png")
+    CreateMode("Delete Entity", "zen/map_edit/delete.png")
+    CreateMode("Create Box", "zen/map_edit/3d_cube.png")
+    CreateMode("Hand", "zen/map_edit/hand.png")
+    CreateMode("Zone", "zen/map_edit/activity_zone.png")
+    CreateMode("Invisible Physics Zone", "zen/map_edit/frame_source.png")
+    CreateMode("Perma Props", "zen/map_edit/save_as.png")
 end
