@@ -23,6 +23,24 @@ local MODE_DEFAULT = map_edit.RegisterMode("Default")
 map_edit.ViewData = map_edit.ViewData or {}
 local vw = map_edit.ViewData
 
+function map_edit.GetViewOrigin()
+	return vw.lastOrigin
+end
+
+function map_edit.GetViewAngles()
+	return vw.lastAngles
+end
+
+function map_edit.GetViewHitPos()
+	return vw.lastTrace_Cursor.HitPos
+end
+
+function map_edit.GetViewHitPosNoCursor()
+	return vw.lastTrace_NoCursor.HitPos
+end
+
+
+
 function map_edit.SetMode(mode)
 	local old_mode = vw.mode
 	vw.mode = mode
@@ -57,11 +75,14 @@ function map_edit.GetVectorString(vec)
 end
 
 function map_edit.Render(rendermode, priority)
-	local origin, normal = util.GetPlayerTraceSource(nil)
-	vw.lastTrace = util.TraceLine({start = origin, endpos = origin + normal * 1024})
+	local cursor_origin, cursor_normal = util.GetPlayerTraceSource(nil)
+	vw.lastTrace_Cursor = util.TraceLine({start = cursor_origin, endpos = cursor_origin + cursor_normal * 1024})
 
-	vw.hoverEntity = vw.lastTrace.Entity
-	vw.hoverOrigin = vw.lastTrace.HitPos
+	local nocursor_origin, nocursor_normal = util.GetPlayerTraceSource(nil, true)
+	vw.lastTrace_NoCursor = util.TraceLine({start = nocursor_origin, endpos = nocursor_origin + nocursor_normal * 1024})
+
+	vw.hoverEntity = vw.lastTrace_Cursor.Entity
+	vw.hoverOrigin = vw.lastTrace_Cursor.HitPos
 
 	ihook.Run("zen.map_edit.Render", rendermode, priority, vw)
 	return true

@@ -13,68 +13,68 @@ ihook.Listen("zen.map_edit.Render", "points", function(rendermode, priority, vw)
     if rendermode == RENDER_3D and priority == RENDER_POST then
 		local y = 0
 		y = y - 5
-		draw3d2d.Text(vw.lastTrace.HitPos, nil, 0.01, true, "v", 100, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
+		draw3d2d.Text(vw.lastTrace_Cursor.HitPos, nil, 0.01, true, "v", 100, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
 
 		y = y - 35
-		draw3d2d.Text(vw.lastTrace.HitPos, nil, 0.1, true, GetVectorString(vw.lastTrace.HitPos), 10, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
+		draw3d2d.Text(vw.lastTrace_Cursor.HitPos, nil, 0.1, true, GetVectorString(vw.lastTrace_Cursor.HitPos), 10, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
 
 		if map_edit.SelectedToolMode then
 			y = y - 35
-			draw3d2d.Text(vw.lastTrace.HitPos, nil, 0.1, true, map_edit.SelectedToolMode, 10, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
+			draw3d2d.Text(vw.lastTrace_Cursor.HitPos, nil, 0.1, true, map_edit.SelectedToolMode, 10, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
 		end
-		local ent = vw.lastTrace.Entity
+		local ent = vw.lastTrace_Cursor.Entity
 
 		if IsValid(ent) then
 
 			y = y - 35
-			draw3d2d.Text(vw.lastTrace.HitPos, nil, 0.1, true, tostring(ent:GetClass()), 20, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
+			draw3d2d.Text(vw.lastTrace_Cursor.HitPos, nil, 0.1, true, tostring(ent:GetClass()), 20, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
 
 			local name = ent.GetName and ent:GetName()
 
 			if name then
 				y = y - 35
-				draw3d2d.Text(vw.lastTrace.HitPos, nil, 0.1, true, tostring(ent:GetName()), 20, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
+				draw3d2d.Text(vw.lastTrace_Cursor.HitPos, nil, 0.1, true, tostring(ent:GetName()), 20, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
 			end
 		end
 
 		if vw.mode == MODE_EDIT_POINT then
 			y = y - 50
 			if vw.edit_point then
-				draw3d2d.Text(vw.lastTrace.HitPos, nil, 0.1, true, "---- MODE: Point Edit (" .. vw.edit_point .. ") ----", 10, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
+				draw3d2d.Text(vw.lastTrace_Cursor.HitPos, nil, 0.1, true, "---- MODE: Point Edit (" .. vw.edit_point .. ") ----", 10, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
 			else
-				draw3d2d.Text(vw.lastTrace.HitPos, nil, 0.1, true, "---- MODE: Point Edit ----", 10, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
+				draw3d2d.Text(vw.lastTrace_Cursor.HitPos, nil, 0.1, true, "---- MODE: Point Edit ----", 10, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
 			end
 
 			if vw.edit_point then
 				y = y - 40
-				draw3d2d.Text(vw.lastTrace.HitPos, nil, 0.1, true, "Setup New Point", 10, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
-				draw3d2d.Text(vw.lastTrace.HitPos, nil, 0.1, true, "IN_ATTACK", "map_edit.Button", 0, y-15, COLOR.WHITE, 1, 1, COLOR.BLUE)
+				draw3d2d.Text(vw.lastTrace_Cursor.HitPos, nil, 0.1, true, "Setup New Point", 10, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
+				draw3d2d.Text(vw.lastTrace_Cursor.HitPos, nil, 0.1, true, "IN_ATTACK", "map_edit.Button", 0, y-15, COLOR.WHITE, 1, 1, COLOR.BLUE)
 			else
 				y = y - 40
-				draw3d2d.Text(vw.lastTrace.HitPos, nil, 0.1, true, "Add Point", 10, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
-				draw3d2d.Text(vw.lastTrace.HitPos, nil, 0.1, true, "IN_ATTACK", "map_edit.Button", 0, y-15, COLOR.WHITE, 1, 1, COLOR.BLUE)
+				draw3d2d.Text(vw.lastTrace_Cursor.HitPos, nil, 0.1, true, "Add Point", 10, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
+				draw3d2d.Text(vw.lastTrace_Cursor.HitPos, nil, 0.1, true, "IN_ATTACK", "map_edit.Button", 0, y-15, COLOR.WHITE, 1, 1, COLOR.BLUE)
 			end
 
 			if vw.edit_point then
 				y = y - 40
-				draw3d2d.Text(vw.lastTrace.HitPos, nil, 0.1, true, "Cancel Editing ", 10, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
-				draw3d2d.Text(vw.lastTrace.HitPos, nil, 0.1, true, "IN_ATTACK2/IN_USE", "map_edit.Button", 0, y-15, COLOR.WHITE, 1, 1, COLOR.BLUE)
+				draw3d2d.Text(vw.lastTrace_Cursor.HitPos, nil, 0.1, true, "Cancel Editing ", 10, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
+				draw3d2d.Text(vw.lastTrace_Cursor.HitPos, nil, 0.1, true, "IN_ATTACK2/IN_USE", "map_edit.Button", 0, y-15, COLOR.WHITE, 1, 1, COLOR.BLUE)
 			else
 				if vw.nearPositionID then
 					y = y - 40
 					local add_text = vw.nearPositionID and "(" .. vw.nearPositionID .. ")" or "(unknown)"
-					draw3d2d.Text(vw.lastTrace.HitPos, nil, 0.1, true, "Delete Near Position " .. add_text, 10, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
-					draw3d2d.Text(vw.lastTrace.HitPos, nil, 0.1, true, "IN_ATTACK2", "map_edit.Button", 0, y-15, COLOR.WHITE, 1, 1, COLOR.BLUE)
+					draw3d2d.Text(vw.lastTrace_Cursor.HitPos, nil, 0.1, true, "Delete Near Position " .. add_text, 10, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
+					draw3d2d.Text(vw.lastTrace_Cursor.HitPos, nil, 0.1, true, "IN_ATTACK2", "map_edit.Button", 0, y-15, COLOR.WHITE, 1, 1, COLOR.BLUE)
 
 					y = y - 40
-					draw3d2d.Text(vw.lastTrace.HitPos, nil, 0.1, true, "Edit Point " .. add_text, 10, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
-					draw3d2d.Text(vw.lastTrace.HitPos, nil, 0.1, true, "IN_USE", "map_edit.Button", 0, y-15, COLOR.WHITE, 1, 1, COLOR.BLUE)
+					draw3d2d.Text(vw.lastTrace_Cursor.HitPos, nil, 0.1, true, "Edit Point " .. add_text, 10, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
+					draw3d2d.Text(vw.lastTrace_Cursor.HitPos, nil, 0.1, true, "IN_USE", "map_edit.Button", 0, y-15, COLOR.WHITE, 1, 1, COLOR.BLUE)
 
 					local clr = input.IsButtonPressedIN(IN_WALK) and COLOR_BLUE or COLOR_WHITE
 
 					y = y - 40
-					draw3d2d.Text(vw.lastTrace.HitPos, nil, 0.1, true, "Start With Point " .. add_text, 10, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
-					draw3d2d.Text(vw.lastTrace.HitPos, nil, 0.1, true, "IN_WALK + IN_USE", "map_edit.Button", 0, y-15, COLOR.WHITE, 1, 1, clr)
+					draw3d2d.Text(vw.lastTrace_Cursor.HitPos, nil, 0.1, true, "Start With Point " .. add_text, 10, 0, y, COLOR.WHITE, 1, 1, COLOR.BLACK)
+					draw3d2d.Text(vw.lastTrace_Cursor.HitPos, nil, 0.1, true, "IN_WALK + IN_USE", "map_edit.Button", 0, y-15, COLOR.WHITE, 1, 1, clr)
 				end
 			end
 		end
@@ -149,7 +149,7 @@ ihook.Listen("zen.map_edit.Render", "points", function(rendermode, priority, vw)
 		local iPoints = #vw.t_Positions
 
 		if input.IsButtonPressedIN(IN_WALK) then
-			local hitNormal = vw.lastTrace.HitNormal
+			local hitNormal = vw.lastTrace_Cursor.HitNormal
 			local hitAngle = hitNormal:Angle()
 			local up = hitAngle:Up()
 			local down = -up
