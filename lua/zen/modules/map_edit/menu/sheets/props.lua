@@ -4,6 +4,9 @@ local ui, gui, map_edit = zen.Init("ui", "gui", "map_edit")
 
 function map_edit.Request_SpawnProp(model)
     print("Request_SpawnProp: " .. model)
+    local pos = map_edit.GetViewHitPosNoCursor()
+    local angle = map_edit.GetViewAngles()
+    nt.SendToChannel("map_edit.SpawnProp", nil, model, pos, angle)
 end
 
 function map_edit.ReadSpawnList()
