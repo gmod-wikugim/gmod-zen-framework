@@ -7,6 +7,7 @@ function map_edit.ToggleMenu()
     if map_edit.IsMenuEnabled then
         map_edit.CloseMenu()
     else
+        if vgui.CursorVisible() then return end
         map_edit.OpenMenu()
     end
 end
@@ -14,7 +15,9 @@ end
 ihook.Handler("zen.map_edit.OnButtonUnPress", "menu.Toggle", function (ply, but, in_key, bind_name, vw)
     if bind_name == "+menu" then
         map_edit.ToggleMenu()
+        return true
     end
+
 end)
 
 function map_edit.OpenMenu()
