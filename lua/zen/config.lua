@@ -6,4 +6,4 @@ icfg.Admins = {
 }
 
 -- Request autorization before use admin access
-icfg.Admin_AuthorizationRequire = true
+icfg.Admin_AuthorizationRequire = false
