@@ -18,14 +18,14 @@ function map_edit.tool_mode.Register(TOOL)
     if TOOL.Icon then assertStringNice(TOOL.Icon, "No Icon specified for tool.") end
 
     -- Check if all functions are set.  
-    if TOOL.FirstAction then assertFunction(TOOL.FirstAction, "No FirstAction specified for tool.") end
-    if TOOL.SecondAction then assertFunction(TOOL.SecondAction, "No SecondAction specified for tool.") end
+    if TOOL.ServerAction then assertFunction(TOOL.ServerAction, "No FirstAction specified for tool.") end
     if TOOL.Reload then assertFunction(TOOL.Reload, "No Reload specified for tool.") end
     if TOOL.HUDDraw then assertFunction(TOOL.HUDDraw, "No HUDDraw specified for tool.") end
 
-    local new_tool = setmetatable(TOOL, map_edit.TOOL_META)
-    map_edit.tool_mode.mt_tool_list[TOOL.id] = new_tool
-    return new_tool
+    setmetatable(TOOL, map_edit.TOOL_META)
+    map_edit.tool_mode.mt_tool_list[TOOL.id] = TOOL
+
+    return TOOL
 end
 
 -- Function getting the tool with the given id.

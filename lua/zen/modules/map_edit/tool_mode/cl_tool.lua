@@ -44,6 +44,8 @@ end
 function map_edit.SetSelectedToolMode(mode, TOOL)
     map_edit.SelectedToolMode = mode
     map_edit.SelectedToolMode_TOOL = TOOL
+
+    ihook.Run("zen.map_edit.OnToolModeSelect", mode, TOOL)
 end
 
 function map_edit.GetActiveTool()
@@ -52,6 +54,7 @@ end
 
 function map_edit.SendActiveToolAction(key, ...)
     local TOOL = map_edit.GetActiveTool()
+    print("Active Tool: ", TOOL.id, " action: ", key)
     if !TOOL then return false end
 
     -- Assert is function
@@ -128,7 +131,7 @@ function map_edit.LoadToolMode()
             last_node = new_node
             last_list = new_list
 
-            ihook.Run("zen.map_edit.OnToolModeSelect", name, TOOL)
+            map_edit.SetSelectedToolMode(name, TOOL)
         end
 
         return new_node, new_list, new_layout

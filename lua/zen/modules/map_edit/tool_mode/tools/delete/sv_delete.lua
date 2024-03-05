@@ -12,7 +12,7 @@ function TOOL:Init()
 
 end
 
-function TOOL:FirstAction(data)
+function TOOL:ServerAction(data)
     local ent = data.ent
     if IsValid(ent) then
         SafeRemoveEntity(ent)

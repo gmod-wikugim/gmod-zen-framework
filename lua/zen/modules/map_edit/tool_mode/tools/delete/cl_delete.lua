@@ -16,7 +16,6 @@ end
 local color_r = Color(255,0,0,100)
 function TOOL:HUDDraw()
     local tr = map_edit.GetViewTrace()
-
     local ent = tr.Entity
 
     if IsValid(ent) then
@@ -28,6 +27,16 @@ function TOOL:HUDDraw()
             local ang = ent:GetAngles()
             render.DrawBox(pos, ang, mins, maxs, color_r)
         end
+    end
+end
+
+function TOOL:LeftClick()
+    print("OnLeftClick")
+    local tr = map_edit.GetViewTrace()
+    local ent = tr.Entity
+
+    if IsValid(ent) then
+        self:CallServerAction({ent=ent})
     end
 end
 
