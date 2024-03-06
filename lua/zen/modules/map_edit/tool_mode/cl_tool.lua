@@ -1,5 +1,6 @@
 module("zen", package.seeall)
 
+map_edit.t_ToolModeCache = map_edit.t_ToolModeCache or {}
 
 ihook.Handler("zen.map_edit.OnButtonPress", "toolmode.Toggle", function(ply, but, in_key, bind_name, vw)
     if bind_name == "+menu_context" then
@@ -39,10 +40,30 @@ function map_edit.GetSelectedMode()
     return map_edit.SelectedToolMode
 end
 
+-- 
+
+function map_edit.tool_mode.GetInitializedTool(tool_id)
+    if !map_edit.t_ToolModeCache[tool_id] then
+        map_edit.t_ToolModeCache[tool_id] = map_edit.tool_mode.GetCopy(tool_id)
+    end
+
+    return map_edit.t_ToolModeCache[tool_id]
+end
+
+function map_edit.tool_mode.ClearInitializedTool(tool_id)
+    if map_edit.t_ToolModeCache[tool_id] then
+        map_edit.t_ToolModeCache[tool_id] = nil
+    end
+end
+
+ihook.Listen("map_edit.tool_mode.Register", "engine:ClearPlayerTOOLCache", function(tool_id, TOOL)
+    map_edit.tool_mode.ClearInitializedTool(tool_id)
+end)
+
 function map_edit.SetSelectedToolMode(tool_id)
     map_edit.SelectedToolMode = tool_id
 
-    local TOOL = map_edit.tool_mode.Get(tool_id)
+    local TOOL = map_edit.tool_mode.GetInitializedTool(tool_id)
 
     if !TOOL.bInitialized then
         TOOL:Init()
@@ -55,7 +76,7 @@ end
 function map_edit.GetActiveTool()
     local tool_id = map_edit.SelectedToolMode
     if !tool_id then return end
-    local TOOL = map_edit.tool_mode.Get(tool_id)
+    local TOOL = map_edit.tool_mode.GetInitializedTool(tool_id)
 
     return TOOL
 end

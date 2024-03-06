@@ -36,6 +36,14 @@ function map_edit.tool_mode.Get(id)
     return map_edit.tool_mode.mt_tool_list[id]
 end
 
+function map_edit.tool_mode.GetCopy(id)
+    local BASE_TOOL = map_edit.tool_mode.Get(id)
+    assertTable(BASE_TOOL, "BASE_TOOL")
+    local BASE_META = getmetatable(BASE_TOOL)
+    local USER_TOOL = setmetatable(table.Copy(BASE_TOOL), BASE_META)
+    return USER_TOOL
+end
+
 -- Function to get all registered tools.
 function map_edit.tool_mode.GetAll()
     return map_edit.tool_mode.mt_tool_list

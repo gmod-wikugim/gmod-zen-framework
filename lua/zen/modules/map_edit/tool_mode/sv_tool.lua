@@ -6,10 +6,7 @@ local P_TOOLS = map_edit.t_PlayersTools
 function map_edit.GetUserTool(ply, tool_id)
     if !P_TOOLS[ply] then P_TOOLS[ply] = {} end
     if !P_TOOLS[ply][tool_id] then
-        local BASE_TOOL = map_edit.tool_mode.Get(tool_id)
-        local BASE_META = getmetatable(BASE_TOOL)
-        local USER_TOOL = setmetatable(table.Copy(BASE_TOOL), BASE_META)
-        P_TOOLS[ply][tool_id] = USER_TOOL
+        P_TOOLS[ply][tool_id] = map_edit.tool_mode.GetCopy(tool_id)
     end
 
     return P_TOOLS[ply][tool_id]
