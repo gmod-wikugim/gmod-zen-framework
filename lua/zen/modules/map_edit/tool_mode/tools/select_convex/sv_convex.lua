@@ -13,3 +13,5 @@ end
 function TOOL:ServerAction(data)
     -- 
 end
+
+map_edit.tool_mode.Register(TOOL)
