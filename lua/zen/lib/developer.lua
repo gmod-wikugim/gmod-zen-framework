@@ -66,19 +66,15 @@ do
 end
 
 if CLIENT then
-    local function CreateNewVal(value)
-        if (isnumber(value) and value > 0) then
-            bZen_Developer = true
-            print("Developer mode is ", COLOR.GREEN, "enabled")
-        else
-            bZen_Developer = false
-            print("Developer mode is ", COLOR.RED ,"disabled")
-        end
-    end
     cvars.Register("zen_developer", 0, FCVAR_ARCHIVE + FCVAR_UNLOGGED + FCVAR_SERVER_CAN_EXECUTE + FCVAR_NEVER_AS_STRING + FCVAR_DONTRECORD + FCVAR_CLIENTCMD_CAN_EXECUTE,
     TYPE.NUMBER,
     function(cvar_name, old_value, new_value)
-        CreateNewVal(new_value)
+        if (isnumber(new_value) and new_value > 0) then
+            _CFG.bZen_Developer = true
+            warn("Developer mode is ", COLOR.GREEN, "enabled")
+        else
+            _CFG.bZen_Developer = false
+            warn("Developer mode is ", COLOR.RED ,"disabled")
+        end
     end)
-    CreateNewVal(GetConVar("zen_developer"):GetInt())
 end
