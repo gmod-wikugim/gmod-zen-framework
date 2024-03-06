@@ -36,6 +36,11 @@ function map_edit.GetHoverEntity()
 	return vw.hoverEntity
 end
 
+function map_edit.GetHoverOrigin()
+	return vw.hoverOrigin
+end
+
+
 
 function map_edit.SetupViewData()
 	table.Empty(map_edit.ViewData)
