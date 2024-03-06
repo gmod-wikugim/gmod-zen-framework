@@ -69,10 +69,8 @@ if CLIENT then
     TYPE.NUMBER,
     function(cvar_name, old_value, new_value)
         if (isnumber(new_value) and new_value > 0) then
-            _CFG.bZen_Developer = true
             warn("Developer mode is ", COLOR.GREEN, "enabled")
         else
-            _CFG.bZen_Developer = false
             warn("Developer mode is ", COLOR.RED ,"disabled")
         end
     end)
