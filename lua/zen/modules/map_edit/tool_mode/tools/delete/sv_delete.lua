@@ -3,7 +3,7 @@ module("zen", package.seeall)
 ---@class zen_TOOL
 local TOOL = {}
 TOOL.id = "delete"
-TOOL.name = "Delete"
+TOOL.Name = "Delete"
 TOOL.Description = "Delete entity"
 
 function TOOL:Init()
@@ -16,3 +16,5 @@ function TOOL:ServerAction(data)
         SafeRemoveEntity(ent)
     end
 end
+
+map_edit.tool_mode.Register(TOOL)

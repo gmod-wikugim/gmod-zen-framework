@@ -12,9 +12,8 @@ function TOOL:Init()
 end
 
 local color_r = Color(255,0,0,100)
-function TOOL:HUDDraw()
-    local tr = map_edit.GetViewTrace()
-    local ent = tr.Entity
+function TOOL:Render(rendermode, priority, vw)
+    local ent = map_edit.GetHoverEntity()
 
     if IsValid(ent) then
         local model = ent:GetModel()
@@ -28,14 +27,16 @@ function TOOL:HUDDraw()
     end
 end
 
-function TOOL:LeftClick()
-    print("OnLeftClick")
-    local tr = map_edit.GetViewTrace()
-    local ent = tr.Entity
+function TOOL:OnButtonPress(but, in_key, bind_name, vw)
+    
+    if bind_name == "+attack" then
+        local ent = map_edit.GetHoverEntity()
 
-    if IsValid(ent) then
-        self:CallServerAction({ent=ent})
+        if IsValid(ent) then
+            self:CallServerAction({ent=ent})
+        end
     end
+ 
 end
 
 map_edit.tool_mode.Register(TOOL)
