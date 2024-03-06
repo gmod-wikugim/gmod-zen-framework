@@ -25,6 +25,8 @@ function map_edit.tool_mode.Register(TOOL)
     setmetatable(TOOL, map_edit.TOOL_META)
     map_edit.tool_mode.mt_tool_list[TOOL.id] = TOOL
 
+    ihook.Run("map_edit.tool_mode.Register", TOOL.id, TOOL)
+
     return TOOL
 end
 
