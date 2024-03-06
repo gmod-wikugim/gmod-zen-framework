@@ -1,4 +1,5 @@
 module("zen", package.seeall)
+_L = getfenv()
 
 AddCSLuaFile("zen/main/main.lua")
 include("zen/main/main.lua")
