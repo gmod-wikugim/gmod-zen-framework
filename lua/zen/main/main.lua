@@ -14,10 +14,10 @@ _MODULE = zen.modules
 _CFG = zen.config
 
 _CFG.colors = _CFG.colors or {}
-iclr = _CFG.colors
+_COLOR = _CFG.colors
 
-iclr.main = Color(0, 255, 0, 255)
-iclr.console_default = Color(200, 200, 200)
+_COLOR.main = Color(0, 255, 0, 255)
+_COLOR.console_default = Color(200, 200, 200)
 
 _CFG.console_space = " "
 
@@ -32,7 +32,7 @@ function print(...)
 
     i = 0
 
-    MsgC(iclr.main, "z> ", iclr.console_default)
+    MsgC(_COLOR.main, "z> ", _COLOR.console_default)
     if count > 0 then
         while i < count do
             i = i + 1

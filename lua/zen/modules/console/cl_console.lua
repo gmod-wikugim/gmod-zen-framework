@@ -378,7 +378,7 @@ ihook.Listen("DrawOverlay", "fast_console_phrase", function()
 	local x, y = object:Size()
 
 
-	surface.SetDrawColor(iclr.main.r, iclr.main.g, iclr.main.b, 200)
+	surface.SetDrawColor(_COLOR.main.r, _COLOR.main.g, _COLOR.main.b, 200)
 	surface.DrawRect(0,0,w,h)
 
 	surface.SetDrawColor(0, 125, 0, 255)

@@ -122,26 +122,26 @@ end
 
 function draw.TextArray(x, y, data, inheritLast, noDraw)
     local fw, fh = 0, 0
-    local l_font, l_clr, l_ax, l_ay, l_xalign, l_yalign, l_clrbg
+    local l_font, l_COLOR, l_ax, l_ay, l_xalign, l_yalign, l_COLORbg
     for k, v in ipairs(data) do
         local text, font, ax, ay, clr, xalign, yalign, clrbg = unpack(v)
 
         if inheritLast then
             l_font = font or l_font
-            l_clr = clr or l_clr
+            l_COLOR = clr or l_COLOR
             l_ax = ax or l_ax
             l_ay = l_ay or l_ay
             l_xalign = xalign or l_xalign
             l_yalign = yalign or l_yalign
-            l_clrbg = clrbg or l_clrbg
+            l_COLORbg = clrbg or l_COLORbg
 
             font = l_font
-            clr = l_clr
+            clr = l_COLOR
             ax = l_ax
             ay = l_ay
             xalign = l_xalign
             yalign = l_yalign
-            clrbg = l_clrbg
+            clrbg = l_COLORbg
         end
 
         local w, h = ui.GetTextSize(text, font)
