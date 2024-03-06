@@ -3,7 +3,7 @@ module("zen", package.seeall)
 ---@class zen_TOOL
 local TOOL = {}
 TOOL.id = "convex_creator"
-TOOL.name = "Convex"
+TOOL.Name = "Convex"
 TOOL.Description = "Convex creator"
 
 function TOOL:Init()
