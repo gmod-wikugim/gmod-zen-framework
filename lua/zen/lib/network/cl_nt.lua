@@ -44,7 +44,7 @@ net.Receive(nt.channels.pullChannels, function(len, ply)
     end
 
     if not bSuccess then
-        log_error("[Network] ", channel_name, "\n", sLastError)
+        MsgC(COLOR.ERROR, "[NT-Predicted-Error] ", channel_name, "\n", sLastError, "\n")
         return
     end
 

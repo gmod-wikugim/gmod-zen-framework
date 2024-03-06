@@ -205,7 +205,7 @@ function nt.SendToChannel(channel_name, target, ...)
             print("[nt.debug] Sent network \"",channel_name,"\" to server/players")
         end
     else
-        log_error("[Network] Channel not have send option", channel_name)
+        MsgC(COLOR.ERROR, "[NT-Predicted-Error] Channel not have send option", channel_name, "\n")
         return
     end
 end
@@ -518,7 +518,7 @@ function nt.Send(channel_name, types, data, target)
     end
 
     if not bSuccess then
-        log_error("[Network] ", channel_name, "\n", sLastError)
+        MsgC(COLOR.ERROR, "[NT-Predicted-Error] ", channel_name, "\n", sLastError, "\n")
         return
     end
 
@@ -664,7 +664,7 @@ net.Receive(nt.channels.sendMessage, function(len, ply)
     ::result::
 
     if not bSuccess then
-        log_error("[Network] ", channel_name, "\n", sLastError)
+        MsgC(COLOR.ERROR, "[NT-Predicted-Error] ", channel_name, "\n", sLastError, "\n")
         return
     end
 end)
