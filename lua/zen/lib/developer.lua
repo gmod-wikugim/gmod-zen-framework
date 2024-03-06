@@ -1,5 +1,37 @@
 module("zen", package.seeall)
 
+do
+    local i, lastcolor
+    local MsgC = MsgC
+    local color_warn = Color(255, 0, 0)
+    local IsColor = IsColor
+    function log(...)
+        if !_CFG.bZen_Developer then return end
+        local args = {...}
+        local count = #args
+
+        i = 0
+
+        MsgC(_COLOR.main, "z", COLOR.BLUE, " LOG> ", color_warn)
+        if count > 0 then
+            while i < count do
+                i = i + 1
+                local dat = args[i]
+                if IsColor(dat) then
+                    lastcolor = dat
+                    continue
+                end
+                if lastcolor then
+                    MsgC(lastcolor, dat)
+                    lastcolor = nil
+                else
+                    MsgC(dat)
+                end
+            end
+        end
+        MsgC("\n", COLOR.WHITE)
+    end
+end
 
 do
     local i, lastcolor
