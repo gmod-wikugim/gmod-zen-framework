@@ -84,6 +84,10 @@ zen.IncludeSV("zen/modules/map_edit/tool_mode/sv_tool.lua")
 zen.IncludeCL("zen/modules/map_edit/tool_mode/tools/delete/cl_delete.lua")
 zen.IncludeSV("zen/modules/map_edit/tool_mode/tools/delete/sv_delete.lua")
 
+-- CONVEX Tool
+zen.IncludeCL("zen/modules/map_edit/tool_mode/tools/select_convex/cl_convex.lua")
+zen.IncludeSV("zen/modules/map_edit/tool_mode/tools/select_convex/sv_convex.lua")
+
 zen.IncludeCL("zen/modules/fast_command/cl_fast_command.lua")
 
 zen.IncludeSH("zen/modules/zone/sh_base.lua")
