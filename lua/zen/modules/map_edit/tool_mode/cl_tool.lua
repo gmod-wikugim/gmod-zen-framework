@@ -178,6 +178,7 @@ end
 
 ihook.Listen("zen.map_edit.OnToolModeSelect", "engine:Setup", function(name, TOOL)
     ihook.Remove("zen.map_edit.Render", "engine:toool_mode:Draw")
+    ihook.Remove("Think", "zen.map_edit.engine:toool_mode:Think")
 
     if TOOL.Render then
         local func = TOOL.Render
@@ -187,6 +188,20 @@ ihook.Listen("zen.map_edit.OnToolModeSelect", "engine:Setup", function(name, TOO
 
         print("Setup draw function for toolmode: ", TOOL.Name)
     end
+
+    if TOOL.Think then
+        local func = TOOL.Think
+        ihook.Listen("Think", "zen.map_edit.engine:toool_mode:Think", function()
+            func(TOOL)
+        end)
+
+        print("Setup think function for toolmode: ", TOOL.Name)
+    end
+end)
+
+ihook.Listen("zen.map_edit.OnDisabled", "engine:tools:StopHooks", function ()
+    ihook.Remove("zen.map_edit.Render", "engine:toool_mode:Draw")
+    ihook.Remove("Think", "zen.map_edit.engine:toool_mode:Think")
 end)
 
 ihook.Handler("zen.map_edit.OnButtonPress", "menu.Toggle", function (ply, but, in_key, bind_name, vw)

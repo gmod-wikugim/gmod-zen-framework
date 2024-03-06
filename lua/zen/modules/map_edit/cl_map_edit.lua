@@ -135,6 +135,8 @@ function map_edit.Toggle()
 		ihook.Remove("StartCommand", map_edit.hookName)
 		ihook.Remove("Render", map_edit.hookName)
 
+		ihook.Run("zen.map_edit.OnDisabled")
+
 		nt.Send("map_edit.status", {"bool"}, {false})
 		return
 	end
@@ -150,6 +152,8 @@ function map_edit.Toggle()
 	ihook.Handler("CalcView", map_edit.hookName, map_edit.CalcView, HOOK_HIGH)
 	ihook.Handler("StartCommand", map_edit.hookName, map_edit.StartCommand, HOOK_HIGH)
 	ihook.Handler("Render", map_edit.hookName, map_edit.Render, HOOK_HIGH)
+
+	ihook.Run("zen.map_edit.OnEnabled")
 
 	nt.Send("map_edit.status", {"bool"}, {true})
 end
