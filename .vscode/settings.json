@@ -1,4 +1,7 @@
 {
     "gitlens.codeLens.enabled": false,
-    "gitlens.codeLens.includeSingleLineSymbols": true
+    "gitlens.codeLens.includeSingleLineSymbols": true,
+    "git.timeline.showAuthor": false,
+    "gitlens.codeLens.authors.enabled": false,
+    "gitlens.codeLens.recentChange.enabled": false
 }
