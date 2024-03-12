@@ -124,5 +124,18 @@ zen.IncludeSH = zen.IncludeSh
 zen.IncludeSV = zen.IncludeSv
 zen.IncludeCL = zen.IncludeCl
 
+function zen.IncludePlugins()
+    local _, folders = file.Find("zen_plugin/*", "LUA")
+
+    if !folders then return end
+
+    for _, folder_name in pairs(folders) do
+        local fl_browser = "zen_plugin/" .. folder_name .. "/browser.lua"
+        if !file.Exists(fl_browser, "LUA") then continue end
+
+        print("Run plugin: ", folder_name)
+        xpcall(zen.IncludeSH, ErrorNoHaltWithStack, fl_browser)
+    end
+end
 
 zen.IncludeSH("zen/browser.lua")
