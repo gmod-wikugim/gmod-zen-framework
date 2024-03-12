@@ -58,43 +58,6 @@ zen.IncludeCL("zen/modules/command/auto_complete/boolean.lua")
 
 zen.IncludeCL("zen/modules/hud/cl_hud.lua")
 
-zen.IncludeCL("zen/modules/map_edit/cl_map_edit.lua")
-zen.IncludeSV("zen/modules/map_edit/sv_map_edit.lua")
--- zen.IncludeCL("zen/modules/map_edit/modules/cl_points.lua")
-
--- zen.IncludeCL("zen/modules/map_edit/modules/cl_world_click.lua")
--- zen.IncludeCL("zen/modules/map_edit/modules/cl_origin_pos.lua")
-
-zen.IncludeSH("zen/modules/map_edit/modules/var_edit/sh_nvars.lua")
-zen.IncludeSV("zen/modules/map_edit/modules/var_edit/sv_nvars.lua")
-zen.IncludeCL("zen/modules/map_edit/modules/var_edit/cl_nvars.lua")
-zen.IncludeCL("zen/modules/map_edit/modules/var_edit/vgui/iproperties.lua")
-
-zen.IncludeCL("zen/modules/map_edit/spawnmenu/menu/menu.lua")
-zen.IncludeCL("zen/modules/map_edit/spawnmenu/menu/sheets/props.lua")
-
-zen.IncludeSV("zen/modules/map_edit/spawnmenu/server/spawn/sv_prop.lua")
-
-zen.IncludeSH("zen/modules/map_edit/tool_mode/sh_meta.lua")
-zen.IncludeSH("zen/modules/map_edit/tool_mode/sh_tool.lua")
-zen.IncludeCL("zen/modules/map_edit/tool_mode/cl_tool.lua")
-zen.IncludeSV("zen/modules/map_edit/tool_mode/sv_tool.lua")
-
--- HAND Tool
-zen.IncludeCL("zen/modules/map_edit/tool_mode/tools/hand/cl_hand.lua")
-
--- DELETE Tool
-zen.IncludeCL("zen/modules/map_edit/tool_mode/tools/delete/cl_delete.lua")
-zen.IncludeSV("zen/modules/map_edit/tool_mode/tools/delete/sv_delete.lua")
-
--- CONVEX Tool
-zen.IncludeCL("zen/modules/map_edit/tool_mode/tools/select_convex/cl_convex.lua")
-zen.IncludeSV("zen/modules/map_edit/tool_mode/tools/select_convex/sv_convex.lua")
-
--- MOVE Tool
-zen.IncludeCL("zen/modules/map_edit/tool_mode/tools/move/cl_move.lua")
-zen.IncludeSV("zen/modules/map_edit/tool_mode/tools/move/sv_move.lua")
-
 zen.IncludeCL("zen/modules/fast_command/cl_fast_command.lua")
 
 zen.IncludeSH("zen/modules/zone/sh_base.lua")
