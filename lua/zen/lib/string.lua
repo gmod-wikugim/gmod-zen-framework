@@ -1,5 +1,8 @@
 module("zen", package.seeall)
 
+_string = _string or table.Copy(string)
+string = _GET("string", _string)
+
 local read_types = {
     ["ply"] = function(var) return isentity(var) and var.Nick and (var:Nick() or "NIL") or tostring(var) end,
     ["n"] = function(var) return string.Comma(tostring(var)) end,
