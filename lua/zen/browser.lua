@@ -5,10 +5,14 @@ zen.IncludeSH("zen/config.lua")
 zen.IncludeSH("zen/lib/hook.lua")
 zen.IncludeSH("zen/lib/util.lua")
 zen.IncludeSH("zen/lib/string.lua")
+zen.IncludeSH("zen/lib/xml.lua")
 zen.IncludeSH("zen/lib/sql.lua")
 zen.IncludeCL("zen/lib/cl_input.lua")
 zen.IncludeCL("zen/lib/cvars.lua")
 zen.IncludeCL("zen/lib/developer.lua")
+
+
+zen.IncludeSH("zen/lib/interface/sh_xml_gui_watch.lua")
 
 zen.IncludeCL("zen/lib/interface/ui/cl_fonts.lua")
 zen.IncludeCL("zen/lib/interface/draw/cl_draw.lua")
@@ -62,6 +66,8 @@ zen.IncludeCL("zen/modules/fast_command/cl_fast_command.lua")
 
 zen.IncludeSH("zen/modules/zone/sh_base.lua")
 zen.IncludeSH("zen/modules/zone/sh_player.lua")
+
+zen.IncludeGUI("example")
 
 zen.IncludePlugins()
 
