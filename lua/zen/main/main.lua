@@ -19,6 +19,9 @@ _COLOR = _CFG.colors
 _COLOR.main = Color(0, 255, 0, 255)
 _COLOR.console_default = Color(200, 200, 200)
 
+_COLOR.client = Color(255, 125, 0)
+_COLOR.server = Color(0, 125, 255)
+
 _CFG.console_space = " "
 
 local string_Split = string.Split
@@ -32,9 +35,11 @@ do
         local args = {...}
         local count = #args
 
+        local text_color = CLIENT and _COLOR.client or _COLOR.server
+
         i = 0
 
-        MsgC(_COLOR.main, "z> ", _COLOR.console_default)
+        MsgC(text_color, "z> ", _COLOR.console_default)
         if count > 0 then
             while i < count do
                 i = i + 1
