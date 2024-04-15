@@ -21,9 +21,9 @@ local phrase_alias = {
 local _concat = table.concat
 
 
-function string.InterpolateConfig(self, read_types, phrase_alias, tab, onlyText)
+function string.InterpolateConfig(message, read_types, phrase_alias, tab, onlyText)
     tab = tab or {}
-    self = self:gsub('($%b{})', function(w)
+    message = message:gsub('($%b{})', function(w)
         local value = w:sub(3, -2) 
 
         if phrase_alias[value] then
@@ -47,9 +47,13 @@ function string.InterpolateConfig(self, read_types, phrase_alias, tab, onlyText)
         end
     end)
 
-    return self
+    return message
 end
 
-function string.Interpolate(self, tab, onlyText)
-    return string.InterpolateConfig(self, read_types, phrase_alias, tab, onlyText)
+---@param message string
+---@param tab table
+---@param onlyText boolean?
+---@return string
+function string.Interpolate(message, tab, onlyText)
+    return string.InterpolateConfig(message, read_types, phrase_alias, tab, onlyText)
 end
