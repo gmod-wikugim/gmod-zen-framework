@@ -12,12 +12,15 @@ module("zen", package.seeall)
 */
 
 
+---@class zen.command.QCMD.type
+---@field type zen.network.type
+---@field name string -- argument name for QCMD:Get(name)
 
 
 ---@class zen.command.QCMD.Data
 ---@field name string
 ---@field callback function
----@field types zen.network.type[]
+---@field types zen.command.QCMD.type[]
 ---@field data zen.command.QCMD.ExtraData
 ---@field types_clear table
 ---@field types_names table
@@ -498,7 +501,7 @@ end
 ---Register command for zen-framework
 ---@param name string
 ---@param callback function
----@param types zen.network.type[]
+---@param types zen.command.QCMD.type[]
 ---@param data zen.command.QCMD.ExtraData
 ---@return zen.command.QCMD.Data
 function icmd.Register(name, callback, types, data)
