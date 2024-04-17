@@ -21,7 +21,7 @@ function PANEL:SetText(text)
 end
 
 function PANEL:Paint(w, h)
-    ui.DrawBox(0, 0, w, h, self.bgColor)
+    draw.Box(0, 0, w, h, self.bgColor)
 
     if self.s_Text then
         draw.Text(self.s_text, self.s_Font, w/2, h/2, self.c_TextColor, 1, 1,  self.c_TextBGColorBG)
