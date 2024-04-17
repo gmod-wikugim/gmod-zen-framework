@@ -320,7 +320,7 @@ local color_text = Color(255,255,255)
 local function getArgs(var)
     if isbool(var) or var == nil then return end
     if isstring(var) then return {var} end
-    if table(var) then return var end
+    if istable(var) then return var end
     return {var}
 end
 
