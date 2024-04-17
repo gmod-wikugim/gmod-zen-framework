@@ -1,5 +1,38 @@
 module("zen", package.seeall)
 
+/*
+    local tCommand = {
+        callback = callback,
+        types = types or {},
+        data = data or {},
+        types_clear = {},
+        types_names = {},
+        name = name,
+    }
+*/
+
+
+
+
+---@class zen.command.QCMD.Data
+---@field name string
+---@field callback function
+---@field types zen.network.type[]
+---@field data zen.command.QCMD.ExtraData
+---@field types_clear table
+---@field types_names table
+---@field IsServerCommand? boolean
+---@field IsClientCommand? boolean
+---@field IsMenuCommand? boolean
+---@field ENV? "Client"|"Server"|"Menu"
+
+
+---@class zen.command.QCMD.ExtraData
+---@field perm? string zen.permission
+---@field help? string help string work with `--help` or `/?`
+
+
+
 icmd = _GET("icmd")
 iconsole = _GET("iconsole")
 
@@ -430,6 +463,7 @@ end
 ihook.Listen("OnFastConsoleCommand", "fast_console_phrase", icmd.OnCommand)
 
 
+---@param tCommand zen.command.QCMD.Data
 function icmd.RegisterData(tCommand)
     tCommand.types_clear = {}
     tCommand.types_names = {}
@@ -459,10 +493,20 @@ function icmd.RegisterData(tCommand)
     return tCommand
 end
 
+
+
+---Register command for zen-framework
+---@param name string
+---@param callback function
+---@param types zen.network.type[]
+---@param data zen.command.QCMD.ExtraData
+---@return zen.command.QCMD.Data
 function icmd.Register(name, callback, types, data)
+
+    ---@type zen.command.QCMD.Data
     local tCommand = {
         callback = callback,
-        types = types or {},
+        types = types,
         data = data or {},
         types_clear = {},
         types_names = {},
