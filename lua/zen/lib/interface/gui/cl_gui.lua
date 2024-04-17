@@ -279,6 +279,13 @@ function gui.ApplyParams(pnl, data)
     pnl.zen_tmp_Params = nil
 end
 
+---@param pnl_name string
+---@param pnlParent? Panel
+---@param data? table
+---@param uniqueName? string
+---@param presets? table
+---@param isAdd? boolean -- Use pnlParent:Add function
+---@return Panel pnlCustom
 function gui.Create(pnl_name, pnlParent, data, uniqueName, presets, isAdd)
     if uniqueName then
         assertStringNice(uniqueName, "uniqueName")
