@@ -218,6 +218,7 @@ ihook.Listen("PlayerButtonPress", "fast_console_phrase", function(ply, but, in_k
 
 	if IsDown(KEY_LCONTROL) and but == KEY_C then goto stop end
 	if but == KEY_ESCAPE then goto stop end
+	if bind == "zen_console" then goto stop end
 
 	if IsDown(KEY_LCONTROL) then
 		if but == KEY_BACKSPACE then
@@ -308,6 +309,19 @@ ihook.Listen("PlayerButtonPress", "fast_console_phrase", function(ply, but, in_k
 	iconsole.UpdateAutoComplete()
 end)
 
+ihook.Handler("map_edit.MouseMove", "zen.console.supperess", function(ply, but)
+	if not iconsole.INPUT_MODE then return end
+
+	return true
+end)
+
+ihook.Handler("map_edit.ButtonMove", "zen.console.supperess", function(ply, but)
+	if not iconsole.INPUT_MODE then return end
+
+	return true
+end)
+
+
 ihook.Listen("DrawOverlay", "fast_console_phrase", function()
 	if not iconsole.INPUT_MODE then return end
 	local w, h = ScrW(), ScrH()
@@ -377,10 +391,10 @@ ihook.Listen("DrawOverlay", "fast_console_phrase", function()
 	local x, y = object:Size()
 
 
-	surface.SetDrawColor(_COLOR.main.r, _COLOR.main.g, _COLOR.main.b, 200)
-	surface.DrawRect(0,0,w,h)
+	-- surface.SetDrawColor(_COLOR.main.r, _COLOR.main.g, _COLOR.main.b, 200)
+	-- surface.DrawRect(0,0,w,h)
 
-	surface.SetDrawColor(0, 125, 0, 255)
+	surface.SetDrawColor(HSVToColor(  ( CurTime() * 250 ) % 360, 1, 1 ))
 	surface.DrawRect(SX-10,SY-10,x+20,y+20)
 
 	surface.SetDrawColor(45, 45, 45, 255)
