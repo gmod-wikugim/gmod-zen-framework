@@ -75,7 +75,9 @@ gui.RegisterStylePanel("help_text_array", {
         draw.TextArray(self.iTextX, self.iTextY, self.tsArray)
     end,
     Think = function(self)
-        if not IsValid(self.pnlTarget) then self:Remove() return end
+        if !IsValid(self.pnlTarget) then self:Remove() return end
+        if !self.pnlTarget:IsVisible() then self:Remove() return end
+        if !self.pnlTarget:GetParent():IsVisible() then self:Remove() return end
 
         if not self.tsArray then return end
 
