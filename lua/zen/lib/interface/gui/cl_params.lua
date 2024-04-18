@@ -889,6 +889,16 @@ end, {
     "CC",
 })
 
+gui.RegisterParam("nopaint", function(pnl, value)
+    pnl.Paint = nil
+end, {
+    "no_paint",
+    "paint_no",
+    "-paint",
+    "disable_paint",
+    "paint_disable",
+})
+
 gui.RegisterParam("save_pos", function(pnl, value)
     local pnlInh = pnl.zen_MotherPanel or pnl.zen_OriginalPanel
     local name = value or pnlInh.zen_UniqueName
