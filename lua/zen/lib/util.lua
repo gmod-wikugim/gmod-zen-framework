@@ -2001,3 +2001,32 @@ function util.GetIcoSphereVertex(radius, subdivisions)
 
     return vertes
 end
+
+
+local match = string.match
+---@param source string
+---@return table<string, string>
+function util.HammerKeyValuesToTable(source)
+    local result = {}
+
+    for key, value in source:gmatch('"([^"]+)" "([^"]+)"') do
+        result[key] = value
+    end
+
+    return result
+end
+
+
+---@param source string
+---@return table<number, table<string, string>>
+function util.HammerKeyValuesTableToTable(source)
+    local result = {}
+    local id = 0
+    for key_values_table in source:gmatch("%b{}") do
+        id = id + 1
+        result[id] = util.HammerKeyValuesToTable(key_values_table)
+    end
+
+
+    return result
+end
