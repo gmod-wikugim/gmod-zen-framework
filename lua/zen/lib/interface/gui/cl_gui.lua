@@ -151,6 +151,7 @@ local ParamsFirst = { -- 1, 2, 3
 
     "set_text",
 
+    "set_minimal_size",
     "size_auto",
     "size_auto_tall",
     "size_auto_wide",
@@ -287,6 +288,8 @@ end
 ---@param isAdd? boolean -- Use pnlParent:Add function
 ---@return Panel pnlCustom
 function gui.Create(pnl_name, pnlParent, data, uniqueName, presets, isAdd)
+    data = data or {}
+
     if uniqueName then
         assertStringNice(uniqueName, "uniqueName")
 
