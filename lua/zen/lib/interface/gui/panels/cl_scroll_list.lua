@@ -19,10 +19,11 @@ function PANEL:Init()
         draw.BoxOutlined(1, 0, 0, cw, ch, COLOR.GREEN)
     end
     self.pnlContent.PerformLayout = function(_)
+
         local w, h = self:GetSize()
         self:PerformLayoutContent(w, h)
-
         self:InvalidateParent(true)
+
     end
 
     self.pnlContent:SetSize(w-self.wideVBar, h)
@@ -60,6 +61,15 @@ function PANEL:Init()
     -- self:InvalidateLayout(true)
 end
 
+function PANEL:PaintOver(w,h)
+    if self.iPercentageTake then
+        draw.Text(self.iPercentageTake, 8, 10, 10, _COLOR.W)
+    end
+    if self.iPercentageScroll then
+        draw.Text(self.iPercentageScroll, 8, 10, 20, _COLOR.W)
+    end
+end
+
 function PANEL:SetInBorder(vActive)
     self.bInBorder = vActive
     self:InvalidateLayout(true)
@@ -79,8 +89,20 @@ function PANEL:SetScroll(fScroll)
         self.fScroll = 0
     end
 
-    self.pnlVBar:SetY(self.fScroll)
-    self.pnlContent:SetY( - self.fScroll )
+    self.fScroll = math.min(self.fScroll, self.iCanvasFullTall - self.page_tall)
+
+    self.pnlContent:SetY( - self.fScroll  )
+
+    self.iPercentageScroll = self.fScroll / self.iCanvasFullTall + self.iPercentageTake
+
+    self.pnlVBar:SetY( (self.iPercentageScroll - self.iPercentageTake) * base_h )
+end
+
+function PANEL:SetScrollPercantage(iPercentage)
+    self.pnlContent:InvalidateLayout(true)
+
+    local percentage_left = 1 - self.iPercentageTake
+    self:SetScroll( ( (  iPercentage * percentage_left  )  *  self.iCanvasFullTall) )
 end
 
 function PANEL:GetScroll()
@@ -109,6 +131,8 @@ function PANEL:PerformLayout(w, h)
         if self.pnlContent:GetTall() < h then
             self.pnlContent:SetTall(h)
         end
+
+        self.pnlContent:SetTall(self.iCanvasFullTall)
     end
 end
 
@@ -117,19 +141,19 @@ function PANEL:PerformLayoutContent(w, h)
     local content_w, content_h = self:GetContentSize(   )
     local child_w, child_h = self:GetContentChildrenSize()
 
-    local percentage = math.min(1, h / math.max(child_h, h) )
+    self.iCanvasFullTall = math.max(h, child_h)
 
-    local vbar_h = percentage * h
-    vbar_h = math.max(10, vbar_h)
+    self.iPercentageTake =  h / self.iCanvasFullTall
+    if !self.iPercentageScroll then
+        self.iPercentageScroll = self.iPercentageTake
+    end
 
-    self.fScrollMultiply = percentage
-    self.fScrollMax = h
-    local vbar_y = self.fScroll
+    self.page_tall = h
 
-    self.pnlVBar:SetSize(vbar_w, vbar_h)
-    self.pnlVBar:SetPos(w-vbar_w, vbar_y)
+    self.vbar_tall = self.iPercentageTake * h
 
-    self.pnlContent:SetTall(child_h)
+    self.pnlVBar:SetSize(vbar_w, self.vbar_tall)
+    self.pnlVBar:SetX(w-vbar_w)
 end
 
 function PANEL:GetContentSize()
@@ -144,58 +168,12 @@ function PANEL:GetVBarSize()
     return self.pnlVBar:GetSize()
 end
 
-
----@param pnlItem Panel
-function PANEL:PushItem(pnlItem)
-    -- self.pnlContent:InvalidateParent(true)
-    pnlItem:SetParent(self.pnlContent)
-    self.pnlContent:InvalidateParent(true)
-    self.pnlContent:InvalidateLayout(true)
-
-
-    local cc_w, cc_h = self:GetContentChildrenSize()
-
-    self.pnlContent:SetTall(cc_h)
-end
-
-
 function PANEL:OnChildAdded(pnlItem)
     if self.bPushNextChildrenToContent then
         pnlItem:SetParent(self.pnlContent)
     end
 end
 
-function PANEL:Think()
-
-    if self.bMoveEnabled then
-
-        if not input.IsMouseDown(MOUSE_LEFT) then
-            self.bMoveEnabled = false
-            return
-        end
-
-        local screen_w, screen_h = ScrW(), ScrH()
-
-        local panel_w, panel_h = self:GetSize()
-
-        local start_x, start_y = self.moveStartX, self.moveStartY
-        local start_cursor_x, start_cursor_y = self.moveStartCursorX, self.moveStartCursorY
-
-        local now_cursor_x, now_cursor_y = input.GetCursorPos()
-
-        local x_offset = now_cursor_x - start_cursor_x
-        local y_offset = now_cursor_y - start_cursor_y
-
-        local new_x = start_x + x_offset
-        local new_y = start_y + y_offset
-
-        new_x = math.Clamp(new_x, 0, screen_w - panel_w)
-        new_y = math.Clamp(new_y, 0, screen_h - panel_h)
-
-
-        self:SetPos(new_x, new_y)
-    end
-end
 
 gui.RegisterStylePanel("scroll_list", PANEL, "EditablePanel")
 
@@ -211,12 +189,23 @@ local function CreatePanel()
     local wide = pnlScroll:GetContentSize()
 
     local pnlLayout = gui.Create("DPanel", pnlScroll)
-    pnlLayout:SetSize(wide, 120000   )
+    pnlLayout:SetSize(wide, 1000)
+    pnlLayout:Dock(TOP)
     pnlLayout.Paint = function(self, w, h)
         draw.Line(0,10, w, h-10)
+        draw.Line(w,10, 0, h-10)
         draw.Line(0,10, w, 10)
         draw.Line(0,h-10, w, h-10)
     end
+
+    -- timer.Simple(0.1, function()
+
+    for k = 1, 10 do
+        vgui.Create("DPanel", pnlScroll):Dock(TOP)
+    end
+
+    pnlScroll:SetScrollPercantage(1)
+
     -- pnlLayout:SetImage("material/entities/edit_sky")
 
     -- local models = file.Find("models/*.mdl", "GAME")
@@ -238,4 +227,4 @@ local function CreatePanel()
     -- end
 
 end
--- CreatePanel()
+CreatePanel()
