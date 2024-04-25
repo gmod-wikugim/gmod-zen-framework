@@ -56,7 +56,7 @@ do
                 end
             end
         end
-        MsgC("\n", COLOR.WHITE)
+        MsgC("\n", _COLOR.WHITE)
     end
 end
 
