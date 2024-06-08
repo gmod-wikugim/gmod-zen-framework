@@ -15,6 +15,7 @@ _CFG = zen.config
 
 _CFG.colors = _CFG.colors or {}
 _COLOR = _CFG.colors
+_COLOR.WHITE = color_white
 
 _COLOR.main = Color(0, 255, 0, 255)
 _COLOR.console_default = Color(200, 200, 200)
