@@ -1,6 +1,8 @@
 module("zen", package.seeall)
 
-icmd.Register("supermode", function(QCMD, who, tar_sid64, perm_name, avaliable, target_flags, unique_flags)
+iperm.RegisterPermission("supermode", "Supermode command")
+
+icmd.Register("supermode", function(QCMD, who)
     who.bZen_SuperMode = true
 
     return true
@@ -9,7 +11,7 @@ end, {}, {
     help = "Enable super mode"
 })
 
-icmd.Register("unsupermode", function(QCMD, who, tar_sid64, perm_name, avaliable, target_flags, unique_flags)
+icmd.Register("unsupermode", function(QCMD, who)
     who.bZen_SuperMode = false
 
     return true
@@ -34,3 +36,23 @@ ihook.Handler("zen.OnClientCommand", "supermode", function(ply, bind_string)
         end
     end
 end)
+
+icmd.Register("set_rank", function(QCMD, who, cmd, args, tags)
+    local sid64, usergroup = unpack(args)
+
+    local target = util.GetPlayerEntity(sid64)
+
+    if !IsValid(target) then
+        return false, "Player should be online"
+    end
+
+    target:SetUserGroup(usergroup)
+
+    return true, "Success setup rank '" .. tostring(usergroup) .. "' to '" .. tostring(target:Nick())
+end, {
+    {name = "Player", type = "sid64"},
+    {name = "UserGroup", type = "string"}
+}, {
+    perm = "set_rank",
+    help = "Set rank to player"
+})
