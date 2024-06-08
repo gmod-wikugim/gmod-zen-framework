@@ -179,9 +179,10 @@ gui.RegisterStylePanel("frame",
     PANEL,
     "EditablePanel",
     {
-        min_size = {800, 600},
+        min_size = {100, 100},
+        size = {800, 600},
         mouse_input = true,
-        center = "true",
+        center = true,
         popup = true,
     }
 )
