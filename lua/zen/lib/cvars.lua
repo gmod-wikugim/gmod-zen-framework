@@ -1,11 +1,10 @@
 module("zen", package.seeall)
 
-CVARS_VALUES = CVARS_VALUES or {}
+CVARS_VALUES = _L.CVARS_VALUES or {}
 
-CVARS = CVARS or {}
+CVARS = _L.CVARS or {}
 
-_cvars = _cvars or cvars
-cvars = _GET("cvars", _cvars)
+cvars = _GET("cvars", cvars)
 
 local meta = {
     __newindex = function(self, key, value)

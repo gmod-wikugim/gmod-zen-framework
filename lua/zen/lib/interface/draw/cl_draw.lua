@@ -1,7 +1,6 @@
 module("zen", package.seeall)
 
-_draw = _draw or table.Copy(draw)
-draw = _GET("draw", _draw)
+draw = _GET("draw", draw)
 
 local s_SetDrawColor = surface.SetDrawColor
 local s_DrawRect = surface.DrawRect

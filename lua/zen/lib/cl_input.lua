@@ -1,5 +1,7 @@
 module("zen", package.seeall)
 
+_L.input = _GET("input", input)
+
 input.KeyPressedCounter = input.KeyPressedCounter or {}
 local KeyPressed = {}
 local BindPressed = {}

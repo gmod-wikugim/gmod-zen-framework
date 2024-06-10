@@ -1,5 +1,7 @@
 module("zen", package.seeall)
 
+util = _GET("util", util)
+
 ---@class TYPE
 ---@field type number|string
 

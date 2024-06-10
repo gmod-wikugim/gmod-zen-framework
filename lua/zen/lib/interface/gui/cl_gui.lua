@@ -1,7 +1,6 @@
 module("zen", package.seeall)
 
-_gui = _gui or table.Copy(gui)
-gui = _GET("gui", _gui)
+gui = _GET("gui", gui)
 
 local sub = string.sub
 

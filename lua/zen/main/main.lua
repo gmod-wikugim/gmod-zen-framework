@@ -27,7 +27,7 @@ _CFG.console_space = " "
 
 local string_Split = string.Split
 
-_print = _print or print
+_print = _L._print or print
 do
     local i, lastcolor
     local MsgC = MsgC
@@ -65,7 +65,7 @@ end
 ---@param default? any
 ---@return table
 function zen.module(name, default)
-    if !_MODULE[name] then _MODULE[name] = default or {} end
+    if !_MODULE[name] then _MODULE[name] = (default) and (table.Copy(default)) or {} end
     return _MODULE[name]
 end
 _GET = zen.module

@@ -1,7 +1,6 @@
 module("zen", package.seeall)
 
-_sql = _sql or table.Copy(sql)
-sql = _GET("sql", _sql)
+sql = _GET("sql", sql)
 
 --- @param qe string SQL_QUERY
 --- @return boolean result, string query
