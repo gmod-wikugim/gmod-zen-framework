@@ -1,0 +1,9 @@
+{
+	"title": "[zen-plugin] Fun mode content",
+	"type": "ServerContent",
+	"ignore"	:
+	[
+		"*.lua"
+	]
+
+}
