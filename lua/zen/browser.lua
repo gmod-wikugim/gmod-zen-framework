@@ -1,5 +1,9 @@
 module("zen", package.seeall)
 
+if SERVER then
+    resource.AddWorkshop("3267517036") -- zen framework content
+end
+
 -- Lua include list
 zen.IncludeSH("zen/config.lua")
 zen.IncludeSH("zen/lib/hook.lua")
@@ -12,6 +16,20 @@ zen.IncludeCL("zen/lib/cl_input.lua")
 zen.IncludeCL("zen/lib/cvars.lua")
 zen.IncludeCL("zen/lib/developer.lua")
 zen.IncludeSH("zen/lib/material.lua")
+zen.IncludeSH("zen/lib/player_data.lua")
+
+zen.IncludeSH("zen/lib/network/sh_nt.lua")
+zen.IncludeSV("zen/lib/network/sv_nt.lua")
+zen.IncludeCL("zen/lib/network/cl_nt.lua")
+
+zen.IncludeSH("zen/lib/network/channels/sh_channel_lua.lua")
+zen.IncludeSH("zen/lib/network/channels/sh_string_id.lua")
+zen.IncludeSH("zen/lib/network/channels/sh_entity_vars.lua")
+zen.IncludeSH("zen/lib/network/channels/sh_table_edit.lua")
+zen.IncludeSH("zen/lib/network/channels/sh_shared_hooks.lua")
+zen.IncludeSH("zen/lib/network/channels/sh_commands.lua")
+zen.IncludeSH("zen/lib/network/channels/sh_message.lua")
+zen.IncludeSH("zen/lib/network/channels/sh_auto.lua")
 
 zen.IncludeCL("zen/lib/interface/ui/cl_fonts.lua")
 zen.IncludeCL("zen/lib/interface/ui/cl_debug.lua")
@@ -37,18 +55,6 @@ zen.IncludeCL("zen/lib/interface/gui/panels/cl_html_button.lua")
 zen.IncludeCL("zen/lib/interface/gui/panels/cl_spawn_icon.lua")
 zen.IncludeCL("zen/lib/interface/gui/panels/cl_image.lua")
 zen.IncludeCL("zen/lib/interface/gui/panels/cl_scroll_list.lua")
-
-zen.IncludeSH("zen/lib/network/sh_nt.lua")
-zen.IncludeSV("zen/lib/network/sv_nt.lua")
-zen.IncludeCL("zen/lib/network/cl_nt.lua")
-
-zen.IncludeSH("zen/lib/network/channels/sh_channel_lua.lua")
-zen.IncludeSH("zen/lib/network/channels/sh_string_id.lua")
-zen.IncludeSH("zen/lib/network/channels/sh_entity_vars.lua")
-zen.IncludeSH("zen/lib/network/channels/sh_table_edit.lua")
-zen.IncludeSH("zen/lib/network/channels/sh_shared_hooks.lua")
-zen.IncludeSH("zen/lib/network/channels/sh_commands.lua")
-zen.IncludeSH("zen/lib/network/channels/sh_message.lua")
 
 zen.IncludeSH("zen/modules/save/sh_base.lua")
 zen.IncludeSH("zen/modules/save/sh_player.lua")
