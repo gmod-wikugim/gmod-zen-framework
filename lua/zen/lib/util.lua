@@ -1689,6 +1689,17 @@ function META.PLAYER:zen_GetEyeTrace(noCursor)
     return util.GetPlayerEyeTrace(self, noCursor)
 end
 
+mt_PlayerCooldown = _L.mt_PlayerCooldown or {}
+
+function META.PLAYER:zen_Cooldown(uniqueID, cooldown)
+    if !mt_PlayerCooldown[self] then mt_PlayerCooldown[self] = {} end
+    local last_use = mt_PlayerCooldown[self][uniqueID]
+    if last_use and (last_use + cooldown) > CurTime() then return false end
+
+    mt_PlayerCooldown[self][uniqueID] = CurTime()
+    return true
+end
+
 cleanup.Register("zen")
 
 
