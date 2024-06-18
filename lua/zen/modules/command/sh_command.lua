@@ -516,8 +516,8 @@ end
 ---Register command for zen-framework
 ---@param name string
 ---@param callback fun(QCMD:zen.command.QCMD_QUERY, who:Player, cmd:string, args:table<number, string>, tags:tabe<number, string>): boolean, string?
----@param types zen.command.QCMD.type[]
----@param data zen.command.QCMD.ExtraData
+---@param types? zen.command.QCMD.type[]
+---@param data? zen.command.QCMD.ExtraData
 ---@return zen.command.QCMD.Data
 function icmd.Register(name, callback, types, data)
 
