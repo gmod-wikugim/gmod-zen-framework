@@ -9,6 +9,13 @@ gui.RegisterParam("tPanel", function(pnl, value)
     if value.Init then value.Init(pnl) end
 end)
 
+gui.RegisterParam("uniqueName", function(pnl, value)
+    pnl.uniqueName = value
+end, {
+    "uniqueName",
+})
+
+
 gui.RegisterParam("set_size_middle", function(pnl, value)
     value = value or 0
     local pnlOwner = pnl:GetParent()

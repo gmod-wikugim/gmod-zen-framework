@@ -11,10 +11,9 @@ end
 function iperm.CreatePlayerPermissionMenu(SteamID64)
     local FEATURES = {}
 
-    local pnlFrame = gui.CreateStyled("frame", nil, "player_permissions", {
+    local pnlFrame = gui.CreateFrame("player_permissions", SteamID64,  {
         size = {400, 500}
     })
-    pnlFrame:SetTitle(SteamID64)
 
     if _CFG.Admins[SteamID64] then
         gui.Create("DLabel", pnlFrame, {
@@ -46,7 +45,7 @@ function iperm.CreatePlayerPermissionMenu(SteamID64)
     end)
 
 
-    local pnlList = gui.CreateStyled("scroll_list", pnlFrame, nil,  {
+    local pnlList = gui.CreateStyled("scroll_list", pnlFrame,  {
         "dock_fill"
     })
 
@@ -114,12 +113,12 @@ icmd.Register("menu_permissions", function(QCMD, who, cmd, args, tags)
         local t_SearchPlayerTable = {}
 
 
-        local pnlEntry = gui.CreateStyled("input_text", pnlFrame, nil, {
+        local pnlEntry = gui.CreateStyled("input_text", pnlFrame, {
             tall = 30,
             "dock_top",
         })
 
-        local pnlPlayers = gui.CreateStyled("scroll_list", pnlFrame, nil, {
+        local pnlPlayers = gui.CreateStyled("scroll_list", pnlFrame, {
             "dock_fill"
         })
 

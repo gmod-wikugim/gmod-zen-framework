@@ -394,20 +394,33 @@ META.PANEL.zen_Add = function(self, pnl_name, extraData, extraPresets)
     return gui.Create(pnl_name, self, extraData, nil, extraPresets, true)
 end
 META.PANEL.zen_AddStyled = function(self, styleName, extraData, extraPresets)
-    return gui.CreateStyled(styleName, self, nil, extraData, extraPresets, true)
+    return gui.CreateStyled(styleName, self, extraData, extraPresets, true)
 end
 
 ---@param uniqueName string
 ---@param beautifulName string
+---@param extraData? table
 ---@return Panel
-function gui.CreateFrame(uniqueName, beautifulName)
-    local pnlFrame = gui.CreateStyled("frame", nil, uniqueName)
+function gui.CreateFrame(uniqueName, beautifulName, extraData)
+    extraData = extraData or {}
+
+    if uniqueName then
+        extraData.uniqueName = uniqueName
+    end
+
+    local pnlFrame = gui.CreateStyled("frame", nil, extraData)
     pnlFrame:SetTitle(beautifulName)
 
     return pnlFrame
 end
 
-function gui.CreateStyled(styleName, pnlParent, uniqueName, extraData, extraPresets, isAdd)
+---@param styleName string
+---@param pnlParent Panel?
+---@param extraData table?
+---@param extraPresets table?
+---@param isAdd boolean?
+---@return Panel
+function gui.CreateStyled(styleName, pnlParent, extraData, extraPresets, isAdd)
     assertStringNice(styleName, "styleName")
     local tStylePanel = gui.t_StylePanels[styleName]
     assert(tStylePanel != nil, "stylePanel not exists: " .. tostring(styleName))
@@ -433,6 +446,8 @@ function gui.CreateStyled(styleName, pnlParent, uniqueName, extraData, extraPres
     if istable(tStylePanel.tPanel) then
         tData.tPanel = tStylePanel.tPanel
     end
+
+    local uniqueName = extraData.uniqueName
 
     local pnl = gui.Create(tStylePanel.vguiBase, pnlParent, tData, uniqueName, tPresets, isAdd)
 
@@ -547,7 +562,7 @@ function gui.SuperCreate(data, uniqueName)
             isUniqueFree = false
         end
 
-        local pnl = gui.CreateStyled(style, pnlParent, newUniqueName, data, presets, true)
+        local pnl = gui.CreateStyled(style, pnlParent, {uniqueName = newUniqueName}, data, presets, true)
         nav_panels[nav_name] = pnl
     end
 
