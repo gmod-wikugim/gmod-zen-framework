@@ -29,6 +29,7 @@ feature.mt_FeaturesInitialized = feature.mt_FeaturesInitialized or {}
 ---@field IsActive fun(self): boolean
 ---@field package pb_Activated boolean
 ---@field package pb_Initialized boolean
+---@field package pb_Valid boolean
 
 local FEATURE_META = {}
 
@@ -43,6 +44,7 @@ end
 function FEATURE_META:Enable(...)
     if self.pb_Activated then return end
 
+    self.pb_Valid = true
     if self.OnActivate then self:OnActivate() end
     self.pb_Activated = true
 end
@@ -52,7 +54,7 @@ function FEATURE_META:IsActive()
 end
 
 function FEATURE_META:IsValid()
-    return self.pb_Activated
+    return self.pb_Valid
 end
 
 ---@vararg any
@@ -60,6 +62,7 @@ function FEATURE_META:Disable(...)
     if self.pb_Activated != true then return end
 
     if self.OnDeactivate then self:OnDeactivate() end
+    self.pb_Valid = false
     self.pb_Activated = false
 end
 
