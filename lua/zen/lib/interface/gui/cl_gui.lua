@@ -390,9 +390,20 @@ function gui.RegisterParam(param, func, aliases)
     end
 end
 
+---@param self Panel
+---@param pnl_name string
+---@param extraData? table
+---@param extraPresets? table
+---@return Panel pnlCustom
 META.PANEL.zen_Add = function(self, pnl_name, extraData, extraPresets)
     return gui.Create(pnl_name, self, extraData, nil, extraPresets, true)
 end
+
+---@param self Panel
+---@param styleName string
+---@param extraData? table
+---@param extraPresets? table
+---@return Panel pnlCustom
 META.PANEL.zen_AddStyled = function(self, styleName, extraData, extraPresets)
     return gui.CreateStyled(styleName, self, extraData, extraPresets, true)
 end

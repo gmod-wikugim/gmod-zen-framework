@@ -522,7 +522,10 @@ META.CSENT                  = _R.CSEnt or {}
 META.BF_READ                = _R.bf_read or {}
 META.IVIDEOWRITER           = _R.IVideoWriter or {}
 META.CLUAEMITTER            = _R.CLuaEmitter or {}
+
+---@class Panel
 META.PANEL                  = _R.Panel or {}
+
 META.CLUAPARTICLE           = _R.CLuaParticle or {}
 META.PIXELVIS_HANDLE_T      = _R.pixelvis_handle_t or {}
 META.IRESTORE               = _R.IRestore or {}
