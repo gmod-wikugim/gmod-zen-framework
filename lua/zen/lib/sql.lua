@@ -12,7 +12,7 @@ function sql.QueryErrorLogFormat(qe, ...)
         print(qe)
         error("SQL Error: " .. sql.LastError())
     end
-    
+
     return res, qe
 end
 
@@ -20,6 +20,27 @@ local sql_no_quotas = {
     ["NULL"] = true,
     ["null"] = true,
 }
+
+
+---@param var table
+---@return string
+function sql.EncodeTable(var)
+    local key_values = util.TableToKeyValues(var, "source")
+    local bEqual = table.IsEqual(var, util.KeyValuesToTable(key_values, false, true))
+    assert(bEqual, "error table encode!")
+
+    local coded = util.Base64Encode(key_values)
+    return sql.SQLStr(coded)
+end
+
+---@param coded string
+---@return table
+function sql.DecodeTable(coded)
+    local key_values = util.Base64Decode(coded)
+    local result = util.KeyValuesToTable(key_values, true, true)
+    return result
+end
+
 
 local sql_types = {
     ["default"] = function(var) return tostring(var) end,
@@ -31,6 +52,10 @@ local sql_types = {
             return var
         elseif isstring(var) then
             return sql_no_quotas[var] and var or sql.SQLStr(var)
+        elseif isbool(var) then
+            return var and "1" or "0"
+        elseif istable(var) then
+            return sql.EncodeTable(var)
         else
             error("incorrent type: " .. type(var))
         end
@@ -81,3 +106,39 @@ function sql.QueryErrorLogInterpolate(query, args)
 
     return res, new_qe
 end
+
+---@class zen.sql.Container
+local META = {}
+
+---@alias SQL_PARAM string|number|boolean|table<string, string|number|boolean>
+
+---@param query string
+---@vararg SQL_PARAM
+---@return boolean|table result, string query
+function META:Query(query, ...)
+    return sql.QueryErrorLogInterpolate(query, {...})
+end
+
+---@param coded string
+---@return table
+function META:DecodeTable(coded)
+    return sql.DecodeTable(coded)
+end
+
+---@param var table
+---@return string
+function META:EncodeTable(var)
+    return sql.EncodeTable(var)
+end
+
+
+META.__index = META
+
+---@meta
+---@return zen.sql.Container
+function sql.GetContainer()
+    return setmetatable({}, META)
+end
+
+
+
