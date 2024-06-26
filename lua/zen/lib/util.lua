@@ -485,54 +485,130 @@ end
 
 _R = debug.getregistry()
 META = META or {}
+
+---@class Entity
 META.ENTITY                 = _R.Entity or {}
 
 ---@class Player
 META.PLAYER                 = _R.Player or {}
 
+---@class Weapon
 META.WEAPON                 = _R.Weapon or {}
+
+---@class Vehicle
 META.VEHICLE                = _R.Vehicle or {}
+
+---@class NPC
 META.NPC                    = _R.NPC or {}
+
+---@class PhysCollide
 META.PHYSCOLLIDE            = _R.PhysCollide or {}
+
+---@class PhysObj
 META.PHYSOBJ                = _R.PhysObj or {}
+
+---@class IMaterial
 META.IMATERIAL              = _R.IMaterial or {}
+
+---@class SurfaceInfo
 META.SURFACEINFO            = _R.SurfaceInfo or {}
+
+---@class PathFollower
 META.PATHFOLLOWER           = _R.PathFollower or {}
+
+---@class CLuaLocomotion
 META.CLUALOCOMOTION         = _R.CLuaLocomotion or {}
+
+---@class ISave
 META.ISAVE                  = _R.ISave or {}
+
+---@class CUserCmd
 META.CUSERCMD               = _R.CUserCmd or {}
+
+---@class CSoundPatch
 META.CSOUNDPATCH            = _R.CSoundPatch or {}
+
+---@class File
 META.FILE                   = _R.File or {}
+
+---@class Vector
 META.VECTOR                 = _R.Vector or {}
+
+---@class CMoveData
 META.CMOVEDATA              = _R.CMoveData or {}
+
+---@class VMatrix
 META.VMATRIX                = _R.VMatrix or {}
+
+---@class CRecipientFilter
 META.CRECIPIENTFILTER       = _R.CRecipientFilter or {}
+
+---@class ITexture
 META.ITEXTURE               = _R.ITexture or {}
+
+---@class CNavArea
 META.CNAVAREA               = _R.CNavArea or {}
+
+---@class CTakeDamageInfo
 META.CTAKEDAMAGEINFO        = _R.CTakeDamageInfo or {}
+
+---@class CEffectData
 META.CEFFECTDATA            = _R.CEffectData or {}
+
+---@class ConVar
 META.CONVAR                 = _R.ConVar or {}
+
+---@class CNavLadder
 META.CNAVLADDER             = _R.CNavLadder or {}
+
+---@class Color
 META.COLOR                  = _R.Color or {}
+
+---@class Angle
 META.ANGLE                  = _R.Angle or {}
+
+---@class NextBot
 META.NEXTBOT                = _R.NextBot or {}
 
+---@class IGModAudioChannel
 META.IGMODAUDIOCHANNEL      = _R.IGModAudioChannel or {}
+
+---@class CSEnt
 META.CSENT                  = _R.CSEnt or {}
+
+---@class bf_read
 META.BF_READ                = _R.bf_read or {}
+
+---@class IVideoWriter
 META.IVIDEOWRITER           = _R.IVideoWriter or {}
+
+---@class CLuaEmitter
 META.CLUAEMITTER            = _R.CLuaEmitter or {}
 
 ---@class Panel
 META.PANEL                  = _R.Panel or {}
 
+---@class CLuaParticle
 META.CLUAPARTICLE           = _R.CLuaParticle or {}
+
 META.PIXELVIS_HANDLE_T      = _R.pixelvis_handle_t or {}
+
+---@class IRestore
 META.IRESTORE               = _R.IRestore or {}
+
+---@class MarkupObject
 META.MARKUPOBJECT           = _R.MarkupObject or {}
+
+---@class ProjectedTexture
 META.PROJECTEDTEXTURE       = _R.ProjectedTexture or {}
+
+---@class DynamicLight
 META.DLIGHT_T               = _R.dlight_t or {}
+
+---@class CNewParticleEffect
 META.CNEWPARTICLEEFFECT     = _R.CNewParticleEffect or {}
+
+---@class IMesh
 META.IMESH                  = _R.IMesh or {}
 
 local get_jit_info = jit.util.funcinfo
