@@ -3,8 +3,11 @@ module("zen", package.seeall)
 local string_find = string.find
 
 function iperm.RequestToChangePlayerPermission(SteamID64, perm_name, bAllow)
-
-
+    nt.Send(
+        "iperm.UpdatePlayerPermission",
+        {"string", "string", "boolean"},
+        {SteamID64, perm_name, bAllow}
+    )
 end
 
 
@@ -51,17 +54,17 @@ function iperm.CreatePlayerPermissionMenu(SteamID64)
 
 
     FEATURES.CreatePermission = function(PERM)
-        local color_out = COLOR.WHITE
         local pnlItem = gui.Create("EditablePanel", pnlList, {
             "dock_top", tall = 30, margin = {2,2,2,2}, cc = {
+                colorBG = Color(255,255,255,5),
                 Paint = function(self, w, h)
-                    draw.BoxOutlined(1, 0,0,w,h,color_out)
+                    draw.Box(0,0,w,h,self.colorBG)
                 end
             }
         })
 
         local text = (PERM.description and PERM.description != "base") and PERM.description or PERM.name
-        gui.Create("DLabel", pnlItem, {
+        local pnlLabel = gui.Create("DLabel", pnlItem, {
             "dock_fill", margin = {5,0,0,0}, text = text, font = ui.ffont(8), text_color = color_white
         })
 
@@ -74,15 +77,18 @@ function iperm.CreatePlayerPermissionMenu(SteamID64)
             }
         })
 
+        if PERM.name == "GRAND" then
+            pnlItem:SetZPos(-1)
+            pnlLabel:SetTextColor(COLOR.RED)
+        end
+
 
         local bStatus = true
         local function SetValue(bActive)
             if bActive then
                 pnlCheckBox:SetText("|--YES--|")
-                color_out = COLOR.GREEN
             else
                 pnlCheckBox:SetText("|--NO--|")
-                color_out = COLOR.RED
             end
             bStatus = bActive
         end
@@ -201,9 +207,7 @@ icmd.Register("menu_permissions", function(QCMD, who, cmd, args, tags)
         end
 
         for k, ply in player.Iterator() do
-            for k = 1, 30 do
-                FEATURES.CreatePlayer(ply:SteamID64(), ply:Nick())
-            end
+            FEATURES.CreatePlayer(ply:SteamID64(), ply:Nick())
         end
 
         pnlEntry.pnl_Value:SetPlaceholderText("Nick / SteamID / SteamID64")

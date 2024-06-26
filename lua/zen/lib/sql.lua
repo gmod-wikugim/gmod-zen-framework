@@ -26,7 +26,7 @@ local sql_no_quotas = {
 ---@return string
 function sql.EncodeTable(var)
     local key_values = util.TableToKeyValues(var, "source")
-    local bEqual = table.IsEqual(var, util.KeyValuesToTable(key_values, false, true))
+    local bEqual = util.Equal(var, util.KeyValuesToTable(key_values, false, true))
     assert(bEqual, "error table encode!")
 
     local coded = util.Base64Encode(key_values)

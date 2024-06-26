@@ -27,22 +27,72 @@ iperm.unique_flags.ABSOLUTE = 2 ^ 4 -- No limits
 
 _CFG.net_permUpdate = "iperm.UpdatePlayer"
 
+---@type table<string, table<string, zen.iperm.perm_info>>
 iperm.mt_PlayerPermissions = iperm.mt_PlayerPermissions or {}
 iperm.mt_Permissions = iperm.mt_Permissions or {}
 
 local bit_band = bit.band
 local function isFlagSet(flags, flag) return bit_band(flags, flag) == flag end
 
-function iperm.PlayerSetPermission(sid64, perm_name, avaliable, target_flags, unique_flags)
+function iperm.PlayerSetPermission(sid64, perm_name, avaliable, target_flags, unique_flags, extra)
+    extra = extra or {}
     iperm.mt_PlayerPermissions[sid64] = iperm.mt_PlayerPermissions[sid64] or {}
     local tPlayerPerm = iperm.mt_PlayerPermissions[sid64]
     tPlayerPerm[perm_name] = {
-        bAvaliable = avaliable,
+        allowed = avaliable,
         target_flags = target_flags or iperm.pflags_target.BASE,
         unique_flags = unique_flags or iperm.unique_flags.BASE,
+        extra = {},
+        perm_name = perm_name,
     }
+
+    if SERVER then
+        local ply = util.GetPlayerEntity(sid64)
+        if ply then
+            nt.SendToChannel("player_permissions", ply, perm_name, avaliable, target_flags, unique_flags, extra)
+        end
+    end
 end
 
+---@param sid64 string
+---@param perm_list table<string, zen.iperm.perm_info>
+function iperm.SetPlayerPermissions(sid64, perm_list)
+    local t_Changed = {}
+
+
+    if !iperm.mt_PlayerPermissions[sid64] then iperm.mt_PlayerPermissions[sid64] = {} end
+    local ACTUAL_PERMS = iperm.mt_PlayerPermissions[sid64]
+
+    for perm_name, PERM in pairs(perm_list) do
+        local actual_value = ACTUAL_PERMS[perm_name]
+        if util.Equal(PERM, actual_value) then continue end
+
+        t_Changed[perm_name] = true
+        ACTUAL_PERMS[perm_name] = PERM
+    end
+
+    for k, v in pairs(ACTUAL_PERMS) do
+        if perm_list[k] == nil then
+            ACTUAL_PERMS[k] = nil
+            t_Changed[k] = true
+        end
+    end
+
+    if SERVER then
+        for perm_name in pairs(t_Changed) do
+            local PERM = ACTUAL_PERMS[perm_name]
+
+
+            if PERM then
+                nt.SendToChannel("player_permissions", nil, sid64, perm_name, PERM.allowed, 0, 0, {})
+            else
+                nt.SendToChannel("player_permissions", nil, sid64, perm_name, false, 0, 0, {})
+            end
+        end
+    end
+end
+
+---@return zen.iperm.perm_info|false
 function iperm.PlayerGetPermission(sid64, perm_name)
     return iperm.mt_PlayerPermissions[sid64] and (iperm.mt_PlayerPermissions[sid64][perm_name] or false) or false
 end
@@ -111,7 +161,7 @@ function iperm.PlayerHasPermission(sid64, perm_name, target, isSilent)
 
         -- Personal block checking
         do
-            if tPlayerPerm and tPlayerPerm.bAvaliable == false then
+            if tPlayerPerm and tPlayerPerm.allowed == false then
                 sError = "This action was blocked for you"
                 goto error
             end
@@ -222,8 +272,8 @@ end
 
 
 ---@param perm_name string
----@param flags number
----@param description string
+---@param flags? number
+---@param description? string
 function iperm.RegisterPermission(perm_name, flags, description)
     assertString(perm_name, "perm_name")
 
@@ -283,6 +333,45 @@ ihook.Handler("zen.icmd.CanRun", "zen.permission", function(tCommand, QCMD, cmd,
     end
 end)
 
+nt.RegisterChannel("player_permissions", nt.t_ChannelFlags.PUBLIC, {
+    types = {"string", "string", "boolean", "uint32", "uint32", "table"},
+    OnRead = function(self, target, sid64, perm_name, allowed, target_flags, unique_flags, extra)
+        if CLIENT then
+            iperm.PlayerSetPermission(sid64, perm_name, allowed, allowed, target_flags, unique_flags, extra)
+        end
+    end,
+    WritePull = function(self, who)
+        if SERVER then
+            local count = table.Count(iperm.mt_PlayerPermissions)
+            net.WriteUInt(count, 16)
+
+            for sid64, PERMS in pairs(iperm.mt_PlayerPermissions) do
+                local count2 = table.Count(PERMS)
+                net.WriteString(sid64)
+                net.WriteUInt(count2, 16)
+
+                for perm_name, PERM in pairs(PERMS) do
+                    nt.Write({"string", "boolean", "uint32", "uint32", "table"}, {PERM.perm_name, PERM.allowed, PERM.target_flags, PERM.unique_flags, PERM.extra})
+                end
+            end
+        end
+    end,
+    ReadPull = function(self, addResult)
+        if CLIENT then
+            local count = net.ReadUInt(16)
+            for k = 1, count do
+                local sid64 = net.ReadString()
+                local count2 = net.ReadUInt(16)
+                for k = 1, count2 do
+                    local perm_name, allowed, target_flags, unique_flags, extra = nt.Read({"string", "boolean", "uint32", "uint32", "table"})
+
+                    addResult(sid64, perm_name, allowed, target_flags, unique_flags, extra)
+                end
+            end
+        end
+    end,
+})
+
 nt.RegisterChannel("permission_info", nt.t_ChannelFlags.PUBLIC, {
     types = {"string", "uint32", "string"},
     OnRead = function(self, target, perm_name, flags, description)
@@ -290,7 +379,7 @@ nt.RegisterChannel("permission_info", nt.t_ChannelFlags.PUBLIC, {
             iperm.RegisterPermission(perm_name, flags, description)
         end
     end,
-    WritePull = function(self, target)
+    WritePull = function(self, who)
         if SERVER then
             local count = iperm.Count
             net.WriteUInt(count, 16)
