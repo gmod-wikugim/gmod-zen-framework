@@ -75,6 +75,18 @@ end, {
     "tall_auto",
 })
 
+gui.RegisterParam("size_content_x", function(pnl, value)
+    pnl:SizeToContentsX()
+end, {})
+
+gui.RegisterParam("size_content_y", function(pnl, value)
+    pnl:SizeToContentsY()
+end, {})
+
+gui.RegisterParam("size_content", function(pnl, value)
+    pnl:SizeToContents(true, true)
+end, {})
+
 
 gui.RegisterParam("size_children", function(pnl, value)
     pnl:SizeToChildren(true, true)
