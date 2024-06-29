@@ -4,7 +4,7 @@ iconsole = _GET("iconsole")
 
 iconsole.INPUT_MODE = false
 iconsole.phrase = ""
-iconsole.DrawFont = ui.ffont(6)
+iconsole.DrawFont = ui.ffont(14)
 iconsole.DrawFont_UnderLine = ui.font("iconsole.underline",6,nil,{underline = true})
 
 local concat = table.concat

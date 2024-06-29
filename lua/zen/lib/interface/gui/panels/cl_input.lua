@@ -261,7 +261,7 @@ gui.RegisterStylePanel("input_entry", {
 
             local tx, ty = bx + aw/2, by + ah/2
 
-            draw.Text(self.sHelpText, 6, tx, ty, color_text, 1, 1, COLOR.BLACK)
+            draw.Text(self.sHelpText, 16, tx, ty, color_text, 1, 1, COLOR.BLACK)
         end
     end,
 }, "DTextEntry", {}, {})
@@ -302,11 +302,11 @@ gui.RegisterStylePanel("input_bool", {
         self.pnl_Value.Paint = function(_, w, h)
             local value = self.pnl_Value.bValue
             if value then
-                draw.Text("true", 6, 2, h/2, color_text, 0, 1, COLOR.BLACK)
+                draw.Text("true", 16, 2, h/2, color_text, 0, 1, COLOR.BLACK)
             elseif value == nil then
-                draw.Text("nil", 6, 2, h/2, color_text, 0, 1, COLOR.BLACK)
+                draw.Text("nil", 16, 2, h/2, color_text, 0, 1, COLOR.BLACK)
             else
-                draw.Text("false", 6, 2, h/2, color_text, 0, 1, COLOR.BLACK)
+                draw.Text("false", 16, 2, h/2, color_text, 0, 1, COLOR.BLACK)
             end
         end
 

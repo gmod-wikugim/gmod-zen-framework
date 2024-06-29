@@ -41,7 +41,7 @@ function ui.font(font_unique_id, size, font_base, font_data, noCheck)
 	local data = {
 		font = font_data.font or font_base,
 		extended = font_data.expected or false,
-		size = (size and size * ( ScrH() / 350.0 ) or font_data.size),
+		size = (size or font_data.size),
 		weight = font_data.weight or 300,
 		blursize = font_data.blursize or 0,
 		scanlines = font_data.scanlines or 0,

@@ -62,7 +62,7 @@ ihook.Listen("PostDrawOpaqueRenderables", "zen.hud", function()
 
             cam.Start3D2D(pos, ang, 0.3)
                 cam.IgnoreZ(true)
-                draw.Text(name_3d2d, 8, 0, 0, clr, 1,1)
+                draw.Text(name_3d2d, 18, 0, 0, clr, 1,1)
                 cam.IgnoreZ(false)
             cam.End3D2D()
         end
