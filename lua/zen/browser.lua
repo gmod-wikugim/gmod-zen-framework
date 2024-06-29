@@ -21,6 +21,7 @@ zen.IncludeSH("zen/lib/anim.lua")
 zen.IncludeSH("zen/lib/feature.lua")
 
 zen.IncludeSH("zen/lib/network/sh_nt.lua")
+zen.IncludeSH("zen/lib/network/sh_new.lua")
 zen.IncludeSV("zen/lib/network/sv_nt.lua")
 zen.IncludeCL("zen/lib/network/cl_nt.lua")
 
@@ -61,6 +62,8 @@ zen.IncludeCL("zen/lib/interface/gui/panels/cl_scroll_vbar.lua")
 zen.IncludeCL("zen/lib/interface/gui/panels/cl_content.lua")
 zen.IncludeCL("zen/lib/interface/gui/panels/cl_check_box.lua")
 zen.IncludeCL("zen/lib/interface/gui/panels/cl_check_box_label.lua")
+zen.IncludeCL("zen/lib/interface/gui/panels/cl_free.lua")
+zen.IncludeCL("zen/lib/interface/gui/panels/cl_text_button.lua")
 
 zen.IncludeSH("zen/modules/save/sh_base.lua")
 zen.IncludeSH("zen/modules/save/sh_player.lua")
