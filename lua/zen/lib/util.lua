@@ -990,6 +990,8 @@ COLOR.FILL_40 = Color(40,40,40,255)
 COLOR.FILL_50 = Color(50,50,50,255)
 COLOR.FILL_60 = Color(60,60,60,255)
 
+COLOR.HOVER = Color(255,255,255,20)
+
 ---@param value string
 ---@return boolean IsSteamID64
 function util.IsSteamID64(value)
