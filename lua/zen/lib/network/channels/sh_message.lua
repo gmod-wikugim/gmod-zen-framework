@@ -2,6 +2,13 @@ module("zen", package.seeall)
 
 msg = _GET("msg")
 
+NOTIFY_GENERIC = 0
+NOTIFY_ERROR = 1
+NOTIFY_UNDO = 2
+NOTIFY_HINT = 3
+NOTIFY_CLEANUP = 4
+
+
 nt.RegisterChannel("message.debugInfo", nil, {
     types = {"string", "uint8", "color", "string"},
     OnRead = function(self, ply, text, lifetime, outline_color, font)
@@ -48,7 +55,7 @@ nt.RegisterChannel("message.console.table", nil, {
     end,
 })
 nt.RegisterChannel("message.notification.AddLegacy", nil, {
-    types = {"string", "uint4", "number"},
+    types = {"string", "uint4", "uint12"},
     OnRead = function(self, ply, message, notify_type, length)
         if CLIENT then
             notification.AddLegacy(message, notify_type, length)
