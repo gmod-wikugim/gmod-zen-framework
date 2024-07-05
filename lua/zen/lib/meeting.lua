@@ -397,14 +397,14 @@ end
 
 -- Send message to everyone in the meeting
 function MEMETA:MessageAll(text)
-    msg.ChatMessage(self.players, text)
+    msg.ChatMessage(self.RecipientFilter_players, text)
 end
 
 -- Send notify to everyone in the meeting
 function MEMETA:NotifyAll(text, notify_type, length)
     notify_type = notify_type or NOTIFY_HINT
     length = length or 5
-    msg.Notify(self.players, text, notify_type, length)
+    msg.Notify(self.RecipientFilter_players, text, notify_type, length)
 end
 
 -- Send message to player in the meeting
