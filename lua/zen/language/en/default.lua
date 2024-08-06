@@ -1,6 +1,6 @@
 module("zen", package.seeall)
 
-local L = language.GetLanguageForEdit("en")
+local L = lang.GetLanguageForEdit("en")
 
 L["welcome"] = "Welcome to Zen Framework!"
 L["zen"] = "Zen"

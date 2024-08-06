@@ -64,14 +64,14 @@ module("zen", package.seeall)
 
 */
 
-language = _GET("language", language)
+lang = _GET("lang")
 
-language.mt_Langauges = language.mt_Langauges or {}
-local LL = language.mt_Langauges
+lang.mt_Langauges = lang.mt_Langauges or {}
+local LL = lang.mt_Langauges
 
-language.DEFAULT_LANG = "en"
+lang.DEFAULT_LANG = "en"
 
-language.CVAR_LANGUAGE = GetConVar("gmod_language")
+lang.CVAR_LANGUAGE = GetConVar("gmod_language")
 
 local read_types = {
     ["ply"] = function(var) return isentity(var) and var.Nick and (var:Nick() or "NIL") or tostring(var) end,
@@ -160,35 +160,35 @@ end
 
 ---@param lang_id string
 ---@return table<string, string>
-function language.GetLanguageForEdit(lang_id)
-    if !language.mt_Langauges[lang_id] then
-        language.mt_Langauges[lang_id] = {}
+function lang.GetLanguageForEdit(lang_id)
+    if !lang.mt_Langauges[lang_id] then
+        lang.mt_Langauges[lang_id] = {}
     end
 
-    return language.mt_Langauges[lang_id]
+    return lang.mt_Langauges[lang_id]
 end
 
 ---@return string
-function language.GetLanguage()
+function lang.GetLanguage()
     -- if CLIENT then
-        if language.CVAR_LANGUAGE then
-            return language.CVAR_LANGUAGE:GetString()
+        if lang.CVAR_LANGUAGE then
+            return lang.CVAR_LANGUAGE:GetString()
         end
     -- end
 
-    return language.DEFAULT_LANG
+    return lang.DEFAULT_LANG
 end
 
 ---@param lang_id string
 ---@param phrase string
 ---@return string|nil
-function language.GetLanguagePhrase(lang_id, phrase)
-    local lang_id = lang_id or language.DEFAULT_LANG
+function lang.GetLanguagePhrase(lang_id, phrase)
+    local lang_id = lang_id or lang.DEFAULT_LANG
 
     local translated = LL[lang_id] and LL[lang_id][phrase]
 
     if !translated then
-        translated = LL[language.DEFAULT_LANG] and LL[language.DEFAULT_LANG][phrase]
+        translated = LL[lang.DEFAULT_LANG] and LL[lang.DEFAULT_LANG][phrase]
     end
 
     return translated
@@ -198,15 +198,15 @@ end
 
 ---@param phrase string
 ---@return string
-function language.GetTranslatedPhrase(phrase)
-    local lang_id = language.GetLanguage()
+function lang.GetTranslatedPhrase(phrase)
+    local lang_id = lang.GetLanguage()
 
     -- Remove # prefix
     if string.StartWith(phrase, "#") then
         phrase = string.sub(phrase, 2)
     end
 
-    local translated = language.GetLanguagePhrase(lang_id, phrase)
+    local translated = lang.GetLanguagePhrase(lang_id, phrase)
 
     if !translated then
         translated = phrase
@@ -219,17 +219,11 @@ end
 ---@param tab? table
 ---@param onlyText? boolean?
 ---@return string
-function language.GetTranslatedPhraseInterpolate(phrase, tab, onlyText)
-    local translated = language.GetTranslatedPhrase(phrase)
+function lang.GetTranslatedPhraseInterpolate(phrase, tab, onlyText)
+    local translated = lang.GetTranslatedPhrase(phrase)
 
     local interpolated = InterpolateConfig(translated, read_types, phrase_alias, tab, onlyText)
 
     return interpolated
 end
-language.L = language.GetTranslatedPhraseInterpolate
-
-
-if CLIENT then
-    local translated = language.L("welcome_player", {LocalPlayer()})
-    _print(translated)
-end
+lang.L = lang.GetTranslatedPhraseInterpolate

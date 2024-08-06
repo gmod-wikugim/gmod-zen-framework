@@ -46,8 +46,8 @@ do
             while i < count do
                 i = i + 1
                 local dat = args[i]
-                if type(dat) == "string" and _sub(dat, 1, 1) == "#" and language.L then
-                    dat = language.L(dat)
+                if type(dat) == "string" and _sub(dat, 1, 1) == "#" and lang.L then
+                    dat = lang.L(dat)
                 end
                 if IsColor(dat) then
                     lastcolor = dat
