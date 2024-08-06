@@ -8,6 +8,7 @@ end
 zen.IncludeSH("zen/config.lua")
 zen.IncludeSH("zen/lib/hook.lua")
 zen.IncludeSH("zen/lib/table.lua")
+zen.IncludeSH("zen/lib/language.lua")
 zen.IncludeSH("zen/lib/util.lua")
 zen.IncludeSH("zen/lib/string.lua")
 -- zen.IncludeSH("zen/lib/xml.lua")
@@ -101,9 +102,12 @@ zen.IncludeSH("zen/modules/zone/sh_player.lua")
 
 zen.IncludeCL("zen/menu/permission/cl_menu.lua")
 
+zen.IncludeFolderRecursive("zen/language")
 
 zen.IncludePlugins()
 
 if file.Exists("zen_sub/browser.lua", "LUA") then
     zen.IncludeSH("zen_sub/browser.lua")
 end
+
+print("#welcome")

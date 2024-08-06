@@ -27,6 +27,7 @@ _CFG.console_space = " "
 
 local string_Split = string.Split
 
+local _sub = string.sub
 _print = _L._print or print
 do
     local i, lastcolor
@@ -45,6 +46,9 @@ do
             while i < count do
                 i = i + 1
                 local dat = args[i]
+                if type(dat) == "string" and _sub(dat, 1, 1) == "#" and language.L then
+                    dat = language.L(dat)
+                end
                 if IsColor(dat) then
                     lastcolor = dat
                     continue
@@ -141,6 +145,33 @@ function zen.IncludePlugins()
 
         print("Run plugin: ", folder_name)
         xpcall(zen.IncludeSH, ErrorNoHaltWithStack, fl_browser)
+    end
+end
+
+function zen.IncludeFolderRecursive(folder)
+    local files, folders = file.Find(folder .. "/*", "LUA")
+
+    if !files then return end
+
+    for _, file_name in pairs(files) do
+        local fl_path = folder .. "/" .. file_name
+
+        local prefix = string.sub(file_name, 1, 3)
+        if prefix == "cl_" then
+            zen.IncludeCL(fl_path)
+        elseif prefix == "sv_" then
+            zen.IncludeSV(fl_path)
+        elseif prefix == "sh_" then
+            zen.IncludeSH(fl_path)
+        else
+            zen.IncludeSH(fl_path)
+        end
+    end
+
+    if !folders then return end
+
+    for _, sub_folder in pairs(folders) do
+        zen.IncludeFolderRecursive(folder .. "/" .. sub_folder)
     end
 end
 
