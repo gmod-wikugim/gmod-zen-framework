@@ -72,7 +72,9 @@ local LL = lang.mt_Langauges
 
 lang.DEFAULT_LANG = "en"
 
-lang.CVAR_LANGUAGE = GetConVar("gmod_language")
+local cvar_lang = GetConVar("gmod_language"):GetString()
+
+lang.ACTIVE_LANG = (#cvar_lang > 0) and cvar_lang or lang.DEFAULT_LANG
 
 local read_types = {
     ["ply"] = function(var) return isentity(var) and var.Nick and (var:Nick() or "NIL") or tostring(var) end,
@@ -201,19 +203,11 @@ end
 
 ---@return string
 function lang.GetLanguage()
-    -- if CLIENT then
-        if lang.CVAR_LANGUAGE then
-            return lang.CVAR_LANGUAGE:GetString()
-        end
-    -- end
-
-    return lang.DEFAULT_LANG
+    return lang.ACTIVE_LANG
 end
 
 function lang.Update()
     local phrases = lang.mt_Langauges[lang.GetLanguage()]
-
-    print("Update language", lang.GetLanguage())
 
     if phrases then
         for k, v in pairs(phrases) do
@@ -224,12 +218,16 @@ end
 
 if CLIENT then
     cvars.AddChangeCallback("gmod_language", function(_, _, value)
-        print("Language changed to", value)
-        timer.Simple(0.1, function()
-            lang.Update()
-        end)
+        if value and #value > 0 then
+            lang.ACTIVE_LANG = value
+        end
+
+        lang.Update()
     end, "language.update")
-    hook.Add("InitPostEntity", "language.update", lang.Update)
+    if !lang.bInitialized then
+        lang.Update()
+        lang.bInitialized = true
+    end
 end
 
 

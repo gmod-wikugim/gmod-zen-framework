@@ -6,4 +6,3 @@ ENT.Type = "anim"
 
 ENT.Spawnable = true
 ENT.AdminOnly = false
-ENT.PrintName = "#entity.zen_base_2"
