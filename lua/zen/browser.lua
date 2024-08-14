@@ -36,6 +36,7 @@ zen.IncludeSH("zen/lib/network/channels/sh_message.lua")
 zen.IncludeSH("zen/lib/network/channels/sh_auto.lua")
 
 zen.IncludeCL("zen/lib/interface/ui/cl_fonts.lua")
+zen.IncludeCL("zen/lib/interface/ui/cl_widget.lua")
 zen.IncludeCL("zen/lib/interface/ui/cl_debug.lua")
 zen.IncludeCL("zen/lib/interface/draw/cl_draw.lua")
 zen.IncludeCL("zen/lib/interface/draw/cl_draw_3d.lua")
