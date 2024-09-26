@@ -49,6 +49,103 @@ function module.SetActiveProvider(provider)
     module.mP_active_provider = provider
 end
 
+
+---@class db.MultiQuery
+---@field query string
+---@field callback? fun(result:any, query:string)
+
+---@param MultiQuery db.MultiQuery[]
+---@param onFinish? fun(results:any[])
+function module.MultiQuery(MultiQuery, onFinish)
+    local ActiveProvider = module.GetActiveProvider()
+
+    if ActiveProvider == "tmysql4" then
+        local db, err = module.tmysql.initialize(
+            zen.db.config.host,
+            zen.db.config.username,
+            zen.db.config.password,
+            zen.db.config.database,
+            zen.db.config.port
+        )
+
+        if not db then
+            module.error("tmysql4: " .. err)
+            return
+        end
+
+        for i, query in ipairs(MultiQuery) do
+            db:Query(query.query, function(result)
+                if query.callback then query.callback(result, query.query) end
+            end)
+        end
+
+        return
+    end
+
+    if ActiveProvider == "mysqloo" then
+        local traceback = debug.traceback()
+
+        local results = {}
+
+        local transaction = module.mysqloo_db:createTransaction()
+
+        for i, query in ipairs(MultiQuery) do
+            local q = module.mysqloo_db:query(query.query)
+
+            function q:onSuccess(data)
+                if query.callback then query.callback(data, query.query) end
+                table.insert(results, data)
+            end
+
+            function q:onError(err)
+                module.error(err, "\n", traceback, query)
+            end
+
+            transaction:addQuery(q)
+        end
+
+        transaction.onSuccess = function()
+            if onFinish then onFinish(results) end
+        end
+
+        transaction.onError = function(tr, err)
+            module.error(err, "\n", traceback, tr)
+
+        end
+
+        transaction:start()
+
+        return
+    end
+
+    if ActiveProvider == "sqlite" then
+        local results = {}
+
+        for i, query in ipairs(MultiQuery) do
+            local data = sql.Query(query.query)
+
+            if data == false then
+                local sql_error = sql.LastError()
+                local str_args = table.concat({sql_error, "\n", query.query})
+
+                module.error(str_args)
+                return
+            else
+                if query.callback then query.callback(data, query.query) end
+                table.insert(results, data)
+            end
+        end
+
+        if onFinish then onFinish(results) end
+
+        return
+    end
+
+    module.error("No active provider found")
+    return
+
+end
+
 ---@param query string
 ---@param callback? fun(result:any, query:string)
 ---@param onError? fun(err:string)
@@ -171,6 +268,8 @@ function module.Start(provider, host_data, onConnected, onDisconnected)
         end
 
         module.log("mysqloo provider connecting...")
+        module.mysqloo_db:setMultiStatements(true)
+        module.mysqloo_db:setAutoReconnect(true)
         module.mysqloo_db:connect()
 
 
@@ -675,65 +774,73 @@ function module.GetTableStruct(tableName, callback)
     end
 
     if ActiveProvider == "mysqloo" then
-        module.Query("SHOW COLUMNS FROM `" .. tableName .. "`", function(table_info)
 
-            // SHOW INDEXES
-            // FROM $tablename
+        module.MultiQuery({
+            {
+                query = "SHOW COLUMNS FROM `" .. tableName .. "`",
+            },
+            {
+                query = "SHOW INDEXES FROM `" .. tableName .. "`",
+            }
+        }, function(results)
+            -- PrintTable(results)
+            local table_info = results[1]
+            local indexes = results[2]
 
-            module.Query("SHOW INDEXES FROM `" .. tableName .. "`", function(indexes)
-                local columns = {}
+            local columns = {}
 
-                local unique_columns = {}
+            local unique_columns = {}
 
-                for i, row in ipairs(indexes) do
-                    if row.Non_unique == 0 then
-                        unique_columns[row.Column_name] = true
-                    end
+            for i, row in ipairs(indexes) do
+                if row.Non_unique == 0 then
+                    unique_columns[row.Column_name] = true
+                end
+            end
+
+            for i, row in ipairs(table_info) do
+                local column_is_unique = unique_columns[row.Field] == true
+
+                local column = {
+                    name = row.Field,
+                    type = module.ConvertTypeToLua(row.Type),
+                    length = row.Length,
+                    default = row.Default,
+                    primaryKey = row.Key == "PRI",
+                    autoIncrement = row.Extra == "auto_increment",
+                    unique = column_is_unique,
+                    notNull = row.Null == "NO"
+                }
+
+                if column.default == "NULL" then
+                    column.default = nil
                 end
 
-                for i, row in ipairs(table_info) do
-                    local column_is_unique = unique_columns[row.Field] == true
-
-                    local column = {
-                        name = row.Field,
-                        type = module.ConvertTypeToLua(row.Type),
-                        length = row.Length,
-                        default = row.Default,
-                        primaryKey = row.Key == "PRI",
-                        autoIncrement = row.Extra == "auto_increment",
-                        unique = column_is_unique,
-                        notNull = row.Null == "NO"
-                    }
-
-                    if column.default == "NULL" then
-                        column.default = nil
-                    end
-
-                    if column.notNull == false then
-                        column.notNull = nil
-                    end
-
-                    if column.unique == false then
-                        column.unique = nil
-                    end
-
-                    if column.primaryKey == false then
-                        column.primaryKey = nil
-                    end
-
-                    if column.autoIncrement == false then
-                        column.autoIncrement = nil
-                    end
-
-                    table.insert(columns, column)
-
-                    callback({
-                        columns = columns
-                    })
+                if column.notNull == false then
+                    column.notNull = nil
                 end
-            end)
+
+                if column.unique == false then
+                    column.unique = nil
+                end
+
+                if column.primaryKey == false then
+                    column.primaryKey = nil
+                end
+
+                if column.autoIncrement == false then
+                    column.autoIncrement = nil
+                end
+
+                table.insert(columns, column)
+
+                callback({
+                    columns = columns
+                })
+            end
 
         end)
+
+
 
         return
     end
@@ -810,7 +917,7 @@ function module.GetTableStruct(tableName, callback)
 end
 
 
-module.Start("mysqloo", {
+module.Start("sqlite", {
     host = "localhost",
     username = "root",
     password = "root",
@@ -818,17 +925,18 @@ module.Start("mysqloo", {
     database = "gmod"
 }, function()
 
+
     module.IsTableExists("db_test", function(bExists)
         if bExists then
             module.log("Table exists db_test")
 
-            -- module.GetTableStruct("db_test", function(data)
-            --     PrintTable(data)
-            -- end)
-
-            module.DeleteTable("db_test", function()
-                module.log("Table db_test deleted")
+            module.GetTableStruct("db_test", function(data)
+                PrintTable(data)
             end)
+
+            -- module.DeleteTable("db_test", function()
+            --     module.log("Table db_test deleted")
+            -- end)
         else
             module.log("Table not exists db_test, creating...")
 
@@ -836,11 +944,11 @@ module.Start("mysqloo", {
                 columns = {
                     {
                         name = "id",
-                        type = "VARCHAR",
-                        -- unique = true,
+                        type = "INTEGER",
+                        unique = true,
                         -- length = 255,
                         -- primaryKey = true,
-                        autoIncrement = true
+                        -- autoIncrement = true
                     },
                     {
                         name = "steamid",
