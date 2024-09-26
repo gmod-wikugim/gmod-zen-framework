@@ -255,7 +255,7 @@ end
 ---@field columns db.universal_table_struct_column[]
 
 ---@param type db.column_type
-function module.ConvertType(type)
+function module.ConvertLuaToType(type)
     local ActiveProvider = module.GetActiveProvider()
 
     if ActiveProvider == "tmysql4" then
@@ -303,6 +303,69 @@ function module.ConvertType(type)
     module.error("No active provider found")
 end
 
+-- Accociative array of database types to lua types
+module.DATABASE_TYPES = {
+    ["BIGINT"] = "INTEGER",
+    ["BINARY"] = "BLOB",
+    ["BIT"] = "INTEGER",
+    ["BLOB"] = "BLOB",
+    ["BOOL"] = "INTEGER",
+    ["BOOLEAN"] = "INTEGER",
+    ["CHAR"] = "TEXT",
+    ["DATE"] = "INTEGER",
+    ["DATETIME"] = "INTEGER",
+    ["DEC"] = "REAL",
+    ["DECIMAL"] = "REAL",
+    ["DOUBLE PRECISION"] = "REAL",
+    ["DOUBLE"] = "REAL",
+    ["ENUM"] = "TEXT",
+    ["FIXED"] = "REAL",
+    ["FLOAT"] = "REAL",
+    ["GEOMETRY"] = "TEXT",
+    ["GEOMETRYCOLLECTION"] = "TEXT",
+    ["INT"] = "INTEGER",
+    ["INTEGER"] = "INTEGER",
+    ["JSON"] = "TEXT",
+    ["LINESTRING"] = "TEXT",
+    ["LONGBLOB"] = "BLOB",
+    ["LONGTEXT"] = "TEXT",
+    ["MEDIUMBLOB"] = "BLOB",
+    ["MEDIUMINT"] = "INTEGER",
+    ["MEDIUMTEXT"] = "TEXT",
+    ["MULTILINESTRING"] = "TEXT",
+    ["MULTIPOINT"] = "TEXT",
+    ["MULTIPOLYGON"] = "TEXT",
+    ["NUMERIC"] = "REAL",
+    ["POINT"] = "TEXT",
+    ["POLYGON"] = "TEXT",
+    ["REAL"] = "REAL",
+    ["SERIAL"] = "INTEGER",
+    ["SET"] = "TEXT",
+    ["SMALLINT"] = "INTEGER",
+    ["TEXT"] = "TEXT",
+    ["TIME"] = "INTEGER",
+    ["TIMESTAMP"] = "INTEGER",
+    ["TINYBLOB"] = "BLOB",
+    ["TINYINT"] = "INTEGER",
+    ["TINYTEXT"] = "TEXT",
+    ["VARBINARY"] = "BLOB",
+    ["VARCHAR"] = "VARCHAR",
+    ["XML"] = "TEXT",
+    ["YEAR"] = "INTEGER",
+}
+
+---@param type string
+---@return db.column_type
+function module.ConvertTypeToLua(type)
+    local LuaType = module.DATABASE_TYPES[type]
+
+    if LuaType then
+        return LuaType
+    end
+
+    module.error("Unknown type: ", type)
+end
+
 ---@param tableName string
 ---@param tableStruct db.universal_table_struct
 ---@param callback? fun(res:any, query:string)
@@ -316,7 +379,7 @@ function module.CreateTable(tableName, tableStruct, callback)
         local query = "CREATE TABLE `" .. tableName .. "` \n("
 
         for i, column in ipairs(tableStruct.columns) do
-            local columnType = module.ConvertType(column.type)
+            local columnType = module.ConvertLuaToType(column.type)
             query = query .. "\t `" .. column.name .. "` " .. columnType
 
             if column.length then
@@ -366,7 +429,7 @@ function module.CreateTable(tableName, tableStruct, callback)
         local query = "CREATE TABLE `" .. tableName .. "` \n("
 
         for i, column in ipairs(tableStruct.columns) do
-            local columnType = module.ConvertType(column.type)
+            local columnType = module.ConvertLuaToType(column.type)
             query = query .. "\t `" .. column.name .. "` " .. columnType
 
             if column.length then
@@ -416,7 +479,7 @@ function module.CreateTable(tableName, tableStruct, callback)
         local query = "CREATE TABLE `" .. tableName .. "` \n(\n"
 
         for i, column in ipairs(tableStruct.columns) do
-            local columnType = module.ConvertType(column.type)
+            local columnType = module.ConvertLuaToType(column.type)
             query = query .. "\t `" .. column.name .. "` " .. columnType
 
             if column.length then
@@ -465,9 +528,131 @@ function module.CreateTable(tableName, tableStruct, callback)
     module.error("No active provider found")
 end
 
+--- Get table schemas and convert this to universal format
+--- Convert NULL to nil
+---@param tableName string
+---@param callback fun(data:db.universal_table_struct)
+function module.GetTableStruct(tableName, callback)
+    local ActiveProvider = module.GetActiveProvider()
+
+    if ActiveProvider == "tmysql4" then
+        module.Query("SHOW COLUMNS FROM `" .. tableName .. "`", function(result)
+            local columns = {}
+
+            for i, row in ipairs(result[1].data) do
+                local column = {
+                    name = row.Field,
+                    type = module.ConvertTypeToLua(row.Type),
+                    length = row.Length,
+                    default = row.Default,
+                    primaryKey = row.Key == "PRI",
+                    autoIncrement = row.Extra == "auto_increment",
+                    unique = row.Key == "UNI",
+                    notNull = row.Null == "NO"
+                }
+
+                table.insert(columns, column)
+            end
+
+            callback({
+                columns = columns
+            })
+        end)
+
+        return
+    end
+
+    if ActiveProvider == "mysqloo" then
+        module.Query("DESCRIBE `%s`", function(result)
+            local columns = {}
+
+            PrintTable(result)
+
+            callback({
+                columns = columns
+            })
+        end)
+
+        return
+    end
+
+    if ActiveProvider == "sqlite" then
+        module.Query("PRAGMA table_info(" .. tableName .. ")", function(table_info_pragma)
+
+            module.Query("PRAGMA index_list(" .. tableName .. ")", function(index_list_pragma)
+
+                local unique_columns = {}
+
+                for i, row in ipairs(index_list_pragma) do
+                    if row.unique == "1" then
+                        unique_columns[row.seq] = true
+                    end
+                end
+
+                -- PrintTable(index_list_pragma)
+                -- PrintTable(table_info_pragma)
+
+                local columns = {}
+
+                for i, row in ipairs(table_info_pragma) do
+
+                    local column_is_unique = unique_columns[row.cid] == true
+
+                    local column = {
+                        name = row.name,
+                        type = module.ConvertTypeToLua(row.type),
+                        length = row.length,
+                        default = row.dflt_value,
+                        primaryKey = row.pk == "1",
+                        autoIncrement = row.pk == "1",
+                        unique = column_is_unique,
+                        notNull = row.notnull == "1",
+                    }
+
+                    if column.default == "NULL" then
+                        column.default = nil
+                    end
+
+                    if column.notNull == false then
+                        column.notNull = nil
+                    end
+
+                    if column.unique == false then
+                        column.unique = nil
+                    end
+
+                    if column.primaryKey == false then
+                        column.primaryKey = nil
+                    end
+
+                    if column.autoIncrement == false then
+                        column.autoIncrement = nil
+                    end
+
+                    table.insert(columns, column)
+                end
+
+                callback({
+                    columns = columns
+                })
+
+            end)
+
+        end)
+
+        return
+    end
+
+    module.error("No active provider found")
+end
+
 module.IsTableExists("db_test", function(bExists)
     if bExists then
         module.log("Table exists db_test")
+
+        module.GetTableStruct("db_test", function(data)
+            PrintTable(data)
+        end)
 
         module.DeleteTable("db_test", function()
             module.log("Table db_test deleted")
@@ -480,13 +665,13 @@ module.IsTableExists("db_test", function(bExists)
                 {
                     name = "id",
                     type = "INTEGER",
-                    primaryKey = true,
-                    autoIncrement = true
+                    unique = true,
                 },
                 {
                     name = "steamid",
                     type = "TEXT",
-                    notNull = true
+                    notNull = true,
+                    unique = true,
                 },
                 {
                     name = "name",
