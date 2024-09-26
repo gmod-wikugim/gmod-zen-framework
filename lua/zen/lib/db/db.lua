@@ -254,6 +254,55 @@ end
 ---@class db.universal_table_struct
 ---@field columns db.universal_table_struct_column[]
 
+---@param type db.column_type
+function module.ConvertType(type)
+    local ActiveProvider = module.GetActiveProvider()
+
+    if ActiveProvider == "tmysql4" then
+        if type == "INTEGER" then
+            return "INT"
+        elseif type == "TEXT" then
+            return "TEXT"
+        elseif type == "REAL" then
+            return "FLOAT"
+        elseif type == "BLOB" then
+            return "BLOB"
+        elseif type == "VARCHAR" then
+            return "VARCHAR"
+        end
+    end
+
+    if ActiveProvider == "mysqloo" then
+        if type == "INTEGER" then
+            return "INT"
+        elseif type == "TEXT" then
+            return "TEXT"
+        elseif type == "REAL" then
+            return "FLOAT"
+        elseif type == "BLOB" then
+            return "BLOB"
+        elseif type == "VARCHAR" then
+            return "VARCHAR"
+        end
+    end
+
+    if ActiveProvider == "sqlite" then
+        if type == "INTEGER" then
+            return "INTEGER"
+        elseif type == "TEXT" then
+            return "TEXT"
+        elseif type == "REAL" then
+            return "REAL"
+        elseif type == "BLOB" then
+            return "BLOB"
+        elseif type == "VARCHAR" then
+            return "VARCHAR"
+        end
+    end
+
+    module.error("No active provider found")
+end
+
 ---@param tableName string
 ---@param tableStruct db.universal_table_struct
 ---@param callback? fun(res:any, query:string)
@@ -267,18 +316,19 @@ function module.CreateTable(tableName, tableStruct, callback)
         local query = "CREATE TABLE `" .. tableName .. "` \n("
 
         for i, column in ipairs(tableStruct.columns) do
-            query = query .. "\t `" .. column.name .. "` " .. column.type
+            local columnType = module.ConvertType(column.type)
+            query = query .. "\t `" .. column.name .. "` " .. columnType
 
             if column.length then
-                if column.type == "VARCHAR" then
+                if columnType == "VARCHAR" then
                     query = query .. "(" .. column.length .. ")"
                 else
-                    module.error("column.length is not supported for type " .. column.type)
+                    module.error("column.length is not supported for type " .. columnType)
                 end
             end
 
-            if column.type == "VARCHAR" and !column.length then
-                module.error("column.length is required for type " .. column.type)
+            if columnType == "VARCHAR" and !column.length then
+                module.error("column.length is required for type " .. columnType)
             end
 
             if column.notNull then
@@ -316,18 +366,19 @@ function module.CreateTable(tableName, tableStruct, callback)
         local query = "CREATE TABLE `" .. tableName .. "` \n("
 
         for i, column in ipairs(tableStruct.columns) do
-            query = query .. "\t `" .. column.name .. "` " .. column.type
+            local columnType = module.ConvertType(column.type)
+            query = query .. "\t `" .. column.name .. "` " .. columnType
 
             if column.length then
-                if column.type == "VARCHAR" then
+                if columnType == "VARCHAR" then
                     query = query .. "(" .. column.length .. ")"
                 else
-                    module.error("column.length is not supported for type " .. column.type)
+                    module.error("column.length is not supported for type " .. columnType)
                 end
             end
 
-            if column.type == "VARCHAR" and !column.length then
-                module.error("column.length is required for type " .. column.type)
+            if columnType == "VARCHAR" and !column.length then
+                module.error("column.length is required for type " .. columnType)
             end
 
             if column.notNull then
@@ -365,18 +416,19 @@ function module.CreateTable(tableName, tableStruct, callback)
         local query = "CREATE TABLE `" .. tableName .. "` \n(\n"
 
         for i, column in ipairs(tableStruct.columns) do
-            query = query .. "\t `" .. column.name .. "` " .. column.type
+            local columnType = module.ConvertType(column.type)
+            query = query .. "\t `" .. column.name .. "` " .. columnType
 
             if column.length then
-                if column.type == "VARCHAR" then
+                if columnType == "VARCHAR" then
                     query = query .. "(" .. column.length .. ")"
                 else
-                    module.error("column.length is not supported for type " .. column.type)
+                    module.error("column.length is not supported for type " .. columnType)
                 end
             end
 
-            if column.type == "VARCHAR" and !column.length then
-                module.error("column.length is required for type " .. column.type)
+            if columnType == "VARCHAR" and !column.length then
+                module.error("column.length is required for type " .. columnType)
             end
 
             if column.notNull then
