@@ -1,5 +1,22 @@
 local module = {}
 
+local type = type
+local tonumber = tonumber
+local pairs = pairs
+
+local function convertStringNumbers(tbl)
+    if type(tbl) ~= "table" then return end
+
+    for k, v in pairs(tbl) do
+        if type(v) == "table" then
+            convertStringNumbers(v)
+        elseif type(v) == "string" and tonumber(v) then
+            tbl[k] = tonumber(v)
+        end
+    end
+
+end
+
 
 -- function check is require module exists
 
@@ -48,24 +65,6 @@ end
 function module.SetActiveProvider(provider)
     module.mP_active_provider = provider
 end
-
-local type = type
-local tonumber = tonumber
-local pairs = pairs
-
-local function convertStringNumbers(tbl)
-    if type(tbl) ~= "table" then return end
-
-    for k, v in pairs(tbl) do
-        if type(v) == "table" then
-            convertStringNumbers(v)
-        elseif type(v) == "string" and tonumber(v) then
-            tbl[k] = tonumber(v)
-        end
-    end
-
-end
-
 
 ---@param Queries string[]
 ---@param onFinish? fun(results:any[])
@@ -694,6 +693,8 @@ function module.GetTableStruct(tableName, callback)
                 table.insert(columns, column)
             end
 
+
+            convertStringNumbers(columns)
             callback({
                 columns = columns
             })
@@ -775,6 +776,7 @@ function module.GetTableStruct(tableName, callback)
                     table.insert(columns, column)
                 end
 
+                convertStringNumbers(columns)
                 callback({
                     columns = columns
                 })
@@ -788,61 +790,176 @@ function module.GetTableStruct(tableName, callback)
     return
 end
 
+---@param table_name string
+---@param callback fun()
+function module.ArchiveTable(table_name, callback)
+    local ActiveProvider = module.GetActiveProvider()
 
-module.Start("mysqloo", {
+    if ActiveProvider == "mysqloo" then
+        module.Query("RENAME TABLE `" .. table_name .. "` TO `" .. table_name .. "_archive`", function()
+            module.log("Table archived")
+            if callback then callback() end
+        end)
+        return
+    end
+
+    if ActiveProvider == "sqlite" then
+        module.Query("ALTER TABLE `" .. table_name .. "` RENAME TO `" .. table_name .. "_archive`", function()
+            module.log("Table archived")
+            if callback then callback() end
+        end)
+        return
+    end
+
+    module.error("No active provider found")
+end
+
+---@param table_name string
+---@param require_table_struct db.universal_table_struct
+---@param callback fun(bSuccess:boolean, reason:string)
+function module.IsTableEqualStructure(table_name, require_table_struct, callback)
+
+    module.GetTableStruct(table_name, function(table_struct)
+        for i, column in ipairs(require_table_struct.columns) do
+            local table_column = table_struct.columns[i]
+
+            if !table_column then
+                callback(false, "Column " .. column.name .. " not found")
+                return
+            end
+
+            if table_column.name != column.name then
+                callback(false, "Column name mismatch: " .. table_column.name .. " != " .. column.name)
+                return
+            end
+
+            if table_column.type != column.type then
+                callback(false, "Column type mismatch: " .. table_column.type .. " != " .. column.type)
+                return
+            end
+
+            if table_column.length != column.length then
+                callback(false, "Column length mismatch: " .. table_column.length .. " != " .. column.length)
+                return
+            end
+
+            if table_column.default != column.default then
+                callback(false, "Column default mismatch: " .. table_column.default .. " != " .. column.default)
+                return
+            end
+
+            if table_column.primaryKey != column.primaryKey then
+                callback(false, "Column primaryKey mismatch: " .. table_column.primaryKey .. " != " .. column.primaryKey)
+                return
+            end
+
+            if table_column.autoIncrement != column.autoIncrement then
+                callback(false, "Column autoIncrement mismatch: " .. table_column.autoIncrement .. " != " .. column.autoIncrement)
+                return
+            end
+
+            if table_column.unique != column.unique then
+                callback(false, "Column unique mismatch: " .. table_column.unique .. " != " .. column.unique)
+                return
+            end
+
+            if table_column.notNull != column.notNull then
+                callback(false, "Column notNull mismatch: " .. table_column.notNull .. " != " .. column.notNull)
+                return
+            end
+        end
+
+        callback(true, "Table structure is equal")
+    end)
+
+end
+
+
+module.mt_Storages = module.mt_Storages or {}
+
+
+---@class db.storage
+---@field provider db.provider
+---@field host_data? db.host_data
+---@field table_name string
+---@field table_struct db.universal_table_struct
+
+---@class db.storage
+local STORAGE = {}
+STORAGE.__index = STORAGE
+
+function STORAGE:Start()
+    self.bStarted = true
+
+    module.Start(self.provider, self.host_data, function()
+        module.IsTableExists(self.table_name, function(bExists)
+            if !bExists then
+                module.log("Storage table not exists, creating: ", self.table_name)
+                module.CreateTable(self.table_name, self.table_struct, function()
+                    module.log("Storage table created: ", self.table_name)
+                end)
+            else
+                -- Check if table structure is equal
+                self:InspectStructure()
+            end
+        end)
+    end)
+end
+
+function STORAGE:InspectStructure()
+    module.log("Storage table exists, checking structure: ", self.table_name)
+    module.IsTableEqualStructure(self.table_name, self.table_struct, function(bSuccess, reason)
+        if !bSuccess then
+            module.error("Table structure mismatch: ", reason)
+            module.error("Table structure mismatch: ", reason)
+        else
+            module.log("Table structure is equal: ", self.table_name)
+        end
+    end)
+end
+
+
+---@param provider db.provider
+---@param table_name string
+---@param table_struct db.universal_table_struct
+---@param host_data? db.host_data
+function STORAGE:Setup(provider, table_name, table_struct, host_data)
+    self.provider = provider
+    self.table_name = table_name
+    self.table_struct = table_struct
+    self.host_data = host_data
+
+
+    if !self.bStarted then
+        self:Start()
+    end
+end
+
+
+---@param provider db.provider
+---@param host_data? db.host_data
+---@param table_name string
+---@param table_struct db.universal_table_struct
+---@return db.storage
+function module.CreateStorage(provider, table_name, table_struct, host_data)
+    local STORAGE = setmetatable({}, STORAGE)
+    STORAGE:Setup(provider, table_name, table_struct, host_data)
+
+    return STORAGE
+end
+
+
+local NiceStorage = module.CreateStorage("mysqloo", "db_test", {
+    columns = {
+        {name = "id", type = "INTEGER", primaryKey = true, autoIncrement = true},
+        {name = "name", type = "VARCHAR", length = 255, notNull = true},
+        {name = "age", type = "INTEGER", notNull = true},
+        {name = "description", type = "TEXT", notNull = true},
+    }
+}, {
     host = "localhost",
     username = "root",
     password = "root",
     database = "gmod",
     port = 3306
-}, function()
-
-    module.IsTableExists("db_test", function(bExists)
-        if bExists then
-            module.DeleteTable("db_test", function()
-                module.log("Table deleted")
-            end)
-        end
-        if !bExists then
-            module.CreateTable("db_test", {
-                columns = {
-                    {
-                        name = "id",
-                        type = "INTEGER",
-                        primaryKey = true,
-                    },
-                    {
-                        name = "name",
-                        type = "VARCHAR",
-                        length = 255,
-                        unique = true
-                    },
-                    {
-                        name = "age",
-                        type = "INTEGER",
-                    },
-                    {
-                        name = "created_at",
-                        type = "INTEGER",
-                        notNull = true,
-                    }
-                }
-            }, function()
-                module.log("Table exists, inspecting..")
-
-                module.GetTableStruct("db_test", function(data)
-                    -- PrintTable(data)
-                end)
-
-            end)
-        end
-    end)
-
-
-
-    timer.Simple(5, function()
-        module.Close()
-    end)
-
-end)
-
+})
