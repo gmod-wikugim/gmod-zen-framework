@@ -82,25 +82,29 @@ function module.MultiQuery(Queries, onFinish)
         for i, singleQuery in pairs(Queries) do
             local q = module.mysqloo_db:query(singleQuery)
 
-            function q:onSuccess(data)
-                results[i] = data
-            end
-
-            function q:onError(err)
-                module.error(err, "\n", traceback, query)
-                return
-            end
-
             transaction:addQuery(q)
         end
 
-        transaction.onSuccess = function()
-            convertStringNumbers(results)
-            if onFinish then onFinish(results) end
+        function transaction:onSuccess()
+            if onFinish then
+                local allQueries = transaction:getQueries()
+
+                for i, query in pairs(allQueries) do
+                    local data = query:getData()
+                    -- results[i] = data
+                    results[i] = data
+                end
+
+                if type(results) == "table" then
+                    convertStringNumbers(results)
+                end
+
+                onFinish(results)
+            end
         end
 
-        transaction.onError = function(tr, err)
-            module.error(err, "\n", traceback, tr)
+        function transaction:onError(err)
+            module.error(err, "\n", traceback, err)
 
         end
 
@@ -193,7 +197,6 @@ end
 ---@field port number
 
 ---@alias db.provider: string
----| '"tmysql4"'
 ---| '"mysqloo"'
 ---| '"sqlite"'
 
@@ -247,19 +250,6 @@ function module.Start(provider, host_data, onConnected, onDisconnected)
         return
     end
 
-    if provider == "tmysql4" then
-        if  !module.IsModuleExists("tmysql4") then
-            module.error("try to start tmysql4 provider, but module not found")
-            return
-        end
-
-        module.tmysql = require("tmysql4")
-
-        module.SetActiveProvider(name)
-        module.log("tmysql4 provider started")
-
-        return
-    end
 
     if provider == "sqlite" then
 
@@ -278,13 +268,6 @@ end
 ---@param callback? function
 function module.Close(callback)
     local ActiveProvider = module.GetActiveProvider()
-
-    if ActiveProvider == "tmysql4" then
-        module.tmysql.shutdown()
-        module.log("tmysql4 provider closed")
-        if callback then callback() end
-        return
-    end
 
     if ActiveProvider == "mysqloo" then
         module.mysqloo_db:disconnect(true)
@@ -310,10 +293,6 @@ function module.SQLEscape(str)
         return str
     end
 
-    if ActiveProvider == "tmysql4" then
-        return module.tmysql.escape(str)
-    end
-
     if ActiveProvider == "mysqloo" then
         return module.mysqloo_db.Escape(str)
     end
@@ -332,13 +311,6 @@ end
 function module.IsTableExists(tableName, callback)
     local ActiveProvider = module.GetActiveProvider()
 
-    if ActiveProvider == "tmysql4" then
-        module.Query("SHOW TABLES LIKE '" .. tableName .. "'", function(result)
-            callback(result[1].data[1] ~= nil)
-        end)
-
-        return
-    end
 
     if ActiveProvider == "mysqloo" then
         -- Check Is MySQL table exists
@@ -366,11 +338,6 @@ end
 ---@param callback fun(result:any, query:string)
 function module.DeleteTable(tableName, callback)
     local ActiveProvider = module.GetActiveProvider()
-
-    if ActiveProvider == "tmysql4" then
-        module.Query("DROP TABLE " .. tableName, callback)
-        return
-    end
 
     if ActiveProvider == "mysqloo" then
         module.Query("DROP TABLE " .. tableName, callback)
@@ -409,20 +376,6 @@ end
 ---@param type db.column_type
 function module.ConvertLuaToType(type)
     local ActiveProvider = module.GetActiveProvider()
-
-    if ActiveProvider == "tmysql4" then
-        if type == "INTEGER" then
-            return "INT"
-        elseif type == "TEXT" then
-            return "TEXT"
-        elseif type == "REAL" then
-            return "FLOAT"
-        elseif type == "BLOB" then
-            return "BLOB"
-        elseif type == "VARCHAR" then
-            return "VARCHAR"
-        end
-    end
 
     if ActiveProvider == "mysqloo" then
         if type == "INTEGER" then
@@ -508,7 +461,7 @@ module.DATABASE_TYPES = {
 }
 
 ---@param type string
----@return db.column_type
+---@return db.column_type, number
 function module.ConvertTypeToLua(type)
     local type_name = string.match(type, "([%a]+)")
     local type_length = string.match(type, "%((%d+)%)")
@@ -517,7 +470,7 @@ function module.ConvertTypeToLua(type)
     local LuaType = module.DATABASE_TYPES[type]
 
     if LuaType then
-        return LuaType
+        return LuaType, type_length
     end
 
     module.error("Unknown type: ", type)
@@ -541,58 +494,6 @@ function module.CreateTable(tableName, tableStruct, callback)
                 return
             end
         end
-    end
-
-    if ActiveProvider == "tmysql4" then
-        local query = "CREATE TABLE `" .. tableName .. "` \n("
-
-        for i, column in ipairs(tableStruct.columns) do
-            local columnType = module.ConvertLuaToType(column.type)
-            query = query .. "\t `" .. column.name .. "` " .. columnType
-
-            if column.length then
-                if columnType == "VARCHAR" then
-                    query = query .. "(" .. column.length .. ")"
-                else
-                    module.error("column.length is not supported for type " .. columnType)
-                    return
-                end
-            end
-
-            if columnType == "VARCHAR" and !column.length then
-                module.error("column.length is required for type " .. columnType)
-                return
-            end
-
-            if column.notNull then
-                query = query .. " NOT NULL"
-            end
-
-            if column.autoIncrement then
-                query = query .. " AUTO_INCREMENT"
-            end
-
-            if column.primaryKey then
-                query = query .. " PRIMARY KEY"
-            end
-
-            if column.unique then
-                query = query .. " UNIQUE"
-            end
-
-            if column.default then
-                query = query .. " DEFAULT " .. module.SQLEscape(column.default)
-            end
-
-            if i ~= #tableStruct.columns then
-                query = query .. ", "
-            end
-        end
-
-        query = query .. ")"
-
-        module.Query(query, callback)
-        return
     end
 
     if ActiveProvider == "mysqloo" then
@@ -732,33 +633,6 @@ end
 function module.GetTableStruct(tableName, callback)
     local ActiveProvider = module.GetActiveProvider()
 
-    if ActiveProvider == "tmysql4" then
-        module.Query("SHOW COLUMNS FROM `" .. tableName .. "`", function(result)
-            local columns = {}
-
-            for i, row in ipairs(result[1].data) do
-                local column = {
-                    name = row.Field,
-                    type = module.ConvertTypeToLua(row.Type),
-                    length = row.Length,
-                    default = row.Default,
-                    primaryKey = row.Key == "PRI",
-                    autoIncrement = row.Extra == "auto_increment",
-                    unique = row.Key == "UNI",
-                    notNull = row.Null == "NO"
-                }
-
-                table.insert(columns, column)
-            end
-
-            callback({
-                columns = columns
-            })
-        end)
-
-        return
-    end
-
     if ActiveProvider == "mysqloo" then
 
         module.MultiQuery({
@@ -772,24 +646,29 @@ function module.GetTableStruct(tableName, callback)
 
             local unique_columns = {}
 
-            for i, row in ipairs(indexes) do
-                if row.Non_unique == 0 then
-                    unique_columns[row.Column_name] = true
+            if type(indexes) == "table" then
+                for i, row in ipairs(indexes) do
+                    if row.Key_name == "PRIMARY" then continue end
+
+                    if row.Non_unique == 0 and row.Index_type == "BTREE" then
+                        unique_columns[row.Column_name] = true
+                    end
                 end
             end
 
             for i, row in ipairs(table_info) do
+                local ColumnType, length = module.ConvertTypeToLua(row.Type)
                 local column_is_unique = unique_columns[row.Field] == true
 
                 local column = {
                     name = row.Field,
-                    type = module.ConvertTypeToLua(row.Type),
-                    length = row.Length,
+                    type = ColumnType,
                     default = row.Default,
                     primaryKey = row.Key == "PRI",
                     autoIncrement = row.Extra == "auto_increment",
                     unique = column_is_unique,
-                    notNull = row.Null == "NO"
+                    notNull = row.Null == "NO" and row.Key != "PRI",
+                    length = length
                 }
 
                 if column.default == "NULL" then
@@ -813,11 +692,11 @@ function module.GetTableStruct(tableName, callback)
                 end
 
                 table.insert(columns, column)
-
-                callback({
-                    columns = columns
-                })
             end
+
+            callback({
+                columns = columns
+            })
 
         end)
 
@@ -910,7 +789,7 @@ function module.GetTableStruct(tableName, callback)
 end
 
 
-module.Start("sqlite", {
+module.Start("mysqloo", {
     host = "localhost",
     username = "root",
     password = "root",
@@ -931,12 +810,12 @@ module.Start("sqlite", {
                         name = "id",
                         type = "INTEGER",
                         primaryKey = true,
-                        autoIncrement = true,
                     },
                     {
                         name = "name",
                         type = "VARCHAR",
                         length = 255,
+                        unique = true
                     },
                     {
                         name = "age",
@@ -949,10 +828,10 @@ module.Start("sqlite", {
                     }
                 }
             }, function()
-                module.log("Table created")
+                module.log("Table exists, inspecting..")
 
                 module.GetTableStruct("db_test", function(data)
-                    PrintTable(data)
+                    -- PrintTable(data)
                 end)
 
             end)
