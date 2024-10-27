@@ -285,7 +285,7 @@ function draw.Circle(x, y, radius, seg, clr, mat)
     draw.DrawPoly(cir, clr, mat)
 end
 
-function draw.BoxRoundedEx(radius, x, y, w, h, tl, tr, bl, br)
+function draw.BoxRoundedEx(radius, x, y, w, h, tl, clr, tr, bl, br)
     local poly = {}
 
     local pi = math.pi
@@ -370,6 +370,11 @@ function draw.BoxRoundedEx(radius, x, y, w, h, tl, tr, bl, br)
 
     -- draw.NoTexture()
 
-    surface.SetDrawColor(color_white)
+    if clr then
+        s_SetDrawColor(clr.r,clr.g,clr.b,clr.a)
+    else
+        s_SetDrawColor(255, 255, 255, 255)
+    end
+
     surface.DrawPoly(poly)
 end
