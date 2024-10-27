@@ -49,10 +49,11 @@ function stencil_cut.EndStencil()
 end
 
 -- Stencil Box Cut Operation
----@param callback fun()
-function stencil_cut.FilterStencil(callback)
-
-    callback()
+---@param callback fun(width: number, height: number)
+---@param width number
+---@param height number
+function stencil_cut.FilterStencil(callback, width, height)
+    callback(width, height)
 
     render.SetStencilFailOperation( STENCILOPERATION_KEEP )
 
