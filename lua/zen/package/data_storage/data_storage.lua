@@ -1,10 +1,17 @@
-scp_code.data_storage = scp_code.data_storage or {}
-scp_code.data_storage.mt_Structures = scp_code.data_storage.mt_Structures or {}
-scp_code.data_storage.mt_Providers = scp_code.data_storage.mt_Providers or {}
-scp_code.data_storage.mt_WaitInit = scp_code.data_storage.mt_WaitInit or {}
+local system = system
+local istable = istable
+local print = print
+local string = string
+
+
+module("data_storage")
+
+mt_Structures = mt_Structures or {}
+mt_Providers = mt_Providers or {}
+mt_WaitInit = mt_WaitInit or {}
 
 --- Print Message to Console, If linux it will use bash colors
-function scp_code.data_storage.ServerLog(...)
+function ServerLog(...)
     if system.IsLinux() then
         local args = {...}
         local text = ""
@@ -27,9 +34,8 @@ function scp_code.data_storage.ServerLog(...)
         print(...)
     end
 end
-local ServerLog = scp_code.data_storage.ServerLog
 
-scp_code.ConfigListener("database", "core.database.initialized", function(CFG)
+ConfigListener("database", "database.initialized", function(CFG)
     if MySQLite.databaseObject then
         if MySQLite.isMySQL() then
             ServerLog("Disconnecting from database..")
@@ -39,11 +45,11 @@ scp_code.ConfigListener("database", "core.database.initialized", function(CFG)
 
     ServerLog("Connecting to database..")
 
-    scp_code.DB = MySQLite.initialize(CFG)
+    DB = MySQLite.initialize(CFG)
 end)
 
 
-hook.Add("DatabaseInitialized", "core.database", function()
+hook.Add("DatabaseInitialized", "database", function()
     local Provider = MySQLite.isMySQL() and "MySQL" or "SQLite"
 
     ServerLog("--------------------")
@@ -51,7 +57,7 @@ hook.Add("DatabaseInitialized", "core.database", function()
     ServerLog("--------------------")
 
 
-    hook.Run("scp_code.DatabaseInitialized")
+    hook.Run("DatabaseInitialized")
 end)
 
 local color_good = Color(0, 255, 0)
@@ -61,8 +67,8 @@ local color_warning = Color(255, 255, 0)
 local color_table = Color(0, 125, 255)
 local color_field = Color(255, 255, 0)
 
----@enum (key) scp_code.data_storage.item.type
-scp_code.data_storage.item_type = {
+---@enum (key) data_storage_struct.item.type
+item_type = {
     NULL = 0,
     BOOLEAN = 1,
     TEXT = 2,
@@ -80,30 +86,30 @@ local TYPE_IGNORE_LENGTH = {
     ["TABLE"] = true,
 }
 
----@class scp_code.data_storage.key
+---@class data_storage_struct.key
 ---@field name string
----@field type scp_code.data_storage.item.type
+---@field type data_storage_struct.item.type
 ---@field id? string
 ---@field length? number
 ---@field default? string|number
 ---@field optional? boolean|false
 
----@class scp_code.data_storage.value
+---@class data_storage_struct.value
 ---@field name string
----@field type scp_code.data_storage.item.type
+---@field type data_storage_struct.item.type
 ---@field id? string
 ---@field length? number
 ---@field default? string|number
 
----@class scp_code.data_storage.inputFields
----@field keys table<string, scp_code.data_storage.key>
----@field values table<string, scp_code.data_storage.value>
+---@class data_storage_struct.inputFields
+---@field keys table<string, data_storage_struct.key>
+---@field values table<string, data_storage_struct.value>
 
----@class scp_code.data_storage.struct
+---@class data_storage_struct.struct
 ---@field uniqueID string
----@field fields table<string, scp_code.data_storage.key|scp_code.data_storage.value>
----@field keys table<string, scp_code.data_storage.key>
----@field values table<string, scp_code.data_storage.value>
+---@field fields table<string, data_storage_struct.key|data_storage_struct.value>
+---@field keys table<string, data_storage_struct.key>
+---@field values table<string, data_storage_struct.value>
 local META = {}
 META.__index = META
 
@@ -125,7 +131,7 @@ end
 
 function META:CallProviderFunction(funcName, ...)
     local provider = self:GetProvider()
-    local providerData = scp_code.data_storage.mt_Providers[provider]
+    local providerData = mt_Providers[provider]
 
     if providerData then
         local func = providerData[funcName]
@@ -178,13 +184,13 @@ function META:Provider_InspectObject(inspectTarget, callback)
 end
 
 function META:OnObjectReady()
-    scp_code.data_storage.RunObjectInit(self.uniqueID)
+    RunObjectInit(self.uniqueID)
 end
 
 
 function META:InitObject()
 
-    if !scp_code.data_storage.bDatabaseReady then
+    if !bDatabaseReady then
         ServerLog("DataStorage registered: " .. self.uniqueID)
         return
     end
@@ -281,7 +287,7 @@ end
 ---@param callback? fun()
 function META:Save(keys, values, callback)
     -- Check database is ready
-    if !scp_code.data_storage.bDatabaseReady then
+    if !bDatabaseReady then
         self:ErrorLog("Database not ready")
         return
     end
@@ -345,7 +351,7 @@ end
 ---@param callback fun(values?: table<string, any>)
 function META:Load(keys, callback)
     -- Check database is ready
-    if !scp_code.data_storage.bDatabaseReady then
+    if !bDatabaseReady then
         self:ErrorLog("Database not ready")
         return
     end
@@ -380,7 +386,7 @@ end
 --- @param callback? fun()
 function META:RemoveAll(callback)
     -- Check database is ready
-    if !scp_code.data_storage.bDatabaseReady then
+    if !bDatabaseReady then
         self:ErrorLog("Database not ready")
         return
     end
@@ -393,7 +399,7 @@ end
 ---@param callback? fun()
 function META:Remove(keys, callback)
     -- Check database is ready
-    if !scp_code.data_storage.bDatabaseReady then
+    if !bDatabaseReady then
         self:ErrorLog("Database `not ready")
         return
     end
@@ -428,7 +434,7 @@ end
 ---@param callback fun(values?: table<number, table<string, any>>)
 function META:LoadMass(keys, callback)
     -- Check database is ready
-    if !scp_code.data_storage.bDatabaseReady then
+    if !bDatabaseReady then
         self:ErrorLog("Database not ready")
         return
     end
@@ -460,9 +466,9 @@ end
 
 
 ---@param uniqueID string
----@param STRUCT scp_code.data_storage.inputFields
----@return scp_code.data_storage.struct
-function scp_code.data_storage.CreateStorage(uniqueID, STRUCT)
+---@param STRUCT data_storage_struct.inputFields
+---@return data_storage_struct.struct
+function CreateStorage(uniqueID, STRUCT)
     -- Asserts
     assert(type(uniqueID) == "string", "uniqueID must be a string")
     assert(type(STRUCT) == "table", "STRUCT must be a table")
@@ -526,7 +532,7 @@ function scp_code.data_storage.CreateStorage(uniqueID, STRUCT)
         STRUCT.fields[key] = valueInfo
     end
 
-    scp_code.data_storage.mt_Structures[uniqueID] = STRUCT
+    mt_Structures[uniqueID] = STRUCT
 
     ---@diagnostic disable-next-line: inject-field
     STRUCT.uniqueID = uniqueID
@@ -535,36 +541,36 @@ function scp_code.data_storage.CreateStorage(uniqueID, STRUCT)
     setmetatable(STRUCT, META)
 
     ---@diagnostic disable-next-line: cast-type-mismatch
-    ---@cast STRUCT scp_code.data_storage.struct
+    ---@cast STRUCT data_storage_struct.struct
 
     STRUCT:InitObject()
 
     return STRUCT
 end
 
----@class scp_code.data_storage.provider_data: scp_code.data_storage.struct
+---@class data_storage_struct.provider_data: data_storage_struct.struct
 ---@field name string
 ---@field CreateObject fun(self)
 
 ---@param name string
----@param DATA scp_code.data_storage.provider_data
-function scp_code.data_storage.RegisterProvider(name, DATA)
-    scp_code.data_storage.mt_Providers[name] = DATA
+---@param DATA data_storage_struct.provider_data
+function RegisterProvider(name, DATA)
+    mt_Providers[name] = DATA
 end
 
 -- Wait Initialize callback
-function scp_code.data_storage.WaitObjectInit(objectID, uniqueID, callback)
-    if !scp_code.data_storage.mt_WaitInit[objectID] then
-        scp_code.data_storage.mt_WaitInit[objectID] = {}
+function WaitObjectInit(objectID, uniqueID, callback)
+    if !mt_WaitInit[objectID] then
+        mt_WaitInit[objectID] = {}
     end
 
-    local Callbacks = scp_code.data_storage.mt_WaitInit[objectID]
+    local Callbacks = mt_WaitInit[objectID]
     Callbacks[uniqueID] = callback
 end
 
 -- Run Initialize callback
-function scp_code.data_storage.RunObjectInit(objectID)
-    local Callbacks = scp_code.data_storage.mt_WaitInit[objectID]
+function RunObjectInit(objectID)
+    local Callbacks = mt_WaitInit[objectID]
 
     if Callbacks then
         for uniqueID, callback in pairs(Callbacks) do
@@ -575,10 +581,10 @@ end
 
 
 -- DataBase INit
-hook.Add("scp_code.DatabaseInitialized", "_gamemode", function()
-    scp_code.data_storage.bDatabaseReady = true
+hook.Add("DatabaseInitialized", "_gamemode", function()
+    bDatabaseReady = true
 
-    for uniqueID, STRUCT in pairs(scp_code.data_storage.mt_Structures) do
+    for uniqueID, STRUCT in pairs(mt_Structures) do
 
         -- Call Wait hooks
         STRUCT:InitObject()

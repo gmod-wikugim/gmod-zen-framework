@@ -3,7 +3,7 @@ module("zen", package.seeall)
 stencil_cut = _GET("stencil_cut")
 
 -- Stencil Box Cut Operation
-function scp_code.StartStencil()
+function stencil_cut.StartStencil()
     -- If you'd like to see the mask layer, you can comment this line out
     render.SetStencilEnable( true )
 
@@ -35,7 +35,7 @@ function scp_code.StartStencil()
 end
 
 -- Stencil Box Cut Operation
-function scp_code.EndStencil()
+function stencil_cut.EndStencil()
     render.ClearStencil()
     -- Return original values
     render.SetStencilPassOperation( STENCILOPERATION_KEEP )
@@ -49,7 +49,7 @@ end
 
 -- Stencil Box Cut Operation
 ---@param callback fun()
-function scp_code.FilterStencil(callback)
+function stencil_cut.FilterStencil(callback)
 
     callback()
 
