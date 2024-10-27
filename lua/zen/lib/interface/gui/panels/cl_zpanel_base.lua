@@ -22,6 +22,12 @@ PANEL.LastPaintW = 0
 PANEL.LastPaintH = 0
 PANEL.LastPaintHovered = nil
 
+PANEL.bEnabled = true
+PANEL.bDisabled = !PANEL.bEnabled
+
+--- Show Panel is blocked. Is blocked, then input press/release also is blocked
+PANEL.bBlocked = false
+
 PANEL.tMousesPressed = {}
 PANEL.tMousesPressTime = {}
 
@@ -43,6 +49,54 @@ function PANEL:IsMouse5Pressed() return self:IsMousePressed(MOUSE_5) end
 
 function PANEL:Init()
 end
+
+function PANEL:IsEnabled() return self.bEnabled end
+function PANEL:IsDisabled() return self.bDisabled end
+
+--- Enable Panel, bState default is [true]
+---@param bState? boolean
+function PANEL:SetEnabled(bState)
+    if bState == nil then bState = true end
+
+    local bStateChanged = self.bEnabled != bState
+
+    self.bEnabled = bState
+    self.bDisabled = !bState
+
+    if bStateChanged then
+        self:GeneratePaintOnce()
+    end
+end
+
+function PANEL:Enable() self:SetEnabled(true) end
+function PANEL:Disable() self:SetEnabled(false) end
+
+function PANEL:IsBlocked() return self.bBlocked end
+
+--- Block Panel, bState default is [true]. Block MousePress/Release. Kill Focus for Keyboard. 
+---@param bState? boolean
+function PANEL:SetBlocked(bState)
+    if bState == nil then bState = true end
+
+    local bStateChanged = self.bBlocked != bState
+
+    self.bBlocked = bState
+
+    if bState == true then
+        if vgui.GetKeyboardFocus() then self:KillFocus() end
+
+        table.Empty(self.tMousesPressTime)
+        table.Empty(self.tMousesPressed)
+    end
+
+    if bStateChanged then
+        self:GeneratePaintOnce()
+    end
+end
+
+--- Block MousePress/Release. Kill Focus for Keyboard. 
+function PANEL:Block() self:SetBlocked(true) end
+function PANEL:UnBlock() self:SetBlocked(false) end
 
 ---@param w number
 ---@param h number
@@ -82,6 +136,8 @@ end
 
 ---@param mouse integer
 function PANEL:OnMousePressed(mouse)
+    if self:IsBlocked() then return end
+
     self.tMousesPressed[mouse] = true
     self.tMousesPressTime[mouse] = CurTime()
 
@@ -94,6 +150,8 @@ end
 
 ---@param mouse integer
 function PANEL:OnMouseReleased(mouse)
+    if self:IsBlocked() then return end
+
     // Ignore no pressed early buttons
     if (self.tMousesPressed[mouse] == nil) then return end
 
