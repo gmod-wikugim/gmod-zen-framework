@@ -284,3 +284,92 @@ function draw.Circle(x, y, radius, seg, clr, mat)
 
     draw.DrawPoly(cir, clr, mat)
 end
+
+function draw.BoxRoundedEx(radius, x, y, w, h, tl, tr, bl, br)
+    local poly = {}
+
+    local pi = math.pi
+
+    local function add_point(x, y)
+        table.insert(poly, {x = x, y = y})
+    end
+
+    -- Left Middle
+    add_point(x, y + h/2)
+
+    -- Left Top
+    if tl then
+        add_point(x, y+radius)
+
+        -- My Stuff
+
+        for i = 1, 90 do
+            local deg = i * pi / 180
+            add_point(x + radius - math.sin(deg) * radius, y + radius - math.cos(deg) * radius)
+        end
+
+        -- End Stuff
+
+        add_point(x + radius, y)
+
+    else
+        add_point(x, y)
+    end
+
+
+    -- Top Middle
+    add_point(x + w/2, y)
+
+    -- Top Right
+    if tr then
+        add_point(x + w - radius, y)
+
+        for i = 1, 90 do
+            local deg = i * pi / 180
+            add_point(x + w - radius + math.sin(deg) * radius, y + radius - math.cos(deg) * radius)
+        end
+
+        add_point(x + w, y + radius)
+    else
+        add_point(x + w, y)
+    end
+
+    -- Right Middle
+    add_point(x + w, y + h/2)
+
+    -- Right Bottom
+    if br then
+        add_point(x + w, y + h - radius)
+
+        for i = 1, 90 do
+            local deg = i * pi / 180
+            add_point(x + w - radius + math.sin(deg) * radius, y + h - radius + math.cos(deg) * radius)
+        end
+
+        add_point(x + w - radius, y + h)
+    else
+        add_point(x + w, y + h)
+    end
+
+    -- Bottom Middle
+    add_point(x + w/2, y + h)
+
+    -- Bottom Left
+    if bl then
+        add_point(x + radius, y + h)
+
+        for i = 1, 90 do
+            local deg = i * pi / 180
+            add_point(x + radius - math.sin(deg) * radius, y + h - radius + math.cos(deg) * radius)
+        end
+
+        add_point(x, y + h - radius)
+    else
+        add_point(x, y + h)
+    end
+
+    -- draw.NoTexture()
+
+    surface.SetDrawColor(color_white)
+    surface.DrawPoly(poly)
+end
