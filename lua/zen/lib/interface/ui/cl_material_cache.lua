@@ -149,7 +149,6 @@ function material_cache.Generate2DMaterial(width, height, draw_func, mask_func, 
     render.Clear(0, 0, 0, 0)
         cam.Start2D()
 
-            // TODO: Gamma corrections for colors
 
             if mask_func then
                 stencil_cut.StartStencil()
