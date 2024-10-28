@@ -48,6 +48,7 @@ function PANEL:IsMouse5Pressed() return self:IsMousePressed(MOUSE_5) end
 
 
 function PANEL:Init()
+    self:SetMouseInputEnabled(true)
 end
 
 function PANEL:IsEnabled() return self.bEnabled end
@@ -73,7 +74,7 @@ function PANEL:Disable() self:SetEnabled(false) end
 
 function PANEL:IsBlocked() return self.bBlocked end
 
---- Block Panel, bState default is [true]. Block MousePress/Release. Kill Focus for Keyboard. 
+--- Block Panel, bState default is [true]. Block MousePress/Release. Kill Focus for Keyboard.
 ---@param bState? boolean
 function PANEL:SetBlocked(bState)
     if bState == nil then bState = true end
@@ -94,24 +95,62 @@ function PANEL:SetBlocked(bState)
     end
 end
 
---- Block MousePress/Release. Kill Focus for Keyboard. 
+--- Block MousePress/Release. Kill Focus for Keyboard.
 function PANEL:Block() self:SetBlocked(true) end
 function PANEL:UnBlock() self:SetBlocked(false) end
+
+local t_isWideDock = {
+    LEFT = false,
+    RIGHT = false,
+    TOP = true,
+    BOTTOM = true
+}
+
+--- Smart dock with Invalidate Parent
+---@param dock integer
+---@param size number?
+function PANEL:SDock(dock, size)
+    if dock == FILL then
+        self:Dock(FILL)
+    elseif type(size) == "number" then
+        if t_isWideDock[dock] then
+            self:SetWide(size)
+        else
+            self:SetTall(size)
+        end
+    end
+
+    self:InvalidateParent(true)
+end
+
+function PANEL:SFill()
+    self:Dock(FILL)
+    self:InvalidateParent(true)
+end
 
 ---@param w number
 ---@param h number
 function PANEL:PaintOnce(w, h)
-    draw.BoxRoundedEx(8, 0, 0, w, h, true, true, true, true)
+    draw.BoxRoundedEx(8, 0, 0, w, h, color_white, true, true, true, true)
+end
+
+---@param w number
+---@param h number
+function PANEL:PaintMask(w, h)
+    surface.SetDrawColor(255,255,255)
+    surface.DrawRect(0,0,w,h)
+    --draw.BoxRoundedEx(8, 0, 0, w, h, true, true, true, true)
 end
 
 ---@private
 function PANEL:Paint(w, h)
     if self.bPaintOnceEnabled then
-        if self.LastPaintW != w or self.LastPaintH != h or PANEL.LastPaintHovered != self:IsHovered() then
-            self:GeneratePaintOnce()
+        if (self.LastPaintW != w) or (self.LastPaintH != h) or (self.LastPaintHovered != self:IsHovered()) then
+            self:GeneratePaintOnce(w, h)
         end
 
         if self.PaintOnceMaterial then
+            surface.SetMaterial(self.PaintOnceMaterial)
             surface.SetDrawColor(255,255,255)
             surface.DrawTexturedRect(0, 0, w, h)
         end
@@ -126,14 +165,6 @@ function PANEL:Paint(w, h)
     end
 end
 
----@param w number
----@param h number
-function PANEL:PaintMask(w, h)
-    surface.SetDrawColor(255,255,255)
-    surface.DrawRect(0,0,w,h)
-    --draw.BoxRoundedEx(8, 0, 0, w, h, true, true, true, true)
-end
-
 ---@param mouse integer
 function PANEL:OnMousePressed(mouse)
     if self:IsBlocked() then return end
@@ -146,6 +177,12 @@ function PANEL:OnMousePressed(mouse)
     if mouse == MOUSE_MIDDLE and type(self.OnMouseMiddlePress) == "function" then self:OnMouseMiddlePress() end
     if mouse == MOUSE_4 and type(self.OnMouse4Press) == "function" then self:OnMouse4Press() end
     if mouse == MOUSE_5 and type(self.OnMouse5Press) == "function" then self:OnMouse5Press() end
+end
+
+function PANEL:SizeToScreen()
+    local w, h = ScrW(), ScrH()
+
+    self:SetSize(w, h)
 end
 
 ---@param mouse integer
@@ -169,19 +206,28 @@ function PANEL:OnMouseReleased(mouse)
     if mouse == MOUSE_5 and type(self.OnMouse5Release) == "function" then self:OnMouse5Release(delta) end
 end
 
-function PANEL:GeneratePaintOnce()
-    local w, h = self:GetSize()
+
+---@param w number?
+---@param h number?
+---@param bSaveAsPNG boolean?
+function PANEL:GeneratePaintOnce(w, h, bSaveAsPNG)
+    w = w or self:GetWide()
+    h = h or self:GetTall()
 
     self.LastPaintW = w
     self.LastPaintH = h
 
     self.LastPaintHovered = self:IsHovered()
 
-    self.PaintOnceMaterial = material_cache.Generate2DMaterial(w, h, function(w, h)
+    self.PaintOnceMaterial, PNG = material_cache.Generate2DMaterial(w, h, function(w, h)
         self:PaintOnce(w, h)
     end, function(w, h)
         self:PaintMask(w, h)
-    end)
+    end, bSaveAsPNG)
+
+    if bSaveAsPNG then
+        file.Write("test.png", PNG)
+    end
 end
 
 vgui.Register("zpanelbase", PANEL, "EditablePanel")

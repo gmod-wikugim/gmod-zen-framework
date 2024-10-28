@@ -138,7 +138,7 @@ material_cache.iMatCounter = material_cache.iMatCounter or 0
         surface.DrawRect(0,0,w/2,0)
     end)
 */
-function material_cache.Generate2DMaterial(width, height, draw_func, mask_func)
+function material_cache.Generate2DMaterial(width, height, draw_func, mask_func, bCapturePNG)
 	material_cache.iMatCounter = material_cache.iMatCounter + 1
     local texture_name = "material_cache/auto_generated/" .. material_cache.iMatCounter
 
@@ -146,14 +146,15 @@ function material_cache.Generate2DMaterial(width, height, draw_func, mask_func)
 
     render.PushRenderTarget(texture)
 
-
-        render.Clear(0, 0, 0, 0)
+    render.Clear(0, 0, 0, 0)
         cam.Start2D()
 
-        if mask_func then
-            stencil_cut.StartStencil()
-            stencil_cut.FilterStencil(mask_func, width, height)
-        end
+            // TODO: Gamma corrections for colors
+
+            if mask_func then
+                stencil_cut.StartStencil()
+                stencil_cut.FilterStencil(mask_func, width, height)
+            end
             draw_func(width, height)
 
             if mask_func then
@@ -162,15 +163,19 @@ function material_cache.Generate2DMaterial(width, height, draw_func, mask_func)
         cam.End2D()
 
 
+        local PNG
+        if bCapturePNG then
+            PNG = render.Capture{
+                format = "png",
+                w = width,
+                h = height,
+                quality = 100,
+                x = 0,
+                y = 0
+            }
+        end
 
-        local PNG = render.Capture{
-            format = "png",
-            w = width,
-            h = height,
-            quality = 100,
-            x = 0,
-            y = 0
-        }
+
 
 
     render.PopRenderTarget()
@@ -181,6 +186,8 @@ function material_cache.Generate2DMaterial(width, height, draw_func, mask_func)
 		["$vertexcolor"] = 1,
 		["$vertexalpha"] = 1,
 	})
+
+    -- result_material:SetVector("$color", Vector(2.2, 2.2, 2.2))
 
     return result_material, PNG, width, height
 end

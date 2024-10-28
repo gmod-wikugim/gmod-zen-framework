@@ -282,13 +282,14 @@ function gui.ApplyParams(pnl, data)
     pnl.zen_tmp_Params = nil
 end
 
----@param pnl_name string
+---@generic T: Panel
+---@param pnl_name zen.panel.`T`
 ---@param pnlParent? Panel
 ---@param data? table
 ---@param uniqueName? string
 ---@param presets? table
 ---@param isAdd? boolean -- Use pnlParent:Add function
----@return Panel pnlCustom
+---@return zen.panel.`T` pnlCustom
 function gui.Create(pnl_name, pnlParent, data, uniqueName, presets, isAdd)
     data = data or {}
 

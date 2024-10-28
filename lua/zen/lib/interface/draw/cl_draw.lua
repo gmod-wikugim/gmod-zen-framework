@@ -22,6 +22,51 @@ local sin = math.sin
 local cos = math.cos
 local math_ceil = math.ceil
 local tostring = tostring
+local math_pow = math.pow
+
+local CVAR_GAMMA = GetConVar("mat_monitorgamma")
+
+local function gammaCorrect(value, gamma)
+
+    return math_pow(value, 1 / gamma)
+
+end
+
+
+-- Function to apply gamma correction to RGB values
+
+local function applyGammaCorrection(r, g, b)
+
+    -- Retrieve the gamma value from the console variable
+
+    local gamma = CVAR_GAMMA:GetFloat()
+
+
+    -- Normalize RGB values (0-255) to (0-1)
+
+    r = r / 255
+
+    g = g / 255
+
+    b = b / 255
+
+
+    -- Apply gamma correction
+
+    r = gammaCorrect(r, gamma) * 255
+
+    g = gammaCorrect(g, gamma) * 255
+
+    b = gammaCorrect(b, gamma) * 255
+
+
+    return r, g, b
+
+end
+
+local function applyGammaCorrectionColor(clr)
+    clr.r, clr.g, clr.b, clr.a = applyGammaCorrection(clr.r, clr.g, clr.b)
+end
 
 function draw.Line(x1, y1, x2, y2, clr)
     if clr then
@@ -285,7 +330,17 @@ function draw.Circle(x, y, radius, seg, clr, mat)
     draw.DrawPoly(cir, clr, mat)
 end
 
-function draw.BoxRoundedEx(radius, x, y, w, h, tl, clr, tr, bl, br)
+---@param radius number
+---@param x number
+---@param y number
+---@param w number
+---@param h number
+---@param clr Color?
+---@param tl boolean?
+---@param tr boolean?
+---@param bl boolean?
+---@param br boolean?
+function draw.BoxRoundedEx(radius, x, y, w, h, clr, tl, tr, bl, br)
     local poly = {}
 
     local pi = math.pi
