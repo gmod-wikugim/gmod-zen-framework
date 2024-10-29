@@ -119,16 +119,19 @@ function PANEL:Block() self:SetBlocked(true) end
 function PANEL:UnBlock() self:SetBlocked(false) end
 
 local t_isWideDock = {
-    LEFT = true,
-    RIGHT = true,
-    TOP = true,
-    BOTTOM = true
+    [LEFT] = true,
+    [RIGHT] = true,
+    [TOP] = true,
+    [BOTTOM] = true
 }
 
 --- Smart dock with Invalidate Parent
 ---@param dock integer
 ---@param size number?
 function PANEL:SDock(dock, size)
+
+    self:Dock(dock)
+
     if type(size) == "number" then
         if t_isWideDock[dock] then
             self:SetWide(size)
@@ -136,9 +139,6 @@ function PANEL:SDock(dock, size)
             self:SetTall(size)
         end
     end
-
-    self:Dock(dock)
-    self:InvalidateParent(true)
 end
 
 function PANEL:SFill()
