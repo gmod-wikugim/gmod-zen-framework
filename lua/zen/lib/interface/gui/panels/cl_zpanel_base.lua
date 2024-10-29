@@ -15,12 +15,31 @@ module("zen", package.seeall)
 ---@field OnMouse5Release? fun(self, delta:number) Called when Release MOUSE_5, delta - time left from presse
 ---@field Draw? fun(self, w:number, h:number) Alias to default Paint
 ---@field DrawOver? fun(self, w:number, h:number) Alias to default PaintOver
+---@field OnSizeChanged? fun(self, w:number, h:number)
+---@field OnCursorJoin fun(self) Called when cursor joined to Panel
+---@field OnCursorExit fun(self) Called when cursor exited after exit Panel
+---@field PaintMask fun(self, w:number, h:number) -- Mask for PaintOnce
+---@field PaintOnce fun(self, w:number, h:number) -- Paint which called when panel: ChangeSize. (Un)Hovered. (De)Enable. (De)Blocked
 local PANEL = {}
 
 PANEL.bPaintOnceEnabled = true
-PANEL.LastPaintW = 0
-PANEL.LastPaintH = 0
-PANEL.LastPaintHovered = nil
+PANEL.LastPaintW = -1
+PANEL.LastPaintH = -1
+
+PANEL.LastPerformW = -1
+PANEL.LastPerformH = -1
+
+---@private
+PANEL.bHoverPaintOnceEnabled = false
+
+---@private
+PANEL.bAutoResizeToChildrenWidth = false
+
+---@private
+PANEL.bAutoResizeToChildrenHeight = false
+
+---@private
+PANEL.bNeedUpdateSizeToChildren = false
 
 PANEL.bEnabled = true
 PANEL.bDisabled = !PANEL.bEnabled
@@ -65,7 +84,7 @@ function PANEL:SetEnabled(bState)
     self.bDisabled = !bState
 
     if bStateChanged then
-        self:GeneratePaintOnce()
+        self:CalcPaintOnce_Internal()
     end
 end
 
@@ -91,7 +110,7 @@ function PANEL:SetBlocked(bState)
     end
 
     if bStateChanged then
-        self:GeneratePaintOnce()
+        self:CalcPaintOnce_Internal()
     end
 end
 
@@ -100,8 +119,8 @@ function PANEL:Block() self:SetBlocked(true) end
 function PANEL:UnBlock() self:SetBlocked(false) end
 
 local t_isWideDock = {
-    LEFT = false,
-    RIGHT = false,
+    LEFT = true,
+    RIGHT = true,
     TOP = true,
     BOTTOM = true
 }
@@ -128,26 +147,56 @@ function PANEL:SFill()
     self:InvalidateParent(true)
 end
 
+/*
 ---@param w number
 ---@param h number
 function PANEL:PaintOnce(w, h)
-    draw.BoxRoundedEx(8, 0, 0, w, h, color_white, true, true, true, true)
+    -- draw.BoxRoundedEx(8, 0, 0, w, h, color_white, true, true, true, true)
 end
+*/
 
+/* PaintMask Example
 ---@param w number
 ---@param h number
 function PANEL:PaintMask(w, h)
     surface.SetDrawColor(255,255,255)
     surface.DrawRect(0,0,w,h)
-    --draw.BoxRoundedEx(8, 0, 0, w, h, true, true, true, true)
+end
+*/
+
+--- Return currect cursor position, return -1, -1 when cursor no visible
+---@return number, number
+function PANEL:GetLocalCursorPos()
+    if vgui.CursorVisible() != true then return -1, -1 end
+
+    local cx, cy = input.GetCursorPos()
+    local x, y = vgui.GetWorldPanel():GetChildPosition(self)
+
+    return cx - x, cy - y
+end
+
+--- Return is cursor in panel
+---@return boolean
+function PANEL:IsCursorInside()
+    if vgui.CursorVisible() != true then return false end
+
+    local cx, cy = self:GetLocalCursorPos()
+
+    local w, h = self:GetSize()
+
+    return cx > 0 and cy > 0 and cx < w and cy < h
 end
 
 ---@private
 function PANEL:Paint(w, h)
     if self.bPaintOnceEnabled then
-        if (self.LastPaintW != w) or (self.LastPaintH != h) or (self.LastPaintHovered != self:IsHovered()) then
-            self:GeneratePaintOnce(w, h)
+        /* Looks Like Useless! TODO: Remove later
+        local bStateHovered = self:IsHovered()
+        if self.LastPaintHovered != bStateHovered then
+            self:CalcPaintOnce(nil, nil, bStateHovered)
         end
+        */
+
 
         if self.PaintOnceMaterial then
             surface.SetMaterial(self.PaintOnceMaterial)
@@ -206,28 +255,145 @@ function PANEL:OnMouseReleased(mouse)
     if mouse == MOUSE_5 and type(self.OnMouse5Release) == "function" then self:OnMouse5Release(delta) end
 end
 
+---@private
+---@param width number?
+---@param height number?
+function PANEL:CalcPaintOnce_Internal(width,  height)
+    if type(self.PaintOnce) != "function" then return end
 
----@param w number?
----@param h number?
----@param bSaveAsPNG boolean?
-function PANEL:GeneratePaintOnce(w, h, bSaveAsPNG)
-    w = w or self:GetWide()
-    h = h or self:GetTall()
+    if (width == nil) then width = self:GetWide() end
+    if (height == nil) then height = self:GetTall() end
 
-    self.LastPaintW = w
-    self.LastPaintH = h
-
-    self.LastPaintHovered = self:IsHovered()
-
-    self.PaintOnceMaterial, PNG = material_cache.Generate2DMaterial(w, h, function(w, h)
-        self:PaintOnce(w, h)
-    end, function(w, h)
-        self:PaintMask(w, h)
-    end, bSaveAsPNG)
-
-    if bSaveAsPNG then
-        file.Write("test.png", PNG)
+    if self.PaintMask then
+        self.PaintOnceMaterial, PNG = material_cache.Generate2DMaterial(width, height, function(w, h)
+            self:PaintOnce(w, h)
+        end, function(w, h)
+            self:PaintMask(w, h)
+        end)
+    else
+        self.PaintOnceMaterial, PNG = material_cache.Generate2DMaterial(width, height, function(w, h)
+            self:PaintOnce(w, h)
+        end)
     end
+end
+
+/*
+---@private
+---@param width number?
+---@param height number?
+---@param bHovered boolean?
+function PANEL:CalcPaintOnce(width, height, bHovered)
+    -- Check is nil. It's work with predict in PerformLayout and OnCursor event
+    if (width == nil) then width = self:GetWide() end
+    if (height == nil) then height = self:GetTall() end
+    -- if (bHovered == nil) then bHovered = self:IsHovered() end
+
+    local bNeedChange = false
+
+    if !bNeedChange and self.LastPaintW != width then bNeedChange = true end
+    if !bNeedChange and self.LastPaintH != height then bNeedChange = true end
+    -- if !bNeedChange and self.LastPaintHovered != bHovered then bNeedChange = true end
+
+    if bNeedChange != true then return end
+
+    self.LastPaintW = width
+    self.LastPaintH = height
+    self.LastPaintHovered = bHovered
+
+    self:CalcPaintOnce_Internal(width, height)
+end
+*/
+
+--- Enable Auto resize panel width to children in PerformLayout
+---@param bState boolean
+function PANEL:SetAutoReSizeToChildrenWidth(bState)
+    self.bAutoResizeToChildrenWidth = bState
+
+    self:InvalidateLayout()
+end
+
+--- Enable Auto resize panel height to children in PerformLayout
+---@param bState boolean
+function PANEL:SetAutoReSizeToChildrenHeight(bState)
+    self.bAutoResizeToChildrenHeight = bState
+
+    self:InvalidateLayout()
+end
+
+--- Enable Auto resize panel width and height to children size
+---@param bState boolean
+function PANEL:SetAutoReSizeToChildren(bState)
+    self.bAutoResizeToChildrenWidth = bState
+    self.bAutoResizeToChildrenHeight = bState
+
+    self:InvalidateLayout()
+end
+
+
+---@param w number
+---@param h number
+---@private
+function PANEL:_SizeChanged(w, h)
+
+    self:CalcPaintOnce_Internal(w, h)
+
+    if type(self.OnSizeChanged) == "function" then
+        self:OnSizeChanged(w, h)
+    end
+end
+
+---@private
+---@param pnlChild Panel
+function PANEL:OnChildAdded(pnlChild)
+    self.bNeedUpdateSizeToChildren = true
+end
+
+---@private
+---@param pnlChild Panel
+function PANEL:OnChildRemoved(pnlChild)
+    self.bNeedUpdateSizeToChildren = true
+end
+
+---@private
+function PANEL:OnCursorEntered()
+    self:CalcPaintOnce_Internal()
+
+    if type(self.OnCursorJoin) == "function" then
+        self:OnCursorJoin()
+    end
+
+end
+
+---@private
+function PANEL:OnCursorExited()
+    self:CalcPaintOnce_Internal()
+
+    if type(self.OnCursorExit) == "function" then
+        self:OnCursorExit()
+    end
+end
+
+function PANEL:PerformLayout(w, h)
+    if self.bNeedUpdateSizeToChildren then
+        local cw, ch = self:ChildrenSize()
+        if self.bAutoResizeToChildrenWidth and self.bAutoResizeToChildrenHeight then
+            self:SetSize(cw, ch)
+        elseif self.bAutoResizeToChildrenWidth then
+            self:SetWide(cw)
+        elseif self.bAutoResizeToChildrenHeight then
+            self:SetTall(ch)
+        end
+
+        self.bNeedUpdateSizeToChildren = false
+    else
+        if (self.LastPerformW != w) or (self.LastPerformH != h) then
+            self.LastPerformW = w
+            self.LastPerformH = h
+
+            self:_SizeChanged(w, h)
+        end
+    end
+
 end
 
 vgui.Register("zpanelbase", PANEL, "EditablePanel")
