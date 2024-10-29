@@ -129,9 +129,7 @@ local t_isWideDock = {
 ---@param dock integer
 ---@param size number?
 function PANEL:SDock(dock, size)
-    if dock == FILL then
-        self:Dock(FILL)
-    elseif type(size) == "number" then
+    if type(size) == "number" then
         if t_isWideDock[dock] then
             self:SetWide(size)
         else
@@ -139,6 +137,7 @@ function PANEL:SDock(dock, size)
         end
     end
 
+    self:Dock(dock)
     self:InvalidateParent(true)
 end
 
