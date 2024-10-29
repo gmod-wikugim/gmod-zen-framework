@@ -105,6 +105,11 @@ local function hexToRGBA(hex)
 end
 
 
+---@alias zColor
+---| Color
+---| string
+
+
 ---@param r number|Color|string
 ---@param b number?
 ---@param g number?
@@ -405,7 +410,7 @@ end
 ---@param y number
 ---@param w number
 ---@param h number
----@param clr Color?
+---@param clr zColor?
 ---@param tl boolean?
 ---@param tr boolean?
 ---@param bl boolean?
@@ -493,10 +498,10 @@ function draw.BoxRoundedEx(radius, x, y, w, h, clr, tl, tr, bl, br)
         add_point(x, y + h)
     end
 
-    -- draw.NoTexture()
+    draw.NoTexture()
 
     if clr then
-        SetDrawColor(clr.r,clr.g,clr.b,clr.a)
+        SetDrawColor(clr)
     else
         SetDrawColor(255, 255, 255, 255)
     end
