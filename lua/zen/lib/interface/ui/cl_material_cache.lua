@@ -142,11 +142,20 @@ function material_cache.Generate2DMaterial(width, height, draw_func, mask_func, 
 	material_cache.iMatCounter = material_cache.iMatCounter + 1
     local texture_name = "material_cache/auto_generated/" .. material_cache.iMatCounter
 
-    local texture = GetRenderTarget(texture_name, width, height)
+    -- local texture = GetRenderTarget(texture_name, width, height)
+    -- local texture = GetRenderTargetEx(texture_name, width, height, RT_SIZE_LITERAL, MATERIAL_RT_DEPTH_NONE, 1 + 256, 0, IMAGE_FORMAT_BGRA8888)
+    local texture = GetRenderTargetEx(texture_name,
+        width, height,
+        RT_SIZE_NO_CHANGE, -- Just no touch anything
+        MATERIAL_RT_DEPTH_SHARED, -- Alpha use multiply alpha object. If any bags then change to --> MATERIAL_RT_DEPTH_SEPARATE --> MATERIAL_RT_DEPTH_ONLY
+        1 + 256, -- Best Combo to enable high-equility screenshot
+        0, -- Dont tested
+        IMAGE_FORMAT_RGBA16161616 -- Allow use more colors in game. Default game colors is restricted!
+    )
 
     render.PushRenderTarget(texture)
 
-    render.Clear(0, 0, 0, 0)
+    render.Clear(0, 0, 0, 0, true, true)
         cam.Start2D()
 
 
@@ -174,19 +183,20 @@ function material_cache.Generate2DMaterial(width, height, draw_func, mask_func, 
             }
         end
 
-
-
-
     render.PopRenderTarget()
 
 	local result_material = CreateMaterial(texture_name, "UnlitGeneric", {
-		["$basetexture"] = texture_name,
-
-		["$vertexcolor"] = 1,
-		["$vertexalpha"] = 1,
+        ["$basetexture"] = texture_name,
+        ["$translucent"] = 1,        // Set to "1" if you want it to be translucent
+        ["$vertexcolor"] = 1,        // Use vertex colors if needed
+        ["$vertexalpha"] = 1,        // Use vertex alpha if needed
+        -- ["$nolod"] = 1,              // Prevents LOD issues
+        -- ["$ignorez"] = 1,
+        -- ["$nomip"] = 1,
+        -- ["$additive"] = 0,
+        -- ["$nocull"] = 1,
+        -- ["$model"] = 1,
 	})
-
-    -- result_material:SetVector("$color", Vector(2.2, 2.2, 2.2))
 
     return result_material, PNG, width, height
 end
