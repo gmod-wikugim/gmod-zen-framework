@@ -406,6 +406,8 @@ function nt.GetTypeWriterFunc(type_name)
                 error("GetTypeWriter specWriter not exists: " .. tostring(specialID))
             end
         end
+    else
+        error("GetTypeWriter: " .. tostring(type_name) .. " don't exists")
     end
 end
 
@@ -441,11 +443,12 @@ function nt.funcValidCustomType(human_type, value, type_id, id)
 end
 
 
--- nt.Write({"player", "int32"}, Player(1), 100)
 function nt.Write(types, data_values)
-    for k, value in ipairs(data_values) do
-        local tp_name = types[k]
+    for i, tp_name in ipairs(types) do
+        local value = data_values[i]
         local fWriter, isSpecial, a1, a2, a3, a4, a5 = nt.GetTypeWriterFunc(tp_name)
+        assert(isfunction(fWriter), "fWriter don't exists " .. tostring(tp_name ))
+
         fWriter(value, a1, a2, a3, a4, a5)
     end
 end
@@ -518,7 +521,7 @@ function nt.Send(channel_name, types, data, target)
     end
 
     if not bSuccess then
-        MsgC(COLOR.ERROR, "[NT-Predicted-Error] ", channel_name, "\n", sLastError, "\n")
+        MsgC(COLOR.ERROR, "[NT-Predicted-Error] NetworkID ", COLOR.VAR_STRING, '"', channel_name, '"', COLOR.ERROR, ": ", sLastError, "\n")
         return
     end
 
@@ -658,13 +661,13 @@ net.Receive(nt.channels.sendMessage, function(len, ply)
 
     if bWaitingInspect then
         bSuccess = false
-        sLastError = "network not inspected"
+        sLastError = "not inspected, looks like server sent message, but client don't know how read it!"
     end
 
     ::result::
 
     if not bSuccess then
-        MsgC(COLOR.ERROR, "[NT-Predicted-Error] ", channel_name, "\n", sLastError, "\n")
+        MsgC(COLOR.ERROR, "[NT-Predicted-Error] NetworkID ", COLOR.VAR_STRING, '"', channel_name, '"', COLOR.ERROR, ": ", sLastError, "\n")
         return
     end
 end)
