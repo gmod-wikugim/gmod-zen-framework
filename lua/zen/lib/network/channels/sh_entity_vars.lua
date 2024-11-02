@@ -89,23 +89,11 @@ local function RemoveID(ent_id)
     end
 end
 
-nt.RegisterChannel("entity_removed", nil, {
-    types = {"uint16"},
-    OnRead = function(self, ply, ent_id)
-        if CLIENT then
-            RemoveID(ent_id)
-        end
-    end,
-    OnWrite = function(self, ply, ent_id)
-        if SERVER then
-            RemoveID(ent_id)
-        end
-    end
-})
+if CLIENT then
+    ihook.Listen("EntityRemoved", "zen.nt.entity_vars", function(ent, bFullUpdate)
+        if !bFullUpdate then return end
 
-if SERVER then
-    ihook.Listen("EntityRemoved", "zen.nt.entity_vars", function(ent)
-        nt.SendToChannel("entity_removed", nil, ent:EntIndex())
+        RemoveID(ent:EntIndex())
     end)
 end
 
