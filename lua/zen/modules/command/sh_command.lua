@@ -31,8 +31,8 @@ module("zen", package.seeall)
 ---@field callback function
 ---@field types zen.command.QCMD.type[]
 ---@field data zen.command.QCMD.ExtraData
----@field types_clear table
----@field types_names table
+---@field types_clear? table
+---@field types_names? table
 ---@field IsServerCommand? boolean
 ---@field IsClientCommand? boolean
 ---@field IsMenuCommand? boolean
