@@ -498,7 +498,7 @@ function PANEL:OnChildRemoved(pnlChild)
     if self.tChildrenList_Keys[pnlChild] != nil then
         self.tChildrenList_Keys[pnlChild] = nil
 
-        for k, v in ipairs(pnlChild) do
+        for k, v in ipairs(self.tChildrenList) do
             if v != pnlChild then continue end
 
             table.remove(self.tChildrenList, k)
