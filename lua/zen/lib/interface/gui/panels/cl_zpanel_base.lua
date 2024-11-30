@@ -419,15 +419,13 @@ function PANEL:SetLayoutScheme(bVertical, iItemAmount)
     self.iAutoLayoutAmount = iItemAmount
 end
 
+local format = string.format
+local tonumber = tonumber
+
 function PANEL:SortChildrenZOrder()
     local childs = self:GetChildren()
 
-    table.sort(childs, function(a, b)
-        if !IsValid(a) then return false end
-        if !IsValid(b) then return true end
-
-        return a:GetZPos() < b:GetZPos()
-    end)
+    // TODO: Do sorting with zpos
 end
 
 function PANEL:RefreshAutoLayout()
@@ -453,8 +451,6 @@ function PANEL:RefreshAutoLayout()
 
         local pnlW, pnlH = pnl:GetSize()
 
-        -- print(bVertical)
-
         if iAmount > 1 then
             if bVertical then
                 CurrentX = CurrentX + pnlW
@@ -467,6 +463,7 @@ function PANEL:RefreshAutoLayout()
         ItemIndex = ItemIndex + 1
 
         if CurrentRowAmount >= iAmount then
+            CurrentRowAmount = 0
             if bVertical then
                 CurrentX = 0
                 CurrentY = CurrentY + pnlH
@@ -552,27 +549,25 @@ function PANEL:OnCursorExited()
 end
 
 function PANEL:PerformLayout(w, h)
-
-    do -- Childrens
-        local cw, ch = self:ChildrenSize()
-        if self.bAutoResizeToChildrenWidth and self.bAutoResizeToChildrenHeight then
-            self:SetSize(cw, ch)
-        elseif self.bAutoResizeToChildrenWidth then
-            self:SetWide(cw)
-        elseif self.bAutoResizeToChildrenHeight then
-            self:SetTall(ch)
-        end
-
-        self.bNeedUpdateSizeToChildren = false
-
-        if self.bAutoLayoutScheme == true then
-            self:RefreshAutoLayout()
-        end
-    end
-
     if (self.LastPerformW != w) or (self.LastPerformH != h) then
         self.LastPerformW = w
         self.LastPerformH = h
+
+        do -- Childrens
+            local cw, ch = self:ChildrenSize()
+            if self.bAutoResizeToChildrenWidth and self.bAutoResizeToChildrenHeight then
+                self:SetSize(cw, ch)
+            elseif self.bAutoResizeToChildrenWidth then
+                self:SetWide(cw)
+            elseif self.bAutoResizeToChildrenHeight then
+                self:SetTall(ch)
+            end
+
+            if self.bAutoLayoutScheme == true then
+                self:RefreshAutoLayout()
+            end
+        end
+
 
         self:_SizeChanged(w, h)
     end
