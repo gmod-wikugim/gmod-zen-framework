@@ -27,40 +27,55 @@ zen.iCounter_ZPanelBase = zen.iCounter_ZPanelBase or 0
 ---@field PostRemove fun(self) -- Alias for OnRemove
 local PANEL = {}
 
-PANEL.bPaintOnceEnabled = true
-PANEL.LastPaintW = -1
-PANEL.LastPaintH = -1
+function PANEL:InternalInit()
+    self.bPaintOnceEnabled = true
+    self.LastPaintW = -1
+    self.LastPaintH = -1
 
-PANEL.LastPerformW = -1
-PANEL.LastPerformH = -1
+    self.LastPerformW = -1
+    self.LastPerformH = -1
 
----@private
-PANEL.bHoverPaintOnceEnabled = false
 
----@private
-PANEL.bAutoResizeToChildrenWidth = false
+    ---@type table<number, Panel>
+    self.tChildrenList = {}
+    self.tChildrenList_Keys = {}
 
----@private
-PANEL.bAutoResizeToChildrenHeight = false
+    ---@private
+    self.bHoverPaintOnceEnabled = false
 
----@private
-PANEL.bNeedUpdateSizeToChildren = false
+    ---@private
+    self.bAutoResizeToChildrenWidth = false
 
-PANEL.bEnabled = true
-PANEL.bDisabled = !PANEL.bEnabled
+    ---@private
+    self.bAutoResizeToChildrenHeight = false
 
---- Show Panel is blocked. Is blocked, then input press/release also is blocked
-PANEL.bBlocked = false
+    ---@private
+    self.bNeedUpdateSizeToChildren = false
 
-PANEL.tMousesPressed = {}
-PANEL.tMousesPressTime = {}
+    ---@private
+    self.bAutoLayoutScheme = false
 
----@class zen.zpanel_base.render_target
----@field Target ITexture
----@field Func fun(w:number, h:number)
+    self.bAutoLayoutIsVertical = true
+    self.iAutoLayoutAmount = 1
 
----@type table<string, zen.zpanel_base.render_target>
-PANEL.tRenderTargets = {}
+
+    self.bEnabled = true
+    self.bDisabled = !self.bEnabled
+
+    --- Show Panel is blocked. Is blocked, then input press/release also is blocked
+    self.bBlocked = false
+
+    self.tMousesPressed = {}
+    self.tMousesPressTime = {}
+
+    ---@class zen.zpanel_base.render_target
+    ---@field Target ITexture
+    ---@field Func fun(w:number, h:number)
+
+    ---@type table<string, zen.zpanel_base.render_target>
+    self.tRenderTargets = {}
+end
+
 
 --- Check is mouse pressed to panel, nil arg check any mouse is pressed
 ---@param mouse integer?
@@ -80,6 +95,8 @@ function PANEL:IsMouse5Pressed() return self:IsMousePressed(MOUSE_5) end
 
 function PANEL:Init()
     self:SetMouseInputEnabled(true)
+
+    self:InternalInit()
 
     zen.iCounter_ZPanelBase = zen.iCounter_ZPanelBase + 1
     self.uniqueNumID = zen.iCounter_ZPanelBase
@@ -392,16 +409,104 @@ function PANEL:_SizeChanged(w, h)
     end
 end
 
+---@param bVertical boolean
+---@param iItemAmount number? Defailt is [1]
+function PANEL:SetLayoutScheme(bVertical, iItemAmount)
+    iItemAmount = iItemAmount or 0
+
+    self.bAutoLayoutScheme = true
+    self.bAutoLayoutIsVertical = bVertical
+    self.iAutoLayoutAmount = iItemAmount
+end
+
+function PANEL:SortChildrenZOrder()
+    local childs = self:GetChildren()
+
+    table.sort(childs, function(a, b)
+        if !IsValid(a) then return false end
+        if !IsValid(b) then return true end
+
+        return a:GetZPos() < b:GetZPos()
+    end)
+end
+
+function PANEL:RefreshAutoLayout()
+    assert(self.bAutoLayoutScheme == true, "AutoLayoutScheme is not enabled!")
+
+    -- print("Refresh", CurTime())
+
+    local bVertical = self.bAutoLayoutIsVertical
+    local iAmount = self.iAutoLayoutAmount
+
+    local childs = self:GetChildren()
+
+    self:SortChildrenZOrder()
+
+    local CurrentX = 0
+    local CurrentY = 0
+
+    local CurrentRowAmount = 0
+
+    local ItemIndex = 0
+    for k, pnl in pairs(childs) do
+        pnl:SetPos(CurrentX, CurrentY)
+
+        local pnlW, pnlH = pnl:GetSize()
+
+        -- print(bVertical)
+
+        if iAmount > 1 then
+            if bVertical then
+                CurrentX = CurrentX + pnlW
+            else
+                CurrentY = CurrentY + pnlH
+            end
+        end
+
+        CurrentRowAmount = CurrentRowAmount + 1
+        ItemIndex = ItemIndex + 1
+
+        if CurrentRowAmount >= iAmount then
+            if bVertical then
+                CurrentX = 0
+                CurrentY = CurrentY + pnlH
+            else
+                CurrentY = 0
+                CurrentX = CurrentX + pnlW
+            end
+        end
+    end
+end
+
 ---@private
 ---@param pnlChild Panel
 function PANEL:OnChildAdded(pnlChild)
     self.bNeedUpdateSizeToChildren = true
+
+    if self.tChildrenList_Keys[pnlChild] == nil then
+        self.tChildrenList_Keys[pnlChild] = pnlChild
+        table.insert(self.tChildrenList, pnlChild)
+    end
+end
+
+function PANEL:GetChildren()
+    return self.tChildrenList
 end
 
 ---@private
 ---@param pnlChild Panel
 function PANEL:OnChildRemoved(pnlChild)
     self.bNeedUpdateSizeToChildren = true
+
+    if self.tChildrenList_Keys[pnlChild] != nil then
+        self.tChildrenList_Keys[pnlChild] = nil
+
+        for k, v in ipairs(pnlChild) do
+            if v != pnlChild then continue end
+
+            table.remove(self.tChildrenList, k)
+        end
+    end
 end
 
 ---@private
@@ -447,7 +552,8 @@ function PANEL:OnCursorExited()
 end
 
 function PANEL:PerformLayout(w, h)
-    if self.bNeedUpdateSizeToChildren then
+
+    do -- Childrens
         local cw, ch = self:ChildrenSize()
         if self.bAutoResizeToChildrenWidth and self.bAutoResizeToChildrenHeight then
             self:SetSize(cw, ch)
@@ -458,15 +564,18 @@ function PANEL:PerformLayout(w, h)
         end
 
         self.bNeedUpdateSizeToChildren = false
-    else
-        if (self.LastPerformW != w) or (self.LastPerformH != h) then
-            self.LastPerformW = w
-            self.LastPerformH = h
 
-            self:_SizeChanged(w, h)
+        if self.bAutoLayoutScheme == true then
+            self:RefreshAutoLayout()
         end
     end
 
+    if (self.LastPerformW != w) or (self.LastPerformH != h) then
+        self.LastPerformW = w
+        self.LastPerformH = h
+
+        self:_SizeChanged(w, h)
+    end
 end
 
 vgui.Register("zpanelbase", PANEL, "EditablePanel")
