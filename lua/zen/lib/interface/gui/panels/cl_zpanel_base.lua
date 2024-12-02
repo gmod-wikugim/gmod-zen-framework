@@ -35,6 +35,9 @@ function PANEL:InternalInit()
     self.LastPerformW = -1
     self.LastPerformH = -1
 
+    self.bAutoDeleteTimerEnabled = false
+    self.iAutoDeleteTimer = 10 -- Seconds
+
 
     ---@type table<number, Panel>
     self.tChildrenList = {}
@@ -67,6 +70,9 @@ function PANEL:InternalInit()
 
     self.tMousesPressed = {}
     self.tMousesPressTime = {}
+
+    self.tSimpleTimers = {}
+    self.tAdvTimers = {}
 
     ---@class zen.zpanel_base.render_target
     ---@field Target ITexture
@@ -108,7 +114,84 @@ function PANEL:Init()
     else
         self.uniquePanelID = "zen.zpanel_base." .. tostring(self.uniqueNumID)
     end
+
+    if self.bAutoDeleteTimerEnabled then
+        self:AutoRemoveAfter(self.iAutoDeleteTimer)
+    end
 end
+
+
+function PANEL:GetUniqueID() return self.uniquePanelID end
+
+---Return UniquePanelID-some-some and etc.
+---@vararg string
+function PANEL:GetSubUniqueID(...) return string.format("%s-%s", self.uniquePanelID, table.concat({...}, "-")) end
+
+---@param seconds number
+---@param onFinish fun(self: zen.panel.zpanelbase)
+function PANEL:SimpleTimer(seconds, onFinish)
+    local timer_name = self:GetSubUniqueID("simple_timer", seconds)
+
+    timer.Create(timer_name, seconds, 1, function()
+        if !IsValid(self) then return end
+
+        onFinish(self)
+    end)
+
+    self.tSimpleTimers[timer_name] = SysTime() + seconds
+end
+
+---Start timer with granted callback(Panel) exists, return not nil to stop timer
+---@param uniqueID string
+---@param seconds number
+---@param reps number
+---@param callback fun(self: zen.panel.zpanelbase): boolean?
+function PANEL:Timer(uniqueID, seconds, reps, callback)
+    local timer_name = self:GetSubUniqueID("adv_timer", uniqueID)
+
+    timer.Create(timer_name, seconds, reps, function()
+        if !IsValid(self) then
+            timer.Remove(timer_name)
+            return
+        end
+
+        local shouldStop = callback(self)
+
+        if shouldStop != nil then
+            timer.Remove(timer_name)
+        end
+    end)
+
+    self.tAdvTimers[timer_name] = SysTime() + seconds * reps
+end
+
+function PANEL:StopTimer(uniqueID)
+    local timer_name = self:GetSubUniqueID("adv_timer", uniqueID)
+    timer.Remove(timer_name)
+    self.tAdvTimers[timer_name] = nil
+end
+
+function PANEL:StopSimpleTimers()
+    for timer_name in pairs(self.tSimpleTimers) do
+        timer.Remove(timer_name)
+        self.tSimpleTimers[timer_name] = nil
+    end
+end
+
+
+function PANEL:StopTimers()
+    for timer_name in pairs(self.tAdvTimers) do
+        timer.Remove(timer_name)
+        self.tAdvTimers[timer_name] = nil
+    end
+end
+
+function PANEL:AutoRemoveAfter(seconds)
+    self:Timer("auto-remove", seconds, 1, function()
+        self:Remove()
+    end)
+end
+
 
 function PANEL:IsEnabled() return self.bEnabled end
 function PANEL:IsDisabled() return self.bDisabled end
@@ -358,6 +441,20 @@ end
 ---@private
 function PANEL:OnRemove()
     if type(self.PostRemove) == "function" then self:PostRemove() end
+
+    do -- Stop timers
+        for timer_name, iendtime in pairs(self.tAdvTimers) do
+            if SysTime() <= iendtime then
+                timer.Remove(timer_name)
+            end
+        end
+
+        for timer_name, iendtime in pairs(self.tSimpleTimers) do
+            if SysTime() <= iendtime then
+                timer.Remove(timer_name)
+            end
+        end
+    end
 end
 
 --- Enable Auto resize panel width to children in PerformLayout
