@@ -8,22 +8,26 @@ function PANEL:Init()
 end
 
 function PANEL:OpenSelectBox()
+    if IsValid(self.pnlSelect) then
+        self.pnlSelect:Remove()
+    end
+
     self.pnlSelect = gui.Create("zpanelbase")
+
+
+    local x, y = self:GetGlobalPos()
+    local w, h = self:GetSize()
+    self.pnlSelect:SetPos(x, y + h)
+
     self.pnlSelect:SetAutoReSizeToChildren(true)
     self.pnlSelect:SetLayoutScheme(true)
     self.pnlSelect:AutoRemoveAfter(10)
+    self.pnlSelect:SetDrawOnTop(true)
 
     function self.pnlSelect:PaintOnce(w, h)
         draw.BoxRounded(5 ,0, 0, w, h, "181818")
     end
 
-    local x, y = self.pnlSelect:GetGlobalPos()
-
-    local w, h = self:GetSize()
-
-    print(h)
-
-    self.pnlSelect:SetPos(x, y + h * 2)
 
     if type(self.GenerateSelectBoxContent) == "function" then
         self:GenerateSelectBoxContent(self.pnlSelect)
