@@ -1567,7 +1567,7 @@ function util.CreateAccelerateTickTimer(name, delay, reps, callback)
     end)
 end
 
-function util.StopAccelerateTickTimer(timer_name)
+function util.StopAccelerateTickTimer(name)
     local timer_name = string.format("zen-util-accelerate-timer-%s", name)
 
     hook.Remove("Tick", timer_name)
@@ -1725,6 +1725,11 @@ function util.IndexFolderFiles(folder_path, onFinished, onFileFounded, onFolderF
     end)
 
     return source, info
+end
+
+function util.StopIndexFolder(folder_path)
+    local timer_name = string.format("index-folder-%s", folder_path)
+    util.StopAccelerateTickTimer(timer_name)
 end
 
 -- PrintTable(util.IndexAllFiles())
