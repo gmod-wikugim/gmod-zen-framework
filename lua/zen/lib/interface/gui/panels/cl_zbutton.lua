@@ -23,7 +23,13 @@ end
 ---@param w number
 ---@param h number
 function PANEL:PaintOnce(w, h)
+
+    if self:IsHovered() then
+        draw.Box(0,0,w,h, "353535")
+    else
+        draw.Box(0,0,w,h, "212121")
+    end
     draw.Text(self.sText, self.sFont, w/2, h/2, self.cTextColor, 1, 1, color_black)
 end
 
-vgui.Register("zbutton", PANEL, "zbutton")
+vgui.Register("zbutton", PANEL, "zlabel")
