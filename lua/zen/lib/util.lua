@@ -1638,6 +1638,10 @@ local function index_files(global_path, source, order_folder, info)
                 new_path = file_name
             end
 
+            if info.bFileFounded then
+                info.onFileFounded(new_path, global_path)
+            end
+
             info.fileAmount = info.fileAmount + 1
             source[info.fileAmount] = new_path
         end
@@ -1657,6 +1661,10 @@ local function index_files(global_path, source, order_folder, info)
                 new_path = folder_name
             end
 
+            if info.bFolderFounded then
+                info.onFolderFounded(new_path, global_path)
+            end
+
             info.folderAmount = info.folderAmount + 1
             order_folder[info.folderAmount] = new_path
         end
@@ -1667,7 +1675,13 @@ function util.IndexAllFiles(onFinished)
     return util.IndexFolderFiles("", onFinished)
 end
 
-function util.IndexFolderFiles(folder_path, onFinished)
+---Index all files and folder with Accelerate timer
+---@param folder_path string
+---@param onFinished fun(fileList: table<number, string>, info: table)
+---@param onFileFounded? fun(file_path: string, folder_path: string)
+---@param onFolderFounded? fun(folder_path: string, upper_folder_path: string)
+---@return table source, table info
+function util.IndexFolderFiles(folder_path, onFinished, onFileFounded, onFolderFounded)
     assert(type(folder_path) == "string", "folder_path not is string")
     assert(type(onFinished) == "function", "onFinished not is function")
 
@@ -1679,17 +1693,31 @@ function util.IndexFolderFiles(folder_path, onFinished)
     info.folderAmount = 0
     info.StartTime = SysTime()
 
+    info.bFileFounded = onFileFounded != nil
+    info.onFileFounded = onFileFounded
+
+    info.bFolderFounded = onFolderFounded != nil
+    info.onFolderFounded = onFolderFounded
+
+    print("Started index files for folder: `", folder_path, "`")
+
     local timer_name = string.format("index-folder-%s", folder_path)
+
+    if info.bFolderFounded then
+        info.onFolderFounded(folder_path, "")
+    end
 
     local currentID = 1
     util.CreateAccelerateTickTimer(timer_name, 0.005, 0, function()
+        info.currentID = currentID
+
         local currentPath = order_folder[currentID]
         if !currentPath then
-            onFinished(source, currentID)
+            info.EndTime = SysTime()
+            print("Finished index: `", folder_path, "` time(", SysTime() - info.StartTime, ") files(", info.fileAmount, ") folders(", info.folderAmount, ")")
+            onFinished(source, info)
             return false
         end
-
-        -- print(currentID, " - ", currentPath)
 
         index_files(currentPath, source, order_folder, info)
 
@@ -1702,7 +1730,7 @@ end
 -- PrintTable(util.IndexAllFiles())
 -- util.StopAllAccelerateTimers()
 -- util.IndexFolderFiles("materials", function(source, folderAmount)
---     PrintTable(source)
+    -- PrintTable(source)
 -- end)
 
 function util.GetModelBoundsFixed(ent, dropZero)
