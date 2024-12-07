@@ -366,6 +366,8 @@ function PANEL:OnMousePressed(mouse)
     if mouse == MOUSE_MIDDLE and type(self.OnMouseMiddlePress) == "function" then self:OnMouseMiddlePress() end
     if mouse == MOUSE_4 and type(self.OnMouse4Press) == "function" then self:OnMouse4Press() end
     if mouse == MOUSE_5 and type(self.OnMouse5Press) == "function" then self:OnMouse5Press() end
+
+    self:CalcPaintOnce_Internal()
 end
 
 function PANEL:SizeToScreen()
@@ -393,6 +395,8 @@ function PANEL:OnMouseReleased(mouse)
     if mouse == MOUSE_MIDDLE and type(self.OnMouseMiddleRelease) == "function" then self:OnMouseMiddleRelease(delta) end
     if mouse == MOUSE_4 and type(self.OnMouse4Release) == "function" then self:OnMouse4Release(delta) end
     if mouse == MOUSE_5 and type(self.OnMouse5Release) == "function" then self:OnMouse5Release(delta) end
+
+    self:CalcPaintOnce_Internal()
 end
 
 ---@param width number?
