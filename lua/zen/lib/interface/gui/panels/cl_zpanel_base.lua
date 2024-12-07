@@ -61,6 +61,11 @@ function PANEL:InternalInit()
     self.bAutoLayoutIsVertical = true
     self.iAutoLayoutAmount = 1
 
+    self.iAutoLayoutXStep = 5
+    self.iAutoLayoutYStep = 5
+
+    self.bAutoLayoutChangeChildSize = false
+
 
     self.bEnabled = true
     self.bDisabled = !self.bEnabled
@@ -519,13 +524,20 @@ end
 
 ---@param bVertical boolean
 ---@param iItemAmount number? Defailt is [1]
-function PANEL:SetLayoutScheme(bVertical, iItemAmount)
-    iItemAmount = iItemAmount or 0
+---@param x_step number? x size between items
+---@param y_step number? y size between items
+---@param bChangeChildenSize boolean?
+function PANEL:SetLayoutScheme(bVertical, iItemAmount, x_step, y_step, bChangeChildenSize)
+    if bChangeChildenSize == nil then bChangeChildenSize = self.bAutoLayoutChangeChildSize end
 
     self.bAutoLayoutScheme = true
     self.bAutoLayoutIsVertical = bVertical
-    self.iAutoLayoutAmount = iItemAmount
+    self.iAutoLayoutAmount = iItemAmount or self.iAutoLayoutAmount
+    self.iAutoLayoutXStep = x_step or self.iAutoLayoutXStep
+    self.iAutoLayoutYStep = y_step or self.iAutoLayoutYStep
+    self.bAutoLayoutChangeChildSize = bChangeChildenSize
 end
+
 
 local format = string.format
 local tonumber = tonumber
@@ -548,8 +560,26 @@ function PANEL:RefreshAutoLayout()
 
     self:SortChildrenZOrder()
 
-    local CurrentX = 0
-    local CurrentY = 0
+    local StepX = self.iAutoLayoutXStep
+    local StepY = self.iAutoLayoutYStep
+
+    local CurrentX = StepX
+    local CurrentY = StepY
+
+    local bChangeSize = self.bAutoLayoutChangeChildSize
+
+
+
+    local ItemSize = 0
+
+    if bChangeSize then
+        if bVertical then
+            ItemSize = ( (self:GetWide() ) / iAmount) - (StepX)
+        else
+            ItemSize = ( (self:GetTall() ) / iAmount) - (StepY)
+        end
+    end
+
 
     local CurrentRowAmount = 0
 
@@ -557,13 +587,17 @@ function PANEL:RefreshAutoLayout()
     for k, pnl in pairs(childs) do
         pnl:SetPos(CurrentX, CurrentY)
 
+        if bChangeSize then
+            pnl:SetSize(ItemSize, ItemSize)
+        end
+
         local pnlW, pnlH = pnl:GetSize()
 
         if iAmount > 1 then
             if bVertical then
-                CurrentX = CurrentX + pnlW
+                CurrentX = CurrentX + pnlW + StepX
             else
-                CurrentY = CurrentY + pnlH
+                CurrentY = CurrentY + pnlH + StepY
             end
         end
 
@@ -573,11 +607,11 @@ function PANEL:RefreshAutoLayout()
         if CurrentRowAmount >= iAmount then
             CurrentRowAmount = 0
             if bVertical then
-                CurrentX = 0
-                CurrentY = CurrentY + pnlH
+                CurrentX = StepX
+                CurrentY = CurrentY + pnlH + StepY
             else
-                CurrentY = 0
-                CurrentX = CurrentX + pnlW
+                CurrentY = StepY
+                CurrentX = CurrentX + pnlW + StepX
             end
         end
     end
