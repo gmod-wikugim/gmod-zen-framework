@@ -121,24 +121,9 @@ function zen.Import(...)
     return unpack(tResult)
 end
 
-function zen.IncludeSv(fl_path, bForceLoad)
-    if SERVER and (zen.SERVER_SIDE_ACTIVATED or bForceLoad) then return zen.INC(fl_path, SERVER) end
-end
-
-function zen.IncludeCl(fl_path, bForceLoad)
-    return zen.INC(fl_path, CLIENT)
-end
-
-function zen.IncludeSh(fl_path, bForceLoad)
-    return zen.INC(fl_path)
-end
-zen.IncludeSH = zen.IncludeSh
-zen.IncludeSV = zen.IncludeSv
-zen.IncludeCL = zen.IncludeCl
-
 function zen.IncludePlugin(plugin_name)
     print("include plugin: ", plugin_name)
-    return zen.INC("zen_plugin/" .. plugin_name .. "/browser.lua")
+    return zen.IncludeSHU("zen_plugin/" .. plugin_name .. "/browser.lua")
 end
 
 function zen.IncludeFolderRecursive(folder)
@@ -168,4 +153,4 @@ function zen.IncludeFolderRecursive(folder)
     end
 end
 
-zen.IncludeSH("zen/browser.lua", true)
+zen.IncludeSHU("zen/browser.lua")
