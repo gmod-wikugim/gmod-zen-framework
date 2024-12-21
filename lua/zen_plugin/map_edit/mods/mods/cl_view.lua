@@ -105,12 +105,12 @@ function MOD:CalcMove(VIEW)
         local add_x = 0 // -(cmd:GetMouseX() * 0.03)
         local add_y = 0 // -(cmd:GetMouseY() * 0.03)
 
-        local cx, cy = input.GetCursorPos()
+        local cx, cy = VIEW.LocalCursorX, VIEW.LocalCursorY
 
         VIEW.CursorX = cx
         VIEW.CursorY = cy
 
-        if input.IsKeyPressed(MOUSE_RIGHT) then
+        if input.IsKeyPressed(MOUSE_RIGHT) or input.IsKeyPressed(KEY_LALT) then
             VIEW.lastCX = VIEW.lastCX or cx
             VIEW.lastCY = VIEW.lastCY or cy
 
@@ -123,6 +123,24 @@ function MOD:CalcMove(VIEW)
 
             VIEW.lastCX = cx
             VIEW.lastCY = cy
+
+
+            if cx < 0 then
+                VIEW.NextCX = VIEW.w
+                VIEW.lastCX = VIEW.w
+            end
+            if cx > VIEW.w then
+                VIEW.NextCX = 0
+                VIEW.lastCX = 0
+            end
+            if cy < 0 then
+                VIEW.NextCY = VIEW.h
+                VIEW.lastCY = VIEW.h
+            end
+            if cy > VIEW.h then
+                VIEW.NextCY = 0
+                VIEW.lastCY = 0
+            end
         else
             VIEW.lastCX = cx
             VIEW.lastCY = cy
@@ -271,6 +289,19 @@ function MOD:Start(workspaceUpper, workspaceContent)
         DisableClipping( old )
 
         CurrentMode:Draw2D(VIEW, w, h)
+
+
+        if VIEW.NextCX or VIEW.NextCY then
+            local cx, cy = input.GetCursorPos()
+            local NX = (VIEW.NextCX) and (VIEW.NextCX + VIEW.x) or (cx)
+            local NY = (VIEW.NextCY) and (VIEW.NextCY + VIEW.y) or (cy)
+
+            VIEW.NextCX = nil
+            VIEW.NextCY = nil
+
+            input.SetCursorPos(NX, NY)
+
+        end
     end
 end
 
