@@ -250,6 +250,14 @@ function SHEET:CreateItemPanel(pnlLayout, ITEM)
 
     local ENT_Material
 
+    if !ENT_Material and ENT and ENT.Icon then
+        local mat = Material(ENT.Icon)
+        if mat and !mat:IsError() then
+            ENT_Material = mat
+        end
+    end
+
+
     if !ENT_Material and ENT and ENT.IconOverride then
         local mat = Material(ENT.IconOverride)
         if mat and !mat:IsError() then
