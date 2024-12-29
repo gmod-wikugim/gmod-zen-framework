@@ -204,17 +204,17 @@ Receive("zen.meta_network.networks", function(_, ply)
                 -- Networks Bytes
                 WriteUInt(meta_network.NetworkCountBits, 32)
 
-                local ObjectAmount = table.Count(meta_network.mt_ListObjects)
+                local ObjectAmount = table.Count(meta_network.mt_ListObjectsIndex)
 
                 WriteUInt(ObjectAmount, meta_network.NetworkCountBits)
 
-                for k, v in pairs(meta_network.mt_ListObjects) do
+                for k, v in pairs(meta_network.mt_ListObjectsIndex) do
                     WriteUInt(v.NetworkID, meta_network.NetworkCountBits)
                     WriteString(v.uniqueID)
                 end
             Send(ply)
         elseif code_name == "DATAVAR_LIST" then
-            for NetworkID, NETWORK_DATA in pairs(meta_network.mt_ListObjects) do
+            for NetworkID, NETWORK_DATA in pairs(meta_network.mt_ListObjectsIndex) do
                 NETWORK_DATA:Sync(ply)
             end
         end
@@ -234,10 +234,8 @@ Receive("zen.meta_network.networks", function(_, ply)
 
                 meta_network.AssignNetworkID(uniqueID, NetworkID, true)
             end
-            for k, v in pairs(meta_network.mt_ListObjects) do
-                WriteUInt(v.NetworkID)
-                WriteString(v.uniqueID)
-            end
+
+            meta_network.bNetworkReady = true
         elseif code_name == "ASSIGN_NETWORK_ID" then
             local networkID = ReadUInt(meta_network.NetworkCountBits)
             local uniqueID = ReadString()
@@ -258,7 +256,7 @@ end)
 local rawset = rawset
 local rawget = rawget
 
-
+/*
 ---@enum (key) zen.meta_network.key_type
 local KEYS_TYPES = {
     number      =  1,
@@ -272,6 +270,7 @@ for k, v in pairs(KEYS_TYPES) do KEYS_TYPES_INDEX[v] = k end
 
 
 local KEYS_TYPES_BITS = countBits(table.Count(KEYS_TYPES))
+*/
 
 function META:WriteKey(IndexID)
     WriteUInt(IndexID, self.IndexBits)
@@ -304,11 +303,13 @@ function META:__newindex(key, value)
 
     self.t_Values[IndexID] = value
 
-    self:SendNetwork(function()
-        WriteCode("UPDATE_VARIABLE")
-        self:WriteKey(IndexID)
-        WriteType(value)
-    end)
+    if SERVER then
+        self:SendNetwork(function()
+            WriteCode("UPDATE_VARIABLE")
+            self:WriteKey(IndexID)
+            WriteType(value)
+        end)
+    end
 end
 
 ---Get numeric index from AnyKey
@@ -403,19 +404,26 @@ function META:Sync(target)
             WriteCode("FULL_SYNC")
             WriteUInt(self.IndexBits, 32)
 
-            local ValueAmount = table.Count(self.t_Values)
+            local ValueAmount = table.Count(self.t_Keys)
 
             WriteUInt(ValueAmount, 32)
 
-            for key, value in pairs(self.t_Values) do
-                local IndexID = self:GetIndexID(key)
+            for Key, IndexID in pairs(self.t_Keys) do
+                local Value = self.t_Values[IndexID]
+
+                assert(Key != nil, "Server-side network `" .. tostring(self.uniqueID) .. "` don't have value for Index `" .. tostring(IndexID) .. "` in FULL_SYNC")
 
                 WriteUInt(IndexID, self.IndexBits)
-                WriteString(key)
-                WriteType(value)
+                WriteType(Key)
+                WriteType(Value)
             end
 
         end, target)
+    end
+    if CLIENT then
+        self:SendNetwork(function(self)
+            WriteCode("FULL_SYNC")
+        end)
     end
 end
 
@@ -455,8 +463,10 @@ function META:OnMessage(CODE, who, len)
 
             for k = 1, ValueAmount do
                 local IndexID = ReadUInt(self.IndexBits)
-                local Key = ReadString()
+                local Key = ReadType()
                 local Value = ReadType()
+
+                assert(Key != nil, "Key can't be nil in Client-side FULL_SYNC")
 
                 self.t_Keys[Key] = IndexID
                 self.t_KeysIndexes[IndexID] = Key
@@ -464,6 +474,14 @@ function META:OnMessage(CODE, who, len)
                 self.t_Values[Key] = Value
             end
         end
+    end
+
+    if SERVER then
+
+        if CODE == "FULL_SYNC" then
+            self:Sync(who)
+        end
+
     end
 
 end
@@ -591,14 +609,21 @@ meta_network.GetNetworkObject("Network08")
 meta_network.GetNetworkObject("Network09")
 local SOME_OBJECT = meta_network.GetNetworkObject("Network09")
 if SERVER then
-    SOME_OBJECT.Var01 = 1
-    SOME_OBJECT.Var02 = 2
-    SOME_OBJECT.Var03 = 2
-    SOME_OBJECT.Var04 = 2
+    SOME_OBJECT.Var01 = "var01"
+    SOME_OBJECT.Var02 = "var02"
+    SOME_OBJECT.Var03 = "var03"
+    SOME_OBJECT.Var04 = "var04"
+    SOME_OBJECT.Var05 = "var05"
 end
 
 -- PrintTable(SOME_OBJECT)
 
 concommand.Add("test_network", function()
     PrintTable(meta_network.mt_ListObjects)
+end)
+
+concommand.Add("test_network_sync", function()
+    for k, NETWORK in pairs(meta_network.mt_ListObjectsIndex) do
+        NETWORK:Sync()
+    end
 end)
