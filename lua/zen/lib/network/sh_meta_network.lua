@@ -1,7 +1,48 @@
 module("zen")
 
+/*
+    Zen MetaNetwork: Easely usage network with __index, __newindex support
+    Like network table, but with real-time update, without call functions
 
--- TODO: Move init network to another network
+    zen.nt (zen.network) will be deleted in future, meta_network will be maintained
+*/
+
+--- TODO: Create entity linked networks by EntityID
+--- Should be created with FreeIndexes Table for EntityID
+--- Also should garbage network after EntityRemove
+--- FreeIndexes should give next free index for link to entity
+
+-- TODO: Remove variable if new variable is nil.
+
+-- TODO: Rename UPDATE_VARIABLE to SET_VARIABLE and DEL_VARIABLE and etc. more human-readable
+
+-- TODO: Create signals.
+-- Server-to-Client should use NetworkID (number)
+-- Client-to-Server should use NetworkID (number), otherwise (string) if signal not exists
+
+-- TODO: Add hooks support (hook.Run)
+-- Add META:OnVarChanger META:OnSignal, etc
+
+-- TODO: Create server-side function, and send interface to client example
+/*
+    if SERVER then
+        NETWORK_OBJECT:RegisterFunction("SlayPlayer", {"Player", "boolean"}, function(self, ply, isSilent)
+            -- Do function stuff
+        end)
+        -- or
+        function NETWORK_OBJECT:f_SlayPlayer(ply, isSilent) -- For example use `f_` prefix
+            -- Do function stuff
+        end
+
+    end
+
+    if CLIENT then
+        NETWORK_OBJECT:StartFunction("SlayPlayer", ply, true)
+        -- or
+        NETWORK_OBJECT:f_SlayPlayer(ply, true) -- For example use `f_` prefix
+    end
+*/
+
 
 local WriteString = net.WriteString
 local ReadString = net.ReadString
@@ -186,12 +227,16 @@ local function ReadCodeNetwork()
     return CODE
 end
 
+--- TODO: Make function usable
+function meta_network.SendFullUpdate(target, networkID) end
 
-function meta_network.SendFullUpdate(target, networkID)
+--- TODO: Create signals, like net.Receive and net.Send
+--- Should use SignalID (number). Error is signal not exists
+function META:SendSignal() end
 
+--- TODO: Should register signal on server, and send to client
+function META:OnSignal() end
 
-
-end
 
 Receive("zen.meta_network.networks", function(_, ply)
     local code_name = ReadCodeNetwork()
@@ -403,6 +448,7 @@ function META:SendNetwork(func, target)
     fix_network)
 end
 
+-- TODO: Create separate push netvars, like netstream for big networks
 function META:Sync(target)
     if SERVER then
         self:SendNetwork(function(self)
@@ -603,9 +649,6 @@ function meta_network.GetNetworkObject(uniqueID)
     return NETWORK_DATA
 end
 
--- TODO: Request NetworkList
--- TODO: Create separeate push netvars
-
 function meta_network.InitClient()
     Start("zen.meta_network.networks")
         WriteCodeNetwork("NETWORK_LIST")
@@ -618,16 +661,16 @@ function meta_network.InitClient()
     SendToServer()
 end
 
-if CLIENT then
-    -- if meta_network.bNetworkReady then return end
+if CLIENT then -- Client start-up
+    if IsValid(LocalPlayer()) then meta_network.InitClient() end
+    hook.Add("InitPostEntity", "zen.meta_network", function()
+        if CLIENT then meta_network.InitClient() end
+    end)
 end
 
-hook.Add("InitPostEntity", "meta_network", function()
-    if CLIENT then
-        meta_network.InitClient()
-    end
-end)
 
+
+/*
 
 meta_network.GetNetworkObject("Network01")
 meta_network.GetNetworkObject("Network02")
@@ -688,7 +731,7 @@ if SERVER then
     end
 end
 
--- PrintTable(SOME_OBJECT)
+
 
 concommand.Add("test_network", function()
     PrintTable(meta_network)
@@ -705,4 +748,6 @@ if CLIENT then
         meta_network.InitClient()
     end)
 end
+
+*/
 
