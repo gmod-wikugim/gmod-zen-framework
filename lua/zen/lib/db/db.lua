@@ -1113,7 +1113,7 @@ function module.CreateStorage(provider, table_name, table_struct, host_data)
     return STORAGE
 end
 
-
+/*
 local NiceStorage = module.CreateStorage("mysqloo", "db_test", {
     columns = {
         {name = "id", type = "INTEGER", primaryKey = true, autoIncrement = true},
@@ -1128,3 +1128,4 @@ local NiceStorage = module.CreateStorage("mysqloo", "db_test", {
     database = "gmod",
     port = 3306
 })
+*/
