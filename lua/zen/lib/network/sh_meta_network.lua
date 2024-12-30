@@ -12,9 +12,9 @@ module("zen")
 --- Also should garbage network after EntityRemove
 --- FreeIndexes should give next free index for link to entity
 
--- TODO: Remove variable if new variable is nil.
+-- TODO: Create free index table
 
--- TODO: Rename UPDATE_VARIABLE to SET_VARIABLE and DEL_VARIABLE and etc. more human-readable
+-- TODO: Rename SET_VAR to SET_VARIABLE and DEL_VARIABLE and etc. more human-readable
 
 -- TODO: Create signals.
 -- Server-to-Client should use NetworkID (number)
@@ -140,8 +140,8 @@ local CODES = {
     PING                           = 1,
     PUSH_TABLE                     = 2,
     CLEAR_TABLE                    = 3,
-    UPDATE_VARIABLE                = 4,
-    EMPTY_VARIABLE                 = 5,
+    SET_VAR                        = 4,
+    DEL_VAR                        = 5,
     PING_VARIBLE                   = 6,
     UPDATE_INDEX_BETS              = 7,
 
@@ -347,19 +347,36 @@ function META:__newindex(key, value)
     assert(SERVER, "This is only server-side controlled")
     assert( rawget(META, key) == nil, "You can't assing `" .. tostring(key) .. "` this is meta-reserved")
 
-    local IndexID = self:GetIndexID(key)
+    local IndexID = self.t_Keys[key]
+
+    -- Ignore new key with value NIL
+    if IndexID == nil then
+        if value == nil then return end
+
+        IndexID = self:GetIndexID(key)
+    end
+
+    ---@cast IndexID number
 
     local OldValue = self.t_Values[IndexID]
 
     if OldValue != value then
         self.t_Values[IndexID] = value
 
-        if SERVER then
+        if value != nil then
             self:SendNetwork(function()
-                WriteCode("UPDATE_VARIABLE")
+                WriteCode("SET_VAR")
                 self:WriteKey(IndexID)
                 WriteType(value)
             end)
+        else
+            self:SendNetwork(function()
+                WriteCode("DEL_VAR")
+                self:WriteKey(IndexID)
+            end)
+
+            self.t_Keys[key] = nil
+            self.t_KeysIndexes[IndexID] = nil
         end
 
         self:OnVariableChanged(key, OldValue, value)
@@ -521,7 +538,7 @@ function META:OnMessage(CODE, who, len)
             local Value = self.t_Values[IndexID]
 
             -- assert(Key != nil, "Client-side network `" .. tostring(self.uniqueID) .. "` don't have key for Index `" .. tostring(IndexID) .. "`")
-        elseif CODE == "UPDATE_VARIABLE" then
+        elseif CODE == "SET_VAR" then
             local IndexID = self:ReadKey()
             local Value = ReadType()
 
@@ -531,6 +548,17 @@ function META:OnMessage(CODE, who, len)
             self.t_Values[IndexID] = Value
 
             print("GetVariable ", IndexID, " ", Key, " ", Value)
+        elseif CODE == "DEL_VAR" then
+            local IndexID = self:ReadKey()
+
+            local Key = self.t_KeysIndexes[IndexID]
+            assert(Key != nil, "Client-side network `" .. tostring(self.uniqueID) .. "` don't have key for Index `" .. tostring(IndexID) .. "`")
+
+            self.t_Values[IndexID] = nil
+            self.t_Keys[Key] = nil
+            self.t_KeysIndexes[IndexID] = nil
+
+            print("Delete variable ", IndexID, " ", Key)
         elseif CODE == "FULL_SYNC" then
             meta_network.NetworkCountBits = ReadUInt(32)
 
@@ -670,71 +698,17 @@ end
 
 
 
-/*
+-- /*
 
-meta_network.GetNetworkObject("Network01")
-meta_network.GetNetworkObject("Network02")
-meta_network.GetNetworkObject("Network03")
-meta_network.GetNetworkObject("Network04")
-meta_network.GetNetworkObject("Network05")
-meta_network.GetNetworkObject("Network06")
-meta_network.GetNetworkObject("Network07")
-meta_network.GetNetworkObject("Network08")
-meta_network.GetNetworkObject("Network09")
-local SOME_OBJECT = meta_network.GetNetworkObject("Network09")
+local SM = meta_network.GetNetworkObject("Network01")
 if SERVER then
-    SOME_OBJECT.Var01 = "10001"
-    SOME_OBJECT.Var02 = "10002"
-    SOME_OBJECT.Var03 = "10003"
-    SOME_OBJECT.Var04 = "10004"
-    SOME_OBJECT.Var05 = "10005"
-    SOME_OBJECT.Var06 = "10006"
-    SOME_OBJECT.Var07 = "10007"
-    SOME_OBJECT.Var08 = "10008"
-end
-local SM2 = meta_network.GetNetworkObject("Network10")
-if SERVER then
-    SM2.Test = 3
-end
-local SM3 = meta_network.GetNetworkObject("Network11")
-local SM3 = meta_network.GetNetworkObject("Network12")
-if SERVER then
-    SM3.Vartiable = "Fafafa"
-end
-local SM3 = meta_network.GetNetworkObject("Network13")
-if SERVER then
-    SM3.Vartiable2 = "Fafafa2"
-
-    for k = 1, 100 do
-        SM3[k] = 10
-
-    end
-end
-
-local SM3 = meta_network.GetNetworkObject("Network14")
-if SERVER then
-    SM3.Vartiable3 = "Fafafa3"
-
-    for k = 1, 1000 do
-        SM3[k] = 30
-
-    end
-end
-
-local SM3 = meta_network.GetNetworkObject("Network15")
-if SERVER then
-    SM3.Vartiable4 = "Fafafa4"
-
-    for k = 1, 300 do
-        SM3[k] = 500
-
-    end
+    SM.Admin = nil
 end
 
 
 
 concommand.Add("test_network", function()
-    PrintTable(meta_network)
+    PrintTable(SM)
 end)
 
 concommand.Add("test_network_sync", function()
@@ -749,5 +723,5 @@ if CLIENT then
     end)
 end
 
-*/
+-- */
 
