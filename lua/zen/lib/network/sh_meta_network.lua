@@ -65,6 +65,7 @@ local SERVER = SERVER
 if SERVER then
     util.AddNetworkString("zen.fix_network")
     util.AddNetworkString("zen.meta_network")
+    util.AddNetworkString("zen.meta_network.sub_table")
     util.AddNetworkString("zen.meta_network.networks")
 end
 
@@ -161,21 +162,6 @@ for k, v in pairs(CODES) do CODES_INDEX[v] = k end
 --- REAL-TIME CODE BITS
 CODES_BITS = countBits(#(CODES))
 
----@enum (key) zen.meta_network.code_sub_table
-local CODES_SUB_TABLE = {
-    SET_SUB_TABLE                  = 1,
-    DEL_SUB_TABLE                  = 2,
-    SET_SUB_TABLE_KEY              = 3,
-    DEL_SUB_TABLE_KEY              = 4,
-}
-
----@type table<number, zen.meta_network.code_sub_table>
-local CODES_SUB_TABLE_INDEX = {}
-for k, v in pairs(CODES_SUB_TABLE) do CODES_SUB_TABLE_INDEX[v] = k end
-
-CODES_SUB_TABLE_BITS = countBits(#(CODES_SUB_TABLE))
-
-
 ---@param code_name zen.meta_network.code
 local function WriteCode(code_name)
     local code = CODES[code_name]
@@ -190,6 +176,8 @@ local function ReadCode()
     assert(CODE != nil, "Unknown code " .. tostring(codeID))
     return CODE
 end
+
+--=============---VVVVVVVVVVVVVVVV---===============--
 
 Receive("zen.meta_network", function(len, who)
     local NetworkID = ReadNetworkID()
@@ -243,6 +231,8 @@ local function ReadCodeNetwork()
     assert(CODE != nil, "Unknown code network: " .. tostring(codeID))
     return CODE
 end
+
+--=============---VVVVVVVVVVVVVVVV---===============--
 
 --- TODO: Make function usable
 function meta_network.SendFullUpdate(target, networkID) end
@@ -314,6 +304,60 @@ end)
 
 
 --================== CODE-NETWORK ==================--
+------------------------------------------------------
+
+
+------------------------------------------------------
+--================ CODE-SUB-TABLE ==================--
+
+---@enum (key) zen.meta_network.code_sub_table
+local CODES_SUB_TABLE = {
+    SET_SUB_TABLE                  = 1,
+    DEL_SUB_TABLE                  = 2,
+    SET_SUB_TABLE_KEY              = 3,
+    DEL_SUB_TABLE_KEY              = 4,
+}
+
+---@type table<number, zen.meta_network.code_sub_table>
+local CODES_SUB_TABLE_INDEX = {}
+for k, v in pairs(CODES_SUB_TABLE) do CODES_SUB_TABLE_INDEX[v] = k end
+
+CODES_SUB_TABLE_BITS = countBits(#(CODES_SUB_TABLE))
+
+---@param code_name zen.meta_network.code_sub_table
+local function WriteCodeSubTable(code_name)
+    local code = CODES_SUB_TABLE[code_name]
+    WriteUInt(code, CODES_SUB_TABLE_BITS)
+end
+
+---@return zen.meta_network.code_sub_table
+local function ReadCodeSubTable()
+    local codeID = ReadUInt(CODES_SUB_TABLE_BITS)
+    local CODE = CODES_SUB_TABLE_INDEX[codeID]
+
+    assert(CODE != nil, "Unknown code network: " .. tostring(codeID))
+    return CODE
+end
+
+--=============---VVVVVVVVVVVVVVVV---===============--
+
+
+Receive("zen.meta_network.sub_table", function (len, ply)
+    local NetworkID = ReadNetworkID()
+
+    print("Receive network: ", NetworkID, " ", ply)
+
+    local NETWORK_OBJECT = meta_network.mt_ListObjectsIndex[NetworkID]
+
+    assert(NETWORK_OBJECT != nil, "NETWORK_OBJECT with id `" .. tostring(NetworkID) .. "` not exists")
+
+    local code_name = ReadCodeSubTable()
+
+    -- Your stuff here
+end)
+
+
+--================ CODE-SUB-TABLE ==================--
 ------------------------------------------------------
 
 
