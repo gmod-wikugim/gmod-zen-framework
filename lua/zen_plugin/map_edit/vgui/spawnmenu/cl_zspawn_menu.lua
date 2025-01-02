@@ -195,12 +195,37 @@ function PANEL:PostRemove()
     util.StopIndexFolder("models")
 end
 
-function PANEL:LoadWorkspaceMDL(WORKSPACE)
+function PANEL:CreateWorkspaceTree(WORKSPACE, onCreated)
     do -- Tree
         WORKSPACE.pnlTree = gui.Create("ztree", WORKSPACE.pnlContent)
         WORKSPACE.pnlTree:SDock(LEFT, 200)
+        WORKSPACE.pnlTree:Expand()
 
+        if onCreated then
+            onCreated(WORKSPACE, WORKSPACE.pnlTree)
+        end
+    end
+end
 
+function PANEL:CreateWorkspaceLayout(WORKSPACE, onTreeCreated)
+    do -- Content
+        WORKSPACE.pnlLayout = gui.Create("zpanelbase", WORKSPACE.pnlContent)
+        WORKSPACE.pnlLayout:SDock(FILL)
+
+        function WORKSPACE.pnlTree:OnNodePress(node_id)
+            WORKSPACE.pnlLayout:Clear()
+        end
+
+        if onTreeCreated then
+            onTreeCreated(WORKSPACE, WORKSPACE.WORKSPACE.pnlLayout)
+        end
+    end
+end
+
+function PANEL:LoadWorkspaceMDL(WORKSPACE)
+    self:CreateWorkspaceTree(WORKSPACE)
+
+    do -- Tree
         WORKSPACE.itemsContent = {}
 
         util.IndexFolderFiles("models", function()
@@ -286,8 +311,7 @@ end
 
 function PANEL:LoadWorkspaceEntity(WORKSPACE)
     do -- Tree
-        WORKSPACE.pnlTree = gui.Create("ztree", WORKSPACE.pnlContent)
-        WORKSPACE.pnlTree:SDock(LEFT, 200)
+        self:CreateWorkspaceTree(WORKSPACE)
 
         WORKSPACE.itemsContent = {}
 
@@ -377,8 +401,7 @@ end
 
 function PANEL:LoadWorkspaceWeapon(WORKSPACE)
     do -- Tree
-        WORKSPACE.pnlTree = gui.Create("ztree", WORKSPACE.pnlContent)
-        WORKSPACE.pnlTree:SDock(LEFT, 200)
+        self:CreateWorkspaceTree(WORKSPACE)
 
         WORKSPACE.itemsContent = {}
 
@@ -457,8 +480,7 @@ end
 
 function PANEL:LoadWorkspaceNPC(WORKSPACE)
     do -- Tree
-        WORKSPACE.pnlTree = gui.Create("ztree", WORKSPACE.pnlContent)
-        WORKSPACE.pnlTree:SDock(LEFT, 200)
+        self:CreateWorkspaceTree(WORKSPACE)
 
         WORKSPACE.itemsContent = {}
 
@@ -537,8 +559,7 @@ end
 
 function PANEL:LoadWorkspaceVehicle(WORKSPACE)
     do -- Tree
-        WORKSPACE.pnlTree = gui.Create("ztree", WORKSPACE.pnlContent)
-        WORKSPACE.pnlTree:SDock(LEFT, 200)
+        self:CreateWorkspaceTree(WORKSPACE)
 
         WORKSPACE.itemsContent = {}
 
