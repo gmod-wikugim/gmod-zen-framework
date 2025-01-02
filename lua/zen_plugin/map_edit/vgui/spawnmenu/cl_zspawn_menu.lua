@@ -213,13 +213,10 @@ function PANEL:CreateWorkspaceLayout(WORKSPACE, onCreated)
 
         WORKSPACE.pnlLayout = gui.Create("zpanelbase", WORKSPACE.pnlContent)
         WORKSPACE.pnlLayout:SDock(FILL)
-
-        function WORKSPACE.pnlTree:OnNodePress(node_id)
-            WORKSPACE.pnlLayout:Clear()
-        end
+        WORKSPACE.pnlLayout:SetLayoutScheme(true, 10, 2, 2, true)
 
         if onCreated then
-            onCreated(WORKSPACE, WORKSPACE.WORKSPACE.pnlLayout)
+            onCreated(WORKSPACE, WORKSPACE.pnlLayout)
         end
     end
 end
@@ -270,19 +267,12 @@ function PANEL:LoadWorkspaceMDL(WORKSPACE)
             if item_list then
                 print("Item amount: ", #item_list)
 
-
-                WORKSPACE.pnlLayout.pnlLayout = gui.Create("zpanelbase", WORKSPACE.pnlLayout)
-                WORKSPACE.pnlLayout.pnlLayout:SDock(FILL)
-                local Wide = WORKSPACE.pnlLayout.pnlLayout:GetSize()
-                local amount = math.Round(Wide/5)
-                WORKSPACE.pnlLayout.pnlLayout:SetLayoutScheme(true, amount, 2, 2, true)
-
                 for _, file_path in pairs(item_list) do
                     local ext = string.GetExtensionFromFilename(file_path)
 
                     if ext != "mdl" then continue end
 
-                    local pnlItem = gui.Create("zbutton", WORKSPACE.pnlLayout.pnlLayout)
+                    local pnlItem = gui.Create("zbutton", WORKSPACE.pnlLayout)
 
                     function pnlItem:PaintOnce(w, h)
                         draw.Box(0,0,w,h,"191919")
@@ -360,14 +350,8 @@ function PANEL:LoadWorkspaceEntity(WORKSPACE)
             if item_list then
                 print("Item amount: ", #item_list)
 
-                WORKSPACE.pnlLayout.pnlLayout = gui.Create("zpanelbase", WORKSPACE.pnlLayout)
-                WORKSPACE.pnlLayout.pnlLayout:SDock(FILL)
-                local Wide = WORKSPACE.pnlLayout.pnlLayout:GetSize()
-                local amount = math.Round(Wide/5)
-                WORKSPACE.pnlLayout.pnlLayout:SetLayoutScheme(true, amount, 2, 2, true)
-
                 for _, ITEM in pairs(item_list) do
-                    local pnlItem = gui.Create("zbutton", WORKSPACE.pnlLayout.pnlLayout)
+                    local pnlItem = gui.Create("zbutton", WORKSPACE.pnlLayout)
 
                     function pnlItem:PaintOnce(w, h)
                         draw.Box(0,0,w,h,"191919")
@@ -425,8 +409,6 @@ function PANEL:LoadWorkspaceWeapon(WORKSPACE)
     do -- Content
         self:CreateWorkspaceLayout(WORKSPACE)
 
-
-
         function WORKSPACE.pnlTree:OnNodePress(node_id)
             print("OnNodePress ", node_id)
 
@@ -436,15 +418,8 @@ function PANEL:LoadWorkspaceWeapon(WORKSPACE)
             if item_list then
                 print("Item amount: ", #item_list)
 
-                WORKSPACE.pnlLayout.pnlLayout = gui.Create("zpanelbase", WORKSPACE.pnlLayout)
-                WORKSPACE.pnlLayout.pnlLayout:SDock(FILL)
-
-                local Wide = WORKSPACE.pnlLayout.pnlLayout:GetSize()
-                local amount = math.Round(Wide/5)
-                WORKSPACE.pnlLayout.pnlLayout:SetLayoutScheme(true, amount, 2, 2, true)
-
                 for _, ITEM in pairs(item_list) do
-                    local pnlItem = gui.Create("zbutton", WORKSPACE.pnlLayout.pnlLayout)
+                    local pnlItem = gui.Create("zbutton", WORKSPACE.pnlLayout)
 
                     function pnlItem:PaintOnce(w, h)
                         draw.Box(0,0,w,h,"191919")
@@ -516,14 +491,8 @@ function PANEL:LoadWorkspaceNPC(WORKSPACE)
             if item_list then
                 print("Item amount: ", #item_list)
 
-                WORKSPACE.pnlLayout.pnlLayout = gui.Create("zpanelbase", WORKSPACE.pnlLayout)
-                WORKSPACE.pnlLayout.pnlLayout:SDock(FILL)
-                local Wide = WORKSPACE.pnlLayout.pnlLayout:GetSize()
-                local amount = math.Round(Wide/5)
-                WORKSPACE.pnlLayout.pnlLayout:SetLayoutScheme(true, amount, 2, 2, true)
-
                 for _, ITEM in pairs(item_list) do
-                    local pnlItem = gui.Create("zbutton", WORKSPACE.pnlLayout.pnlLayout)
+                    local pnlItem = gui.Create("zbutton", WORKSPACE.pnlLayout)
 
                     function pnlItem:PaintOnce(w, h)
                         draw.Box(0,0,w,h,"191919")
@@ -594,14 +563,8 @@ function PANEL:LoadWorkspaceVehicle(WORKSPACE)
             if item_list then
                 print("Item amount: ", #item_list)
 
-                WORKSPACE.pnlLayout.pnlLayout = gui.Create("zpanelbase", WORKSPACE.pnlLayout)
-                WORKSPACE.pnlLayout.pnlLayout:SDock(FILL)
-                local Wide = WORKSPACE.pnlLayout.pnlLayout:GetSize()
-                local amount = math.Round(Wide/5)
-                WORKSPACE.pnlLayout.pnlLayout:SetLayoutScheme(true, amount, 2, 2, true)
-
                 for _, ITEM in pairs(item_list) do
-                    local pnlItem = gui.Create("zbutton", WORKSPACE.pnlLayout.pnlLayout)
+                    local pnlItem = gui.Create("zbutton", WORKSPACE.pnlLayout)
 
                     function pnlItem:PaintOnce(w, h)
                         draw.Box(0,0,w,h,"191919")
