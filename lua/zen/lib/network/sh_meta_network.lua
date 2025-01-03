@@ -90,8 +90,10 @@ meta_network.mi_NetworkObjectCounter = meta_network.mi_NetworkObjectCounter or 0
 ---@field t_KeysIndexes table<number, any> -- <index, key>
 ---@field t_Values table<any, any> -- <key, value>
 ---@field t_FreeIndexes table<number, number> -- <number, number> Free Indexes after DEL_VAR
----@field IndexCounter number
----@field IndexBits number
+---@field t_Signals table<any, number> -- <any, number>
+---@field t_SignalsIndexes table<number, any> -- <number, any>
+---@field IndexValuesCounter number
+---@field IndexValuesBits number
 ---@field NetworkID number
 ---@field uniqueID string
 local META = {}
@@ -149,6 +151,9 @@ local CODES = {
 
     FULL_SYNC                      = 6,
     NEW_INDEX                      = 7,
+
+    SEND_SIGNAL                    = 8,
+    NEW_SIGNAL_INDEX               = 9,
 }
 
 ---@type table<number, zen.meta_network.code>
@@ -230,12 +235,25 @@ end
 
 --=============---VVVVVVVVVVVVVVVV---===============--
 
+function META:GetSignalID(signalName)
+    local SignalID = self.t_Signals[signalName]
+
+    if SignalID == nil then
+        
+    end
+
+    return SignalID
+end
+
 --- TODO: Make function usable
 function meta_network.SendFullUpdate(target, networkID) end
 
 --- TODO: Create signals, like net.Receive and net.Send
 --- Should use SignalID (number). Error is signal not exists
-function META:SendSignal() end
+function META:SendSignal(signalName)
+    
+    
+end
 
 --- TODO: Should register signal on server, and send to client
 function META:OnSignal() end
@@ -377,11 +395,11 @@ local KEYS_TYPES_BITS = countBits(table.Count(KEYS_TYPES))
 */
 
 function META:WriteKey(IndexID)
-    WriteUInt(IndexID, self.IndexBits)
+    WriteUInt(IndexID, self.IndexValuesBits)
 end
 
 function META:ReadKey()
-    return ReadUInt(self.IndexBits)
+    return ReadUInt(self.IndexValuesBits)
 end
 
 ---@private
@@ -399,24 +417,24 @@ function META:__index(Key)
     end
 end
 
----@param NewIndexBits number
-function META:SetCurrentIndexBits(NewIndexBits)
-    local OldBits = self.IndexBits
-    rawset(self, "IndexBits", NewIndexBits)
+---@param NewIndexValuesBits number
+function META:SetCurrentIndexValuesBits(NewIndexValuesBits)
+    local OldBits = self.IndexValuesBits
+    rawset(self, "IndexValuesBits", NewIndexValuesBits)
 
     if SERVER then
         self:SendNetwork(function()
             WriteCode("UPDATE_INDEX_BETS")
-            WriteUInt(NewIndexBits, 32)
+            WriteUInt(NewIndexValuesBits, 32)
         end)
 
-        if NewIndexBits < OldBits then
-            local NewIndexCounter = table.Count(self.t_KeysIndexes)
+        if NewIndexValuesBits < OldBits then
+            local NewIndexValuesCounter = table.Count(self.t_KeysIndexes)
 
-            rawset(self, "IndexCounter", NewIndexCounter)
+            rawset(self, "IndexValuesCounter", NewIndexValuesCounter)
 
             for k, v in pairs(self.t_FreeIndexes) do
-                if v > NewIndexCounter then
+                if v > NewIndexValuesCounter then
                     -- table.remove(self.t_FreeIndexes, k)
                     self.t_FreeIndexes[k] = nil
                 end
@@ -473,8 +491,8 @@ function META:__newindex(Key, value)
 
             table.insert(self.t_FreeIndexes, IndexID)
 
-            if self.IndexCounter == IndexID then
-                self:SetCurrentIndexBits( countBits( table.Count(self.t_KeysIndexes) ) )
+            if self.IndexValuesCounter == IndexID then
+                self:SetCurrentIndexValuesBits( countBits( table.Count(self.t_KeysIndexes) ) )
             end
         end
 
@@ -493,15 +511,15 @@ function META:GetIndexID(any)
 
         if NewIndexID == nil then
 
-            local IndexCounter = rawget(self, "IndexCounter")
-            IndexCounter = IndexCounter + 1
-            rawset(self, "IndexCounter", IndexCounter)
+            local IndexValuesCounter = rawget(self, "IndexValuesCounter")
+            IndexValuesCounter = IndexValuesCounter + 1
+            rawset(self, "IndexValuesCounter", IndexValuesCounter)
 
-            if IndexCounter > maxValue(self.IndexBits) then
-                self:SetCurrentIndexBits( countBits(IndexCounter) )
+            if IndexValuesCounter > maxValue(self.IndexValuesBits) then
+                self:SetCurrentIndexValuesBits( countBits(IndexValuesCounter) )
             end
 
-            NewIndexID = IndexCounter
+            NewIndexID = IndexValuesCounter
         else
             table.remove(self.t_FreeIndexes, ID_TODEL)
         end
@@ -571,7 +589,7 @@ function META:Sync(target)
         self:SendNetwork(function(self)
             WriteCode("FULL_SYNC")
             WriteUInt(meta_network.NetworkCountBits, 32)
-            WriteUInt(self.IndexBits, 32)
+            WriteUInt(self.IndexValuesBits, 32)
 
             local ValueAmount = table.Count(self.t_Keys)
 
@@ -582,7 +600,7 @@ function META:Sync(target)
 
                 assert(Key != nil, "Server-side network `" .. tostring(self.uniqueID) .. "` don't have value for Index `" .. tostring(IndexID) .. "` in FULL_SYNC")
 
-                WriteUInt(IndexID, self.IndexBits)
+                WriteUInt(IndexID, self.IndexValuesBits)
                 WriteType(Key)
                 WriteType(Value)
             end
@@ -622,7 +640,7 @@ function META:OnMessage(CODE, who, len)
         if CODE == "PING" then
             self:Ping()
         elseif CODE == "UPDATE_INDEX_BETS" then
-            self:SetCurrentIndexBits(ReadUInt(32))
+            self:SetCurrentIndexValuesBits(ReadUInt(32))
         elseif CODE == "NEW_INDEX" then
             local IndexID = self:ReadKey()
             local Key = ReadType()
@@ -662,12 +680,12 @@ function META:OnMessage(CODE, who, len)
         elseif CODE == "FULL_SYNC" then
             meta_network.NetworkCountBits = ReadUInt(32)
 
-            self:SetCurrentIndexBits(ReadUInt(32))
+            self:SetCurrentIndexValuesBits(ReadUInt(32))
 
             local ValueAmount = ReadUInt(32)
 
             for k = 1, ValueAmount do
-                local IndexID = ReadUInt(self.IndexBits)
+                local IndexID = ReadUInt(self.IndexValuesBits)
                 local Key = ReadType()
                 local Value = ReadType()
 
@@ -757,9 +775,13 @@ function meta_network.GetNetworkObject(uniqueID)
             t_Values = {},
             t_SubTables = {},
             t_FreeIndexes = {},
+            t_Signals = {},
+            t_SignalsIndexes = {},
             NetworkID = -1,
-            IndexCounter = 0,
-            IndexBits = 0,
+            IndexValuesCounter = 0,
+            IndexValuesBits = 0,
+            IndexSignalCounter = 0,
+            IndexSignalBits = 0,
             uniqueID = uniqueID,
         }
 
