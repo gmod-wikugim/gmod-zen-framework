@@ -65,6 +65,7 @@ local SERVER = SERVER
 if SERVER then
     util.AddNetworkString("zen.fix_network")
     util.AddNetworkString("zen.meta_network")
+    util.AddNetworkString("zen.meta_network.index")
     util.AddNetworkString("zen.meta_network.sub_table")
     util.AddNetworkString("zen.meta_network.networks")
 end
@@ -92,6 +93,12 @@ meta_network.mi_NetworkObjectCounter = meta_network.mi_NetworkObjectCounter or 0
 ---@field t_FreeIndexes table<number, number> -- <number, number> Free Indexes after DEL_VAR
 ---@field t_Signals table<any, number> -- <any, number>
 ---@field t_SignalsIndexes table<number, any> -- <number, any>
+---@field t_ChannelKeys table<number, table<any, number>>
+---@field t_ChannelIDS table<number, table<number, any>>
+---@field t_ChannelFreeIDS table<number, table<number, number>>
+---@field t_ChannelCounter table<number, number>
+---@field t_ChannelBits table<number, number>
+---@field t_ChannelData table<any, any>
 ---@field IndexValuesCounter number
 ---@field IndexValuesBits number
 ---@field NetworkID number
@@ -136,6 +143,242 @@ local function ReadNetworkID()
     return ReadUInt(meta_network.NetworkCountBits)
 end
 
+---@return zen.META_NETWORK
+local function ReadNETWORK()
+    local NetworkID = ReadNetworkID()
+
+    local NETWORK_OBJECT = meta_network.mt_ListObjectsIndex[NetworkID]
+
+    assert(NETWORK_OBJECT != nil, "NETWORK_OBJECT with id `" .. tostring(NetworkID) .. "` not exists")
+
+    return NETWORK_OBJECT
+end
+
+------------------------------------------------------
+--=================== CHANNELS =====================--
+
+
+---@enum (key) zen.meta_network.channel
+local CHANNELS = {
+    TABLE_VAR                      = 1,
+}
+
+---@type table<number, zen.meta_network.channel>
+local CHANNELS_INDEX = {}
+for k, v in pairs(CHANNELS) do CHANNELS_INDEX[v] = k end
+
+--- REAL-TIME CODE BITS
+local CHANNELS_BITS = countBits(table.Count(CHANNELS))
+
+---@param channelID zen.meta_network.channel
+local function WriteChannel(channelID)
+    local code = CHANNELS[channelID]
+    WriteUInt(code, CHANNELS_BITS)
+end
+
+---@return zen.meta_network.channel
+local function ReadChannel()
+    local codeID = ReadUInt(CHANNELS_BITS)
+    -- local CODE = CHANNELS_INDEX[codeID]
+
+    -- assert(CODE != nil, "Unknown code " .. tostring(codeID))
+    return codeID
+end
+
+--=================== CHANNEL ======================--
+------------------------------------------------------
+
+------------------------------------------------------
+--================ CHANNEL-INFO ====================--
+
+
+---@enum (key) zen.meta_network.channel_info
+local CHANNELS_INFO = {
+    UPDATE_BITS                      = 1,
+    NEW_INDEX                        = 2,
+    DEL_INDEX                        = 3,
+}
+
+---@type table<number, zen.meta_network.channel_info>
+local CHANNELS_INFO_INDEX = {}
+for k, v in pairs(CHANNELS_INFO) do CHANNELS_INFO_INDEX[v] = k end
+
+--- REAL-TIME CODE BITS
+local CHANNELS_INFO_BITS = countBits(table.Count(CHANNELS_INFO))
+
+---@param channelID zen.meta_network.channel_info
+local function WriteChannelInfo(channelID)
+    local code = CHANNELS_INFO[channelID]
+    WriteUInt(code, CHANNELS_INFO_BITS)
+end
+
+---@return zen.meta_network.channel_info
+local function ReadChannelInfo()
+    local codeID = ReadUInt(CHANNELS_INFO_BITS)
+    local CODE = CHANNELS_INFO_INDEX[codeID]
+
+    assert(CODE != nil, "Unknown code " .. tostring(codeID))
+    return CODE
+end
+
+--================ CHANNEL-INFO ====================--
+------------------------------------------------------
+
+
+--- Create _INDEX[number] for _KEY[number], like HashMap for Indexes
+---@param CHANNEL_NAME zen.meta_network.channel
+---@param _KEY any
+---@return number _INDEX
+function META:GetFreeIndex(CHANNEL_NAME, _KEY)
+    assert(type(CHANNEL_NAME) == "string", "CHANNEL_NAME not is string")
+    assert(_KEY != nil, "_KEY not is NIL")
+
+    local CHANNEL_ID = CHANNELS[CHANNEL_NAME]
+
+    assert(CHANNEL_ID != nil, "CHANNEL_ID not exists `" .. tostring(CHANNEL_NAME) .. "`")
+
+    ---@diagnostic disable-next-line: cast-type-mismatch
+    ---@cast CHANNEL_ID zen.meta_network.channel
+
+    do -- Init default
+        self.t_ChannelKeys[CHANNEL_ID] = self.t_ChannelKeys[CHANNEL_ID] or {}
+        self.t_ChannelIDS[CHANNEL_ID] = self.t_ChannelIDS[CHANNEL_ID] or {}
+        self.t_ChannelFreeIDS[CHANNEL_ID] = self.t_ChannelFreeIDS[CHANNEL_ID] or {}
+        self.t_ChannelCounter[CHANNEL_ID] = self.t_ChannelCounter[CHANNEL_ID] or 0
+        self.t_ChannelBits[CHANNEL_ID] = self.t_ChannelBits[CHANNEL_ID] or 0
+    end
+
+    local Keys = self.t_ChannelKeys[CHANNEL_ID]
+    local IDs = self.t_ChannelIDS[CHANNEL_ID]
+    local FreeIDs = self.t_ChannelFreeIDS[CHANNEL_ID]
+    local Counter = self.t_ChannelCounter[CHANNEL_ID]
+    local Bits = self.t_ChannelBits[CHANNEL_ID]
+
+    local _INDEX = Keys[_KEY]
+
+    if _INDEX == nil then
+
+        if _INDEX == nil then -- Check FreeID
+            local _ID, FreeID = next(FreeIDs)
+
+            if FreeID != nil then
+                table.remove(FreeIDs, _ID)
+
+                _INDEX = FreeID
+            end
+        end
+
+        if _INDEX == nil then
+            Counter = Counter + 1
+            self.t_ChannelCounter[CHANNEL_ID] = Counter
+
+            if Counter > maxValue(Bits) then
+                local NewBits = countBits(Counter)
+                self.t_ChannelBits[CHANNEL_ID] = NewBits
+
+                Start("zen.meta_network.index")
+                    WriteNetworkID(self.NetworkID)
+                    WriteUInt(CHANNEL_ID, CHANNELS_BITS)
+                    WriteChannelInfo("UPDATE_BITS")
+                    WriteUInt(NewBits, 32)
+                Broadcast()
+            end
+
+            _INDEX = Counter
+        end
+
+        Start("zen.meta_network.index")
+            WriteNetworkID(self.NetworkID)
+            WriteUInt(CHANNEL_ID, CHANNELS_BITS)
+            WriteChannelInfo("NEW_INDEX")
+            WriteUInt(_INDEX, self.t_ChannelBits[CHANNEL_ID])
+            WriteType(_KEY)
+        Broadcast()
+
+        if _INDEX == nil then error("_INDEX still is nil") end
+
+        Keys[_KEY] = _INDEX
+        IDs[_INDEX] = _KEY
+    end
+
+
+    return _INDEX
+end
+
+---@param CHANNEL_NAME zen.meta_network.channel
+---@param _KEY any
+function META:DeleteFreeIndex(CHANNEL_NAME, _KEY)
+    assert(type(CHANNEL_NAME) == "string", "CHANNEL_NAME not is string")
+    assert(_KEY != nil, "_KEY not is NIL")
+
+    local CHANNEL_ID = CHANNELS[CHANNEL_NAME]
+
+    assert(CHANNEL_ID != nil, "CHANNEL_ID not exists `" .. tostring(CHANNEL_NAME) .. "`")
+
+    self.t_ChannelKeys[CHANNEL_ID] = self.t_ChannelKeys[CHANNEL_ID] or {}
+    self.t_ChannelIDS[CHANNEL_ID] = self.t_ChannelIDS[CHANNEL_ID] or {}
+    self.t_ChannelFreeIDS[CHANNEL_ID] = self.t_ChannelFreeIDS[CHANNEL_ID] or {}
+    self.t_ChannelCounter[CHANNEL_ID] = self.t_ChannelCounter[CHANNEL_ID] or 0
+    self.t_ChannelBits[CHANNEL_ID] = self.t_ChannelBits[CHANNEL_ID] or 0
+
+    local _INDEX = self.t_ChannelKeys[CHANNEL_ID][_KEY]
+
+    if _INDEX != nil then
+        self.t_ChannelIDS[CHANNEL_ID][_INDEX] = nil
+    end
+
+    self.t_ChannelKeys[CHANNEL_ID][_KEY] = nil
+
+
+    if SERVER then
+        Start("zen.meta_network.index")
+            WriteNetworkID(self.NetworkID)
+            WriteUInt(CHANNEL_ID, CHANNELS_BITS)
+            WriteChannelInfo("DEL_INDEX")
+            WriteUInt(_INDEX, self.t_ChannelBits[CHANNEL_ID])
+        Broadcast()
+    end
+end
+
+net.Receive("zen.meta_network.index", function(len, ply)
+    if SERVER then return end
+
+    local NETWORK = ReadNETWORK()
+
+    local CHANNEL_ID = ReadChannel()
+    local CHANNEL_INFO = ReadChannelInfo()
+
+    if CHANNEL_INFO == "UPDATE_BITS" then
+        NETWORK.t_ChannelBits[CHANNEL_ID] = ReadUInt(32)
+    elseif CHANNEL_INFO == "NEW_INDEX" then
+        local _INDEX = ReadUInt(NETWORK.t_ChannelBits[CHANNEL_ID])
+        print(_INDEX)
+        local _KEY = ReadType()
+
+        assert(_KEY != nil, "_KEY is NIL")
+
+        NETWORK.t_ChannelKeys[CHANNEL_ID] = NETWORK.t_ChannelKeys[CHANNEL_ID] or {}
+        NETWORK.t_ChannelIDS[CHANNEL_ID] = NETWORK.t_ChannelIDS[CHANNEL_ID] or {}
+        NETWORK.t_ChannelFreeIDS[CHANNEL_ID] = NETWORK.t_ChannelFreeIDS[CHANNEL_ID] or {}
+        NETWORK.t_ChannelCounter[CHANNEL_ID] = NETWORK.t_ChannelCounter[CHANNEL_ID] or 0
+        NETWORK.t_ChannelBits[CHANNEL_ID] = NETWORK.t_ChannelBits[CHANNEL_ID] or 0
+
+        NETWORK.t_ChannelKeys[CHANNEL_ID][_KEY] = _INDEX
+        NETWORK.t_ChannelIDS[CHANNEL_ID][_INDEX] = _KEY
+    elseif CHANNEL_INFO == "DEL_INDEX" then
+        local _INDEX = ReadUInt(NETWORK.t_ChannelBits[CHANNEL_ID])
+
+        assert(_INDEX != nil, "_INDEX is NIL")
+
+        local _KEY = NETWORK.t_ChannelIDS[CHANNEL_ID][_INDEX]
+
+        if _KEY != nil then
+            NETWORK.t_ChannelKeys[CHANNEL_ID][_KEY] = nil
+        end
+
+        NETWORK.t_ChannelIDS[CHANNEL_ID][_INDEX] = nil
+    end
+end)
 
 
 ------------------------------------------------------
@@ -239,7 +482,7 @@ function META:GetSignalID(signalName)
     local SignalID = self.t_Signals[signalName]
 
     if SignalID == nil then
-        
+
     end
 
     return SignalID
@@ -251,8 +494,8 @@ function meta_network.SendFullUpdate(target, networkID) end
 --- TODO: Create signals, like net.Receive and net.Send
 --- Should use SignalID (number). Error is signal not exists
 function META:SendSignal(signalName)
-    
-    
+
+
 end
 
 --- TODO: Should register signal on server, and send to client
@@ -605,6 +848,42 @@ function META:Sync(target)
                 WriteType(Value)
             end
 
+            local CHANNEL_AMOUNT = table.Count(self.t_ChannelBits)
+
+            WriteUInt(CHANNEL_AMOUNT, CHANNELS_BITS)
+
+            for CHANNEL_ID, CHANNEL_BITS  in pairs(self.t_ChannelBits) do
+                WriteUInt(CHANNEL_ID, CHANNELS_BITS)
+                WriteUInt(CHANNEL_BITS, 32)
+
+                local Keys = self.t_ChannelKeys[CHANNEL_ID]
+
+                local KEY_AMOUNT = table.Count(Keys)
+
+                WriteUInt(KEY_AMOUNT, CHANNEL_BITS)
+
+                if KEY_AMOUNT <= 0 then continue end
+
+                local bDataExists = next(self.t_ChannelData) != nil
+                WriteBool(bDataExists)
+
+                for _KEY, _INDEX in pairs(Keys) do
+                    WriteType(_KEY)
+                    WriteUInt(_INDEX, CHANNEL_BITS)
+
+                    if bDataExists then
+                        local DATA = self.t_ChannelData[_KEY]
+                        local bThisDataExists = DATA != nil
+
+                        WriteBool(bThisDataExists)
+
+                        if bThisDataExists then
+                            WriteType(DATA)
+                        end
+                    end
+                end
+            end
+
         end, target)
     end
     if CLIENT then
@@ -697,6 +976,49 @@ function META:OnMessage(CODE, who, len)
                 self.t_KeysIndexes[IndexID] = Key
                 self.t_Values[Key] = Value
             end
+
+            --
+
+            local CHANNEL_AMOUNT = ReadUInt(CHANNELS_BITS)
+
+
+            for k = 1, CHANNEL_AMOUNT do
+                local CHANNEL_ID = ReadChannel()
+                local CHANNEL_BITS = ReadUInt(32)
+
+                self.t_ChannelBits[CHANNEL_ID] = CHANNEL_BITS
+                self.t_ChannelKeys[CHANNEL_ID] = {}
+                self.t_ChannelIDS[CHANNEL_ID] = {}
+
+                local KEY_AMOUNT = ReadUInt(CHANNEL_BITS)
+
+                if KEY_AMOUNT <= 0 then continue end
+
+                local DATA_EXISTS = ReadBool()
+
+                if DATA_EXISTS then
+                    self.t_ChannelData[CHANNEL_ID] = {}
+                end
+
+                for k = 1, KEY_AMOUNT do
+                    local _KEY = ReadType()
+                    local _INDEX = ReadUInt(CHANNEL_BITS)
+
+                    assert(_KEY != nil, "Client-side network `" .. tostring(self.uniqueID) .. "` don't have _KEY for Index `" .. tostring(_KEY) .. "`")
+
+                    self.t_ChannelKeys[CHANNEL_ID][_KEY] = _INDEX
+                    self.t_ChannelIDS[CHANNEL_ID][_INDEX] = _KEY
+
+
+                    if DATA_EXISTS then
+                        if ReadBool() then
+                            _DATA = ReadType()
+
+                            self.t_ChannelData[CHANNEL_ID][_KEY] = _DATA
+                        end
+                    end
+                end
+            end
         end
     end
 
@@ -777,6 +1099,12 @@ function meta_network.GetNetworkObject(uniqueID)
             t_FreeIndexes = {},
             t_Signals = {},
             t_SignalsIndexes = {},
+            t_ChannelCounter = {},
+            t_ChannelBits = {},
+            t_ChannelKeys = {},
+            t_ChannelFreeIDS = {},
+            t_ChannelIDS = {},
+            t_ChannelData = {},
             NetworkID = -1,
             IndexValuesCounter = 0,
             IndexValuesBits = 0,
@@ -828,13 +1156,18 @@ end
 
 local SM = meta_network.GetNetworkObject("Network01")
 if SERVER then
-    SM.Admin = "admin"
-    SM.Admin5 = nil
-    SM.Admin3 = true
+    -- SM.Admin = "admin"
+    -- SM.Admin5 = nil
+    -- SM.Admin3 = true
 
     for k = 1, 32 do
         SM[k] = nil
         SM[k+50] = nil
+    end
+
+    for k = 1, 10 do
+        -- SM:GetFreeIndex("TABLE_VAR", "Hello World - " .. k)
+        -- SM:DeleteFreeIndex("TABLE_VAR", "Hello World - " .. k)
     end
 end
 
