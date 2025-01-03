@@ -207,6 +207,15 @@ function PANEL:CreateWorkspaceTree(WORKSPACE, onCreated)
     end
 end
 
+function PANEL:CreateItemPanel(WORKSPACE, ITEM)
+    WORKSPACE.mt_Items = WORKSPACE.mt_Items or {}
+
+    local pnlItem = vgui.Create("zspawn_item", WORKSPACE.pnlLayout)
+    WORKSPACE.mt_Items[pnlItem] = ITEM
+
+    pnlItem:SetItem(ITEM)
+end
+
 function PANEL:CreateWorkspaceLayout(WORKSPACE, onCreated)
     do -- Content
         assert(IsValid(WORKSPACE.pnlTree), "WORKSPACE.pnlTree don't valid")
@@ -222,6 +231,7 @@ function PANEL:CreateWorkspaceLayout(WORKSPACE, onCreated)
 end
 
 function PANEL:LoadWorkspaceMDL(WORKSPACE)
+    local this = self
     self:CreateWorkspaceTree(WORKSPACE)
 
     do -- Tree
@@ -272,27 +282,10 @@ function PANEL:LoadWorkspaceMDL(WORKSPACE)
 
                     if ext != "mdl" then continue end
 
-                    local pnlItem = gui.Create("zbutton", WORKSPACE.pnlLayout)
-
-                    function pnlItem:PaintOnce(w, h)
-                        draw.Box(0,0,w,h,"191919")
-
-                        if self:IsHovered() then
-                            draw.BoxOutlined(1, 0, 0, w, h, "666666")
-                        else
-                            draw.BoxOutlined(1, 0, 0, w, h, "444444")
-                        end
-                    end
-
-                    function pnlItem:DoClick()
-                        RunConsoleCommand("gm_spawn", file_path)
-                    end
-
-                    pnlItem:SetSize(200, 200)
-
-                    local pnlSpawnIcon = gui.Create("SpawnIcon", pnlItem, {dock_fill = true})
-                    pnlSpawnIcon:SetModel(Model(file_path))
-                    pnlSpawnIcon:SetMouseInputEnabled(false)
+                    this:CreateItemPanel(WORKSPACE, {
+                        TYPE = "SANDBOX_MODEL",
+                        VALUE = file_path
+                    })
                 end
 
             end
@@ -301,6 +294,8 @@ function PANEL:LoadWorkspaceMDL(WORKSPACE)
 end
 
 function PANEL:LoadWorkspaceEntity(WORKSPACE)
+    local this = self
+
     do -- Tree
         self:CreateWorkspaceTree(WORKSPACE)
 
@@ -351,32 +346,12 @@ function PANEL:LoadWorkspaceEntity(WORKSPACE)
                 print("Item amount: ", #item_list)
 
                 for _, ITEM in pairs(item_list) do
-                    local pnlItem = gui.Create("zbutton", WORKSPACE.pnlLayout)
 
-                    function pnlItem:PaintOnce(w, h)
-                        draw.Box(0,0,w,h,"191919")
-
-                        if self:IsHovered() then
-                            draw.BoxOutlined(1, 0, 0, w, h, "666666")
-                        else
-                            draw.BoxOutlined(1, 0, 0, w, h, "444444")
-                        end
-                    end
-
-                    function pnlItem:DoClick()
-                        RunConsoleCommand("gm_spawnsent", ITEM.ClassName)
-                    end
-
-                    pnlItem:SetSize(200, 200)
-
-                    local pnlSpawnInfo = CreateItemSpawnIcon(ITEM)
-                    if pnlSpawnInfo != nil and IsValid(pnlSpawnInfo) then
-                        pnlSpawnInfo:SetParent(pnlItem)
-                        pnlSpawnInfo:SetSize(200, 200)
-                        pnlSpawnInfo:Dock(FILL)
-                        pnlSpawnInfo:InvalidateParent(true)
-                        pnlSpawnInfo:SetMouseInputEnabled(false)
-                    end
+                    this:CreateItemPanel(WORKSPACE, {
+                        TYPE = "SANDBOX_SENT",
+                        ITEM = ITEM,
+                        VALUE = ITEM.ClassName
+                    })
                 end
             end
         end
@@ -384,6 +359,8 @@ function PANEL:LoadWorkspaceEntity(WORKSPACE)
 end
 
 function PANEL:LoadWorkspaceWeapon(WORKSPACE)
+    local this = self
+
     do -- Tree
         self:CreateWorkspaceTree(WORKSPACE)
 
@@ -419,33 +396,11 @@ function PANEL:LoadWorkspaceWeapon(WORKSPACE)
                 print("Item amount: ", #item_list)
 
                 for _, ITEM in pairs(item_list) do
-                    local pnlItem = gui.Create("zbutton", WORKSPACE.pnlLayout)
-
-                    function pnlItem:PaintOnce(w, h)
-                        draw.Box(0,0,w,h,"191919")
-
-                        if self:IsHovered() then
-                            draw.BoxOutlined(1, 0, 0, w, h, "666666")
-                        else
-                            draw.BoxOutlined(1, 0, 0, w, h, "444444")
-                        end
-                    end
-
-                    function pnlItem:DoClick()
-                        RunConsoleCommand("give", ITEM.ClassName)
-                    end
-
-                    pnlItem:SetSize(200, 200)
-
-                    local pnlSpawnInfo = CreateItemSpawnIcon(ITEM)
-                    if pnlSpawnInfo != nil and IsValid(pnlSpawnInfo) then
-                        pnlSpawnInfo:SetParent(pnlItem)
-                        pnlSpawnInfo:SetSize(200, 200)
-                        pnlSpawnInfo:Dock(FILL)
-                        pnlSpawnInfo:InvalidateParent(true)
-                        pnlSpawnInfo:SetMouseInputEnabled(false)
-                    end
-
+                    this:CreateItemPanel(WORKSPACE, {
+                        TYPE = "SANDBOX_WEAPON",
+                        ITEM = ITEM,
+                        VALUE = ITEM.ClassName
+                    })
                 end
             end
         end
@@ -453,6 +408,8 @@ function PANEL:LoadWorkspaceWeapon(WORKSPACE)
 end
 
 function PANEL:LoadWorkspaceNPC(WORKSPACE)
+    local this = self
+
     do -- Tree
         self:CreateWorkspaceTree(WORKSPACE)
 
@@ -492,32 +449,11 @@ function PANEL:LoadWorkspaceNPC(WORKSPACE)
                 print("Item amount: ", #item_list)
 
                 for _, ITEM in pairs(item_list) do
-                    local pnlItem = gui.Create("zbutton", WORKSPACE.pnlLayout)
-
-                    function pnlItem:PaintOnce(w, h)
-                        draw.Box(0,0,w,h,"191919")
-
-                        if self:IsHovered() then
-                            draw.BoxOutlined(1, 0, 0, w, h, "666666")
-                        else
-                            draw.BoxOutlined(1, 0, 0, w, h, "444444")
-                        end
-                    end
-
-                    function pnlItem:DoClick()
-                        RunConsoleCommand("gmod_spawnnpc", ITEM._KEY)
-                    end
-
-                    pnlItem:SetSize(200, 200)
-
-                    local pnlSpawnInfo = CreateItemSpawnIcon(ITEM)
-                    if pnlSpawnInfo != nil and IsValid(pnlSpawnInfo) then
-                        pnlSpawnInfo:SetParent(pnlItem)
-                        pnlSpawnInfo:SetSize(200, 200)
-                        pnlSpawnInfo:Dock(FILL)
-                        pnlSpawnInfo:InvalidateParent(true)
-                        pnlSpawnInfo:SetMouseInputEnabled(false)
-                    end
+                    this:CreateItemPanel(WORKSPACE, {
+                        TYPE = "SANDBOX_NPC",
+                        ITEM = ITEM,
+                        VALUE = ITEM._KEY
+                    })
                 end
             end
         end
@@ -525,6 +461,8 @@ function PANEL:LoadWorkspaceNPC(WORKSPACE)
 end
 
 function PANEL:LoadWorkspaceVehicle(WORKSPACE)
+    local this = self
+
     do -- Tree
         self:CreateWorkspaceTree(WORKSPACE)
 
@@ -564,32 +502,11 @@ function PANEL:LoadWorkspaceVehicle(WORKSPACE)
                 print("Item amount: ", #item_list)
 
                 for _, ITEM in pairs(item_list) do
-                    local pnlItem = gui.Create("zbutton", WORKSPACE.pnlLayout)
-
-                    function pnlItem:PaintOnce(w, h)
-                        draw.Box(0,0,w,h,"191919")
-
-                        if self:IsHovered() then
-                            draw.BoxOutlined(1, 0, 0, w, h, "666666")
-                        else
-                            draw.BoxOutlined(1, 0, 0, w, h, "444444")
-                        end
-                    end
-
-                    function pnlItem:DoClick()
-                        RunConsoleCommand("gm_spawnvehicle", ITEM._KEY)
-                    end
-
-                    pnlItem:SetSize(200, 200)
-
-                    local pnlSpawnInfo = CreateItemSpawnIcon(ITEM)
-                    if pnlSpawnInfo != nil and IsValid(pnlSpawnInfo) then
-                        pnlSpawnInfo:SetParent(pnlItem)
-                        pnlSpawnInfo:SetSize(200, 200)
-                        pnlSpawnInfo:Dock(FILL)
-                        pnlSpawnInfo:InvalidateParent(true)
-                        pnlSpawnInfo:SetMouseInputEnabled(false)
-                    end
+                    this:CreateItemPanel(WORKSPACE, {
+                        TYPE = "SANDBOX_VEHICLE",
+                        ITEM = ITEM,
+                        VALUE = ITEM._KEY
+                    })
                 end
             end
         end
