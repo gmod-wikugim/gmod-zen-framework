@@ -97,7 +97,16 @@ end
 
 
 function map_edit.Render(rendermode, priority)
-	UpdateView()
+	-- local RT = render.GetRenderTarget()
+	-- print(RT == nil, tostring(RT))
+	-- render.ClearDepth()
+	-- render.Clear( 0, 0, 0, 0 )
+
+	-- local VIEW = render.GetViewSetup()
+
+	-- print(VIEW.znear)
+
+	-- UpdateView()
 
 	ihook.Run("zen.map_edit.Render", rendermode, priority, vw)
 	return true
@@ -114,6 +123,8 @@ map_edit.mt_HookCreated = map_edit.mt_HookCreated or {}
 local HookStateMent = {
 	["PlayerButtonUp.SupperessNext"] = true,
 	["PlayerButtonDown.SupperessNext"] = true,
+
+	["RenderScene"] = true,
 
 	["PlayerSwitchWeapon"] = true,
 	["CreateMove"] = true,
@@ -409,6 +420,16 @@ function map_edit.OnEnabled()
 	ihook.Handler("StartCommand", map_edit.hookName, map_edit.StartCommand, HOOK_HIGH)
 	ihook.Handler("Render", map_edit.hookName, map_edit.Render, HOOK_HIGH)
 
+	map_edit.ScrW = map_edit.ScrW or ScrW()
+	map_edit.ScrH = map_edit.ScrH or ScrH()
+
+	-- render.SetViewPort(-1, -1, 100, 100)
+
+	-- local customRt = GetRenderTarget( "some_unique_render_target_nameeeee", 1000, 500, true )
+
+	-- render.SetRenderTarget(customRt)
+
+
 	ihook.Run("zen.map_edit.OnEnabled")
 
 	nt.Send("map_edit.status", {"bool"}, {true})
@@ -421,6 +442,9 @@ function map_edit.OnDisabled()
 	for k, val in pairs(map_edit.mt_HookCreated) do
 		ihook.Remove(k, map_edit.hookName)
 	end
+
+	-- render.SetViewPort(-1, -1, -1, -1)
+	-- render.SetRenderTarget()
 
 	ihook.Remove("CalcView", map_edit.hookName)
 	ihook.Remove("StartCommand", map_edit.hookName)
