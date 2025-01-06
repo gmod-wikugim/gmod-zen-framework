@@ -7,6 +7,7 @@ RENDER_PRE = 1
 RENDER_DEFAULT = 2
 RENDER_POST = 3
 
+/*
 ihook.Listen("DrawTranslucentRenderables", "zen.hud", function()
     ihook.Run("Render", RENDER_3D, RENDER_PRE)
 end)
@@ -88,3 +89,5 @@ ihook.Listen("PostDrawOpaqueRenderables", "zen.hud", function()
         end
     end
 end)
+
+*/
