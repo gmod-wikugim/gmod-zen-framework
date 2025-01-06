@@ -1,5 +1,57 @@
 module("zen")
 
+zen.FreePanelIDS = zen.FreePanelIDS or {}
+zen.FreePanelIDS_Index = zen.FreePanelIDS_Index or {}
+
+local FREE_IDS = zen.FreePanelIDS
+local FREE_IDS_Index = zen.FreePanelIDS_Index
+
+local table_remove = table.remove
+local table_insert = table.insert
+local string_format = string.format
+
+---@return string
+local function TakeID(width, height)
+    FREE_IDS[width] = FREE_IDS[width] or {}
+    FREE_IDS[width][height] = FREE_IDS[width][height] or {
+        [0] = 0,
+    }
+
+    local INFO = FREE_IDS[width][height]
+
+
+    local FreeID
+    if INFO[1] != nil then
+        FreeID = INFO[1]
+        table_remove(INFO, 1)
+    else
+        INFO[0] = INFO[0] + 1 -- Counter
+        FreeID = string_format("zen/PanelRT/%s/%s/%s", width, height, INFO[0])
+    end
+
+    FREE_IDS_Index[FreeID] = {width, height, INFO[0]}
+
+    return FreeID
+end
+
+local function FreeID(DeleteID)
+    local DATA = FREE_IDS_Index[DeleteID]
+    if !DATA then return end
+
+    local width = DATA[1]
+    local height = DATA[2]
+
+    FREE_IDS[width] = FREE_IDS[width] or {}
+    FREE_IDS[width][height] = FREE_IDS[width][height] or {
+        [0] = 0,
+    }
+
+    -- PrintTable(FREE_IDS)
+
+    FREE_IDS_Index[DeleteID] = nil
+    table_insert(FREE_IDS[width][height], DeleteID)
+end
+
 zen.iCounter_ZPanelBase = zen.iCounter_ZPanelBase or 0
 
 ---@class zen.panel.zpanelbase: Panel
@@ -413,17 +465,27 @@ function PANEL:CalcPaintOnce_Internal(width,  height)
     if (width == nil) then width = self:GetWide() end
     if (height == nil) then height = self:GetTall() end
 
+    if self.iLastPaintOneWidth != width or self.iLastPaintOneHeiht != height then
+        if self.renderTargetID != nil then
+            FreeID(self.renderTargetID)
+        end
+        self.renderTargetID = TakeID(width, height)
+    end
+
     if self.PaintMask then
         self.PaintOnceMaterial, PNG = material_cache.Generate2DMaterial(width, height, function(w, h)
             self:PaintOnce(w, h)
         end, function(w, h)
             self:PaintMask(w, h)
-        end)
+        end, false, self.renderTargetID)
     else
         self.PaintOnceMaterial, PNG = material_cache.Generate2DMaterial(width, height, function(w, h)
             self:PaintOnce(w, h)
-        end)
+        end, nil, false, self.renderTargetID)
     end
+
+    self.iLastPaintOneWidth = width
+    self.iLastPaintOneHeiht = height
 end
 
 /*
@@ -469,6 +531,13 @@ function PANEL:OnRemove()
             if SysTime() <= iendtime then
                 timer.Remove(timer_name)
             end
+        end
+    end
+
+    do -- FreePanelIDS
+        local TargetID = self.renderTargetID
+        if TargetID then
+            FreeID(self.renderTargetID)
         end
     end
 end

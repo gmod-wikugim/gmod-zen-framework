@@ -138,9 +138,14 @@ material_cache.iMatCounter = material_cache.iMatCounter or 0
         surface.DrawRect(0,0,w/2,0)
     end)
 */
-function material_cache.Generate2DMaterial(width, height, draw_func, mask_func, bCapturePNG)
-	material_cache.iMatCounter = material_cache.iMatCounter + 1
-    local texture_name = "material_cache/auto_generated/" .. material_cache.iMatCounter
+
+function material_cache.Generate2DMaterial(width, height, draw_func, mask_func, bCapturePNG, texture_name)
+    assert(type(texture_name) == "string" or texture_name == nil, "texture_name not is string")
+
+    if texture_name == nil then
+        material_cache.iMatCounter = material_cache.iMatCounter + 1
+        texture_name = "material_cache/auto_generated/" .. material_cache.iMatCounter
+    end
 
     -- local texture = GetRenderTarget(texture_name, width, height)
     -- local texture = GetRenderTargetEx(texture_name, width, height, RT_SIZE_LITERAL, MATERIAL_RT_DEPTH_NONE, 1 + 256, 0, IMAGE_FORMAT_BGRA8888)
