@@ -24,10 +24,14 @@ MOD.VIEW.fov	=	120
 MOD.VIEW.fovviewmodel	=	75
 MOD.VIEW.fovviewmodel_unscaled	=	60
 MOD.VIEW.subrect	=	false
-MOD.VIEW.zfar	=	90000
+MOD.VIEW.zfar	=	1000
 MOD.VIEW.zfarviewmodel	=	90000
-MOD.VIEW.znear	=	1
-MOD.VIEW.znearviewmodel	=	1
+MOD.VIEW.znear	= 1
+MOD.VIEW.znearviewmodel	= 0
+MOD.VIEW.dopostprocess = false
+MOD.VIEW.bloomtone = true
+MOD.VIEW.drawviewmodel = false
+
 
 local function GetAngleString(ang)
 	return table.concat({math.Round(ang.p, 2), math.Round(ang.y, 2), math.Round(ang.r, 2)}, " ")
@@ -79,6 +83,11 @@ function MOD:DrawTraceHitEntityWireframeBox(VIEW)
         render.DrawLine(VIEW.origin - Vector(0,0,10), HitPos, COLOR_YELLOW)
     end
 
+    if VIEW.ME then
+        local HitPos = VIEW.ME:GetPos()
+
+        render.DrawLine(VIEW.origin - Vector(0,0,10), HitPos, COLOR_GREEN)
+    end
 
     if !VIEW.TRACE_WITH_CURSOR then return end
 
@@ -233,6 +242,13 @@ function MOD:CalcMove(VIEW)
         })
     end
 
+    if VIEW.lastOrigin != VIEW.origin and (VIEW.nextOriginUpdate or 0) <= CurTime() then
+		VIEW.nextOriginUpdate = (VIEW.nextOriginUpdate or 0) + 0.5
+		VIEW.lastOrigin = VIEW.origin
+		nt.Send("map_edit.update.pos", {"vector"}, {VIEW.lastOrigin})
+	end
+
+
     cam.Start3D()
         self:DrawHitPoint(VIEW)
         self:DrawTraceHitEntityWireframeBox(VIEW)
@@ -281,6 +297,8 @@ function MOD:Start(workspaceUpper, workspaceContent)
         VIEW.w = w
         VIEW.h = h
 
+        VIEW.ME = LocalPlayer()
+
         VIEW.aspect = w / h // Don't touch, used for normal aspect calc, also for cursor 3D position
         VIEW.subrect = false
 
@@ -316,6 +334,20 @@ function MOD:Draw2D(VIEW, w, h)
 
     if VIEW.w and VIEW.h then
         draw.Text("W:H> " .. VIEW.w .. " : " .. VIEW.h, "12:DejaVu Sans", 10, 30, color_white)
+    end
+
+    do -- FpS
+        VIEW.FPS  = ( 1 / FrameTime() )
+        VIEW.AVGA = (VIEW.AVGA or 0) + 1
+        VIEW.AVGS = (VIEW.AVGS or 0) + VIEW.FPS
+        VIEW.AVG = VIEW.AVGS / VIEW.AVGA
+        draw.Text("FPS> " .. VIEW.FPS, "12:DejaVu Sans", 10, 50, color_white)
+        draw.Text("A FPS> " .. math.floor(VIEW.AVG), "12:DejaVu Sans", 10, 70, color_white)
+
+        if VIEW.AVGA > 100 then
+            VIEW.AVGA = 0
+            VIEW.AVGS = 0
+        end
     end
 end
 
