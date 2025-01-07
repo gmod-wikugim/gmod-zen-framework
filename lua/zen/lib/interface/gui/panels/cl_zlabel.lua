@@ -4,11 +4,11 @@ module("zen")
 local PANEL = {}
 
 function PANEL:Init()
-    self.sFont = "14:DejaVu Sans"
     self.sText = "ExampleText"
     self.cTextColor = color_white
     self.cTextColorBG = color_black
     self:SetCursor("hand")
+    self:SetFont("14:DejaVu Sans")
 end
 
 function PANEL:GetText() return self.sText end
@@ -19,7 +19,7 @@ function PANEL:SetText(text)
 end
 
 function PANEL:SetFont(font)
-    self.sFont = font
+    self.sFont = ui.ffont(font)
     self:CalcPaintOnce_Internal()
 end
 
