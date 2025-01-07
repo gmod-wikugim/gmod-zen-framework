@@ -76,6 +76,8 @@ zen.iCounter_ZPanelBase = zen.iCounter_ZPanelBase or 0
 ---@field OnCursorExit fun(self) Called when cursor exited after exit Panel
 ---@field PaintMask fun(self, w:number, h:number) -- Mask for PaintOnce
 ---@field PaintOnce fun(self, w:number, h:number) -- Paint which called when panel: ChangeSize. (Un)Hovered. (De)Enable. (De)Blocked
+---@field PaintOnceBG fun(self, w:number, h:number) -- Works only with PaintOnce. Paint which called when panel: ChangeSize. (Un)Hovered. (De)Enable. (De)Blocked
+---@field PaintOnceOver fun(self, w:number, h:number) -- Works only with PaintOnce. Paint which called when panel: ChangeSize. (Un)Hovered. (De)Enable. (De)Blocked
 ---@field PostRemove fun(self) -- Alias for OnRemove
 local PANEL = {}
 
@@ -90,6 +92,11 @@ function PANEL:InternalInit()
     self.bAutoDeleteTimerEnabled = false
     self.iAutoDeleteTimer = 10 -- Seconds
 
+    ---@type table<number|string, fun(w:number, h:number)>
+    self.tPaintOncePre = {}
+
+    ---@type table<number|string, fun(w:number, h:number)>
+    self.tPaintOncePost = {}
 
     ---@type table<number, Panel>
     self.tChildrenList = {}
@@ -456,6 +463,43 @@ function PANEL:OnMouseReleased(mouse)
     self:CalcPaintOnce_Internal()
 end
 
+--- Internal function for CreateMaterial
+---@private
+---@param w number
+---@param h number
+function PANEL:_PaintOnceFunction(w, h)
+    for k, v in pairs(self.tPaintOncePre) do v(w, h) end
+
+    if type(self.PaintOnceBG) == "function" then self:PaintOnceBG(w, h) end
+    self:PaintOnce(w, h)
+    if type(self.PaintOnceOver) == "function" then self:PaintOnceOver(w, h) end
+
+    for k, v in pairs(self.tPaintOncePost) do v(w, h) end
+end
+
+
+---Add draw function to call before PaintOnce
+---@param callback fun(w:number, h:number)
+---@param uniqueID string?
+function PANEL:AddPaintOncePreFunction(callback, uniqueID)
+    if uniqueID then
+        self.tPaintOncePre[uniqueID] = callback
+    else
+        table.insert(self.tPaintOncePre, callback)
+    end
+end
+
+---Add draw function to call after PaintOnce
+---@param callback fun(w:number, h:number)
+---@param uniqueID string?
+function PANEL:AddPaintOncePostFunction(callback, uniqueID)
+    if uniqueID then
+        self.tPaintOncePost[uniqueID] = callback
+    else
+        table.insert(self.tPaintOncePost, callback)
+    end
+end
+
 ---@param width number?
 ---@param height number?
 function PANEL:CalcPaintOnce_Internal(width,  height)
@@ -474,13 +518,13 @@ function PANEL:CalcPaintOnce_Internal(width,  height)
 
     if self.PaintMask then
         self.PaintOnceMaterial, PNG = material_cache.Generate2DMaterial(width, height, function(w, h)
-            self:PaintOnce(w, h)
+            self:_PaintOnceFunction(width, height)
         end, function(w, h)
             self:PaintMask(w, h)
         end, false, self.renderTargetID)
     else
         self.PaintOnceMaterial, PNG = material_cache.Generate2DMaterial(width, height, function(w, h)
-            self:PaintOnce(w, h)
+            self:_PaintOnceFunction(width, height)
         end, nil, false, self.renderTargetID)
     end
 
