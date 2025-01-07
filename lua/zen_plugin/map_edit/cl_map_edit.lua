@@ -255,6 +255,10 @@ function map_edit.CreateWorkspace(workspacename, data)
 			pnlText:SetFont(ui.ffont("20:DejaVu Sans"))
 			pnlText:SizeToContentsX(25)
 
+			pnlText:AddPaintOncePreFunction(function (w, h)
+				draw.Box(0,0,w,h,"323232")
+			end)
+
 			function pnlText:DoClick()
 				WORKSPACE:SetMod(MOD)
 				pnlContent:Remove()
