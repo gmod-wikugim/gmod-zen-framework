@@ -15,7 +15,12 @@ end)
 zen.bAutoRunEnabled = type(Autorun) == "table" and type(Autorun.require) == "function"
 
 zen.SEND_CLIENT_FILES = true
-zen.SERVER_SIDE_ACTIVATED = true
+zen.SERVER_SIDE_ACTIVATED = false
+
+if zen.bAutoRunEnabled then
+    zen.SERVER_SIDE_ACTIVATED = false
+end
+
 
 ---@param path string
 function zen.INC(path)

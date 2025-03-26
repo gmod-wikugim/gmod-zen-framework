@@ -1132,6 +1132,11 @@ end
 function meta_network.InitClient()
     if meta_network.bNetworkReady then return end
 
+    if zen.SERVER_SIDE_ACTIVATED != true then
+        log("Ignore network initialization, because SERVER-SIDE not activated")
+        return
+    end
+
     Start("zen.meta_network.networks")
         WriteCodeNetwork("NETWORK_LIST")
         WriteBool(false)
