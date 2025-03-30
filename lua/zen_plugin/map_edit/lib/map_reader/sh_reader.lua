@@ -7,7 +7,11 @@ map_reader = _GET("map_reader")
 ---@field iden integer[32] // BSP file identifier
 ---@field version integer[32] // BSP file version
 ---@field LUMPS table<string, zen.map_edit.reader.lump_t> // lump directory array
+---@field LUMPS_len_sum integer[32] // sum of all lumps length
 ---@field mapRevision integer[32] // the map's revision (iteration, version) number
+---@field mapFileSize integer[32] // the map's file size (in bytes)
+---@field read_bytes integer[32] // the map's file size (in bytes)
+---@field INFO string
 
 ---@class zen.map_edit.reader.lump_t
 ---@field fileofs integer[32] // offset into file (bytes)
@@ -21,10 +25,13 @@ map_reader = _GET("map_reader")
 
 local read_bytes = 0
 
+
+---@param READER_DATA zen.map_edit.reader.READER
+---@param fl File
 ---@param start number
 ---@param len number
 ---@return string
-local function readSeparate(fl, start, len)
+local function readSeparate(READER_DATA, fl, start, len)
     assert(isnumber(start), "start not number")
     assert(isnumber(len), "len not number")
 
@@ -36,27 +43,40 @@ local function readSeparate(fl, start, len)
 
     read_bytes = read_bytes + len
 
+    READER_DATA.mark_as_read(start, len)
+
     fl:Seek(now_pointer)
 
     return data
 end
 
+---@param READER_DATA zen.map_edit.reader.READER
+---@param fl File
+---@param bytes number
 ---@return string
-local function readString(fl, bytes)
+local function readString(READER_DATA, fl, bytes)
     read_bytes = read_bytes + bytes
+
+    READER_DATA.mark_as_read(fl:Tell(), bytes)
 
     return fl:Read(bytes)
 end
 
-local function readInt(fl)
+---@param READER_DATA zen.map_edit.reader.READER
+---@param fl File
+local function readInt(READER_DATA, fl)
     read_bytes = read_bytes + 32
+
+    READER_DATA.mark_as_read(fl:Tell(), 32)
 
     return fl:ReadLong()
 end
 
+---@param READER_DATA zen.map_edit.reader.READER
+---@param fl File
 ---@param start number
 ---@param data string
-local function writeSeparate(fl, start, data)
+local function writeSeparate(READER_DATA, fl, start, data)
     assert(isnumber(start), "start not number")
     assert(isstring(data), "data not is string")
 
@@ -177,7 +197,11 @@ function map_reader.ExportBSP(map_name, export_path)
 end
 
 
-function map_reader.ReadLMP(lmp_path, MAP, bIsMap)
+---@param READER_DATA zen.map_edit.reader.READER
+---@param lmp_path string
+---@param MAP zen.map_edit.reader.dheader_t
+---@param bIsMap boolean
+function map_reader.ReadLMP(READER_DATA, lmp_path, MAP, bIsMap)
     local fl = file.Open(lmp_path, "rb", "GAME")
     assert(fl, "file not opened")
 
@@ -190,14 +214,16 @@ function map_reader.ReadLMP(lmp_path, MAP, bIsMap)
     */
 
     if bIsMap then
-        MAP.iden = readInt(fl)
-        MAP.version = readInt(fl)
+        MAP.iden = readInt(READER_DATA, fl)
+        MAP.version = readInt(READER_DATA, fl)
 
         print("MAP_VERSION: ", MAP.version)
     end
 
+
     ---@diagnostic disable-next-line: inject-field
     MAP.LUMPS = MAP.LUMPS or {}
+    MAP.LUMPS_len_sum = 0
 
     print("READ: ", lmp_path)
 
@@ -218,12 +244,14 @@ function map_reader.ReadLMP(lmp_path, MAP, bIsMap)
 
         local LUMP = MAP.LUMPS[header]
         LUMP.header         = header
-        LUMP.fileofs        = readInt(fl)
-        LUMP.lumpID         = readInt(fl)
-        LUMP.version        = readInt(fl)
-        LUMP.filelen        = readInt(fl)
+        LUMP.fileofs        = readInt(READER_DATA, fl)
+        LUMP.lumpID         = readInt(READER_DATA, fl)
+        LUMP.version        = readInt(READER_DATA, fl)
+        LUMP.filelen        = readInt(READER_DATA, fl)
         -- LUMP.char        = readString(4)
-        LUMP.mapRevision   = readInt(fl)
+        LUMP.mapRevision   = readInt(READER_DATA, fl)
+
+        MAP.LUMPS_len_sum = MAP.LUMPS_len_sum + LUMP.filelen
 
 
         if !LUMP.fileofs then
@@ -257,14 +285,14 @@ function map_reader.ReadLMP(lmp_path, MAP, bIsMap)
 
         if LUMP.fileofs > 0 && LUMP.filelen > 0  then
             LUMP._data_exists = 1
-            local data = readSeparate(fl, LUMP.fileofs, LUMP.filelen)
+            local data = readSeparate(READER_DATA, fl, LUMP.fileofs, LUMP.filelen)
 
             LUMP.dirt = data
 
             if data then
                 local now_pointer = fl:Tell()
                 fl:Seek(LUMP.fileofs)
-                LUMP.data = map_reader.ReadLump(header, data, fl)
+                LUMP.data = map_reader.ReadLump(READER_DATA, header, data, fl)
                 fl:Seek(now_pointer)
             end
         end
@@ -273,7 +301,7 @@ function map_reader.ReadLMP(lmp_path, MAP, bIsMap)
     end
 
     if bIsMap then
-        MAP.mapRevision = readInt(fl)
+        MAP.mapRevision = readInt(READER_DATA, fl)
     end
 
     print("CLOSE: ", lmp_path)
@@ -293,6 +321,63 @@ function map_reader.CreateMapLumps(map_name)
 
     -- rp_bangclaw_opti
 
+    ---@class zen.map_edit.reader.READER
+    local READER_DATA = {}
+    READER_DATA.read_bytes = 0
+    READER_DATA.read_bytes_segments = {}
+
+    local math_floor = math.floor
+    local pairs = pairs
+    ---@param segment_start number
+    ---@param segment_len number
+    READER_DATA.mark_as_read = function(segment_start, segment_len)
+        local segment_step = 1000
+
+        local segment_id = math_floor(segment_start/segment_step)
+        local segment_end = segment_start + segment_len
+
+        local segment_limit = (segment_id * segment_step - 1)
+
+        local SEGMENT = READER_DATA.read_bytes_segments[segment_id]
+        if SEGMENT == nil then
+            READER_DATA.read_bytes_segments[segment_id] = {[segment_start] = segment_end}
+            return
+        end
+
+
+        local bSegmentUpdate = false
+        local bNextSegmentUpdate = false
+        local iNextSegmentStart, iNextSegmentEnd
+
+        for _start, _end in pairs(SEGMENT) do
+            -- Skip if segment is already read
+            if segment_start >= _start and segment_start <= _end then
+
+                -- Update _end if segment_end is greater
+                if segment_end > _end then
+
+                    if segment_end > segment_limit then
+                        bNextSegmentUpdate = true
+                        iNextSegmentStart = segment_limit + 1
+                        iNextSegmentEnd = segment_end
+
+                        segment_end = segment_limit
+                    end
+
+                    SEGMENT[_start] = segment_end
+                    bSegmentUpdate = true
+                end
+            end
+        end
+
+        if !bSegmentUpdate then
+            SEGMENT[segment_start] = segment_end
+        end
+
+        if bNextSegmentUpdate then
+            READER_DATA.mark_as_read(iNextSegmentStart, iNextSegmentEnd)
+        end
+    end
 
 
     local files = file.Find("maps/" .. map_name .. "_l_0.lmp", "GAME")
@@ -311,44 +396,66 @@ function map_reader.CreateMapLumps(map_name)
     ---@diagnostic disable-next-line: missing-fields
     local MAP = {}
 
-    map_reader.ReadLMP(map_path, MAP, true)
+    map_reader.ReadLMP(READER_DATA, map_path, MAP, true)
+
+    MAP.mapFileSize = file.Size(map_path, "GAME")
+
+    local read_bytes = 0
+
+    for segment_id, SEGMENT in pairs(READER_DATA.read_bytes_segments) do
+        for segment_start, segment_end in pairs(SEGMENT) do
+            read_bytes = read_bytes + (segment_end - segment_start)
+        end
+    end
+
+    MAP.read_bytes = read_bytes
+    MAP.INFO = string.format("Read INFO: %s\nMap: %s\nReaded percentage: %d%% (%d Mb/%d Mb)", 
+        map_name,
+        map_path,
+        math.floor((read_bytes / MAP.mapFileSize) * 100),
+        MB(read_bytes),
+        MB(MAP.mapFileSize)
+    )
 
     for k, lmp_path in pairs(lump_files) do
-        map_reader.ReadLMP(lmp_path, MAP, false)
+        map_reader.ReadLMP(READER_DATA, lmp_path, MAP, false)
     end
 
     return MAP
 end
 
 ---@private
----@type table<string, fun(source:string): any>
+---@type table<string, fun(READER_DATA:zen.map_edit.reader.READER, source:string): any>
 map_reader.mt_LumpReaders = map_reader.mt_LumpReaders or {}
 
 ---@param lump_name string
----@param func fun(source: string, fl:File): any
+---@param func fun(READER_DATA:zen.map_edit.reader.READER, source: string, fl:File): any
 function map_reader.RegisterLumpRead(lump_name, func)
     map_reader.mt_LumpReaders[lump_name] = func
 end
 
 ---@private
+---@param READER_DATA zen.map_edit.reader.READER
 ---@param reader string
 ---@param source string
 ---@param fl File
 ---@return any
-function map_reader.ReadLump(reader, source, fl)
+function map_reader.ReadLump(READER_DATA, reader, source, fl)
 
     local funcReader = map_reader.mt_LumpReaders[reader]
 
     if funcReader then
-        return funcReader(source, fl)
+        return funcReader(READER_DATA, source, fl)
     else
         return "NO_READER"
     end
 end
 
--- local HEADER = map_reader.CreateMapLumps()
+-- local HEADEERS = map_reader.CreateMapLumps()
 
--- PrintTable(HEADER)
+-- print(HEADEERS.INFO)
+
+-- PrintTable(HEADEERS)
 -- PrintTable(HEADER.LUMPS["LUMP_GAME_LUMP"].data.list)
 
 -- map_reader.ExportBSP(nil, "map_export/actual2.txt")

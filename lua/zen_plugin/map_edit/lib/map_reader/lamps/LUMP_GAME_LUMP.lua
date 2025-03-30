@@ -20,15 +20,18 @@ local GAMELUMP_DETAIL_PROP_LIGHTING_HDR = GAMELUMP_MAKE_CODE('d', 'p', 'l', 'h')
 
 
 ---commentErr
+---@param READER_DATA zen.map_edit.reader.READER 
 ---@param source string
 ---@param fl File
-local function read_source(source, fl)
+local function read_source(READER_DATA, source, fl)
 
     local function readSeparate(start, len)
         assert(isnumber(start), "start not number")
         assert(isnumber(len), "len not number")
 
         local now_pointer = fl:Tell()
+
+        READER_DATA.mark_as_read(start, len)
 
         fl:Seek(start)
 
@@ -41,27 +44,44 @@ local function read_source(source, fl)
 
     ---@return string
     local function readString(bytes)
+
+        READER_DATA.mark_as_read(fl:Tell(), bytes)
+
         return fl:Read(bytes)
     end
 
     local function readInt()
+
+        READER_DATA.mark_as_read(fl:Tell(), 4*8)
+
         return fl:ReadLong()
     end
 
     local function readShort()
+
+        READER_DATA.mark_as_read(fl:Tell(), 2*8)
+
         return fl:ReadShort()
     end
 
 
     local function readUShort()
+
+        READER_DATA.mark_as_read(fl:Tell(), 2*8)
+
         return fl:ReadUShort()
     end
 
     local function readVector()
+        READER_DATA.mark_as_read(fl:Tell(), 3*4*8)
+
         return Vector(fl:ReadFloat(), fl:ReadFloat(), fl:ReadFloat())
     end
 
     local function readAngle()
+
+        READER_DATA.mark_as_read(fl:Tell(), 3*4*8)
+
         return Angle(fl:ReadFloat(), fl:ReadFloat(), fl:ReadFloat())
     end
 
@@ -70,6 +90,9 @@ local function read_source(source, fl)
     end
 
     local function readFloat()
+
+        READER_DATA.mark_as_read(fl:Tell(), 4*8)
+
         return fl:ReadFloat()
     end
 
@@ -153,6 +176,6 @@ local function read_source(source, fl)
 end
 
 
-map_reader.RegisterLumpRead("LUMP_GAME_LUMP", function (source, fl)
-    return read_source(source, fl)
+map_reader.RegisterLumpRead("LUMP_GAME_LUMP", function (READER_DATA, source, fl)
+    return read_source(READER_DATA, source, fl)
 end)
