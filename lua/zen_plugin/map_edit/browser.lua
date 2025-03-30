@@ -79,4 +79,4 @@ zen.IncludeCL("zen_plugin/map_edit/vgui/spawnmenu/cl_ztree_node.lua")
 zen.IncludeCL("zen_plugin/map_edit/vgui/spawnmenu/cl_ztree.lua")
 zen.IncludeCL("zen_plugin/map_edit/vgui/spawnmenu/cl_zspawn_item.lua")
 
-zen.IncludeSV("zen_plugin/map_edit/bsp/BSP.lua")
+zen.IncludeSH("zen_plugin/map_edit/bsp/BSP.lua")
