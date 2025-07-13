@@ -146,8 +146,25 @@ function iperm.PlayerCanTarget(w_sid64, iTFlags, tTargets)
     return bResult, tTargets
 end
 
+---@param sid64 string
+---@param perm_name string
+---@param target Player|"CRecipientFilter"| table<Player>
+---@param isSilent boolean?
 function iperm.PlayerHasPermission(sid64, perm_name, target, isSilent)
     local sError = "unknown"
+
+    if util.CheckSpam("PermCheck", 5, 5) then
+        sError = "Stop spamming. "
+        goto error
+    end
+        
+
+    if perm_name == nil then
+        sError = "Failed to check permission, perm_name is nil, ask developer to fix it\n " .. debug.traceback()
+        goto error
+    end
+
+
 
     if perm_name == "public" then goto success end
     if _CFG.Admins[sid64] then goto success end
@@ -175,7 +192,7 @@ function iperm.PlayerHasPermission(sid64, perm_name, target, isSilent)
             end
 
             if not tPlayerPerm then
-                sError = "This action not avaliable for you. Don't have permission"
+                sError = Format("You don't has permission for '%s'", perm_name)
                 goto error
             end
         end
@@ -316,12 +333,23 @@ function iperm.RegisterPermission(perm_name, flags, description)
     nt.SendToChannel("permission_info", nil, perm_name, flags, description)
 end
 
+
 function META.PLAYER:zen_HasPerm(perm, target, noCheckAuth)
+    if game.SinglePlayer() then return true end // Force-Allow single-player
     if zen.SERVER_SIDE_ACTIVATED == false then return true end // Give you full access, if server hasn't ZEN
     if perm == "public" then return true end
     if SERVER and not self:IsFullyAuthenticated() then return false, "You are not fully authenticated" end
     if !noCheckAuth and self:zen_GetVar("auth") != true then return false, "You are not login as admin (auth)" end
     return iperm.PlayerHasPermission(self:SteamID64(), perm, target)
+end
+
+function META.PLAYER:zen_HasPermNotify(perm, target, noCheckAuth)
+    local hasPerm, comment = self:zen_HasPerm(perm, target, noCheckAuth)
+    if hasPerm != true and type(comment) == "string" then
+        msg.Error(self, comment)
+    end
+
+    return hasPerm, comment
 end
 
 ihook.Handler("zen.icmd.CanRun", "zen.permission", function(tCommand, QCMD, cmd, args, tags, who)

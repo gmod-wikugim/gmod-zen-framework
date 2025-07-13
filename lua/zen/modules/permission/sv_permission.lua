@@ -65,7 +65,7 @@ function iperm.DB:GivePermission(playerID, perm_name, allowed, target_flags, uni
         )
     ]], playerID, perm_name, allowed, target_flags, unique_flags, extra)
 
-    iperm.DB:LoadPlayerPermissions(playerID)    
+    iperm.DB:LoadPlayerPermissions(playerID)
 end
 
 ---@class zen.iperm.perm_info
@@ -159,7 +159,7 @@ concommand.Add("zen_root", function(ply, args, cmd, argStr)
     if IsValid(ply) then return end
 
     local findPly = util.FindPlayerEntity(argStr)
-    
+
     if IsValid(findPly) then
         print("Give root to player `", findPly:Nick(), "` (", findPly:SteamID(), ")")
 
@@ -168,4 +168,57 @@ concommand.Add("zen_root", function(ply, args, cmd, argStr)
     else
         print("Player not founded `", argStr , "`")
     end
+end)
+
+
+mt_AccessRequests = mt_AccessRequests or {}
+mi_RequestAmount = mi_RequestAmount or 0
+mt_AccessRequestPerm = mt_AccessRequestPerm or {}
+
+-- Concommand 'zen_request_access' which requests access from server operator
+concommand.Add("zen_request_access", function(ply, cmd, args)
+    local perm_name = args[1]
+
+    local RequestUniqueID = Format("Request-%s-%s", ply:SteamID64(), perm_name)
+
+    local RequestID = mt_AccessRequests[RequestUniqueID]
+    if RequestID == nil then
+        mi_RequestAmount = mi_RequestAmount + 1
+        RequestID = mi_RequestAmount
+        mt_AccessRequests[RequestUniqueID] = RequestID 
+        mt_AccessRequestPerm = {
+            perm_name = perm_name,
+            SteamID64 = ply:SteamID64(),
+        }
+    end
+
+    msg.Error(ply, Format("You create request to get permission from server operator '%s'\n Ask server operator type command: `zen_approve_access_request %s`\nRequest is copied to clipboard", perm_name, RequestID))
+    util.SetPlayerClipboard(ply, Format("Hey server operator, please approve my request for permission '%s', you can do it by typing command: 'zen_approve_access_request %s'", perm_name, RequestID))
+end)
+
+-- Concommand 'zen_approve_access_request' which approves access request
+concommand.Add("zen_approve_access_request", function(ply, cmd, args)
+    -- Check is console 
+    if IsValid(ply) then
+        msg.Error(ply, "Available only in server-console")
+        return
+    end
+
+
+    local RequestID = tonumber(args[1])
+    if not RequestID then
+        msg.Error(ply, "Invalid request ID")
+        return
+    end
+
+    local REQUEST = mt_AccessRequestPerm[RequestID]
+    if !REQUEST then
+        msg.Error(ply, "Request not found or already approved")
+        return
+    end
+
+    local perm_name = REQUEST.perm_name
+    local SteamID64 = REQUEST.SteamID64
+
+    iperm.DB:GivePermission(SteamID64, perm_name, true)
 end)
