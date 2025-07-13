@@ -146,9 +146,13 @@ do -- msg.Error
         local text = messageError or "Unknown error"
         local lifetime = 4
         local outline_color = Color(255, 0, 0)
-        local font = "6:Roboto"
+        local font = "20:Roboto"
 
-        nt.SendToChannel("message.debugInfo", target, text, lifetime, outline_color, font)
+        if SERVER then
+            nt.SendToChannel("message.debugInfo", target, text, lifetime, outline_color, font)
+        else
+            ui.DebugInfo(text, lifetime, outline_color, font)
+        end
     end
 
     ---@param target Player|"CRecipientFilter"| table<Player>
