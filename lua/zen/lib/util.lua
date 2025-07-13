@@ -3,6 +3,9 @@ module("zen")
 ---@class zen.util
 util = _GET("util", util)
 
+
+---@alias nt.target Player|CRecipientFilter|Player[]|nil
+
 ---@class TYPE
 ---@field type number|string
 
@@ -2041,6 +2044,41 @@ function META.PLAYER:zen_Cooldown(uniqueID, cooldown)
     return true
 end
 
+
+mt_SpamCheck_Amount = mt_SpamCheck_Amount or {}
+mt_SpamCheck_Time =  mt_SpamCheck_Time or {}
+
+-- Works like zen_Cooldown, but when callmore more time when <amount> return true
+-- Usefull for check spam
+-- Return true when spam, return false when no spam
+---@param spam_name string
+---@param max_amount number
+---@param refresh_time number
+function util.CheckSpam(spam_name, max_amount, refresh_time)
+    max_amount = max_amount or 5
+    refresh_time = refresh_time or 5
+
+    mt_SpamCheck_Amount[spam_name] = (mt_SpamCheck_Amount[spam_name] or 0) + 1
+
+    local current_amount = mt_SpamCheck_Amount[spam_name]
+    local current_time = SysTime()
+    local time_left = current_time - (mt_SpamCheck_Time[spam_name] or 0)
+
+    mt_SpamCheck_Time[spam_name] = current_time
+
+    if time_left >= refresh_time then
+        mt_SpamCheck_Amount[spam_name] = 1
+        return false
+    end
+
+
+    if current_amount < max_amount then
+        return false
+    else
+        return true, refresh_time
+    end
+end
+
 cleanup.Register("zen")
 
 
@@ -2570,3 +2608,21 @@ local function equals(o1, o2, ignore_mt)
     return true
 end
 util.Equal = equals
+
+do -- Clipboard from text
+    nt.SimpleChannel("SetClipboardText", {"string"}, function (ply, clipboard_text)
+        if CLIENT then SetClipboardText(clipboard_text) end
+    end)
+
+    ---@param ply nt.target
+    ---@param clipboard_text string
+    function util.SetPlayerClipboard(ply, clipboard_text)
+        if CLIENT then
+            SetClipboardText(clipboard_text)
+        end
+
+        if SERVER then
+            nt.SendToChannel("SetClipboardText", nil, clipboard_text)
+        end
+    end
+end
