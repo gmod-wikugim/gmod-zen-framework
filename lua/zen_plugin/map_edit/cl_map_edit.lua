@@ -285,6 +285,8 @@ end
 function map_edit.OpenMainEditor()
 	gui.EnableScreenClicker(true)
 
+	ui.DebugInfo("EditorMode Enabled:")
+
 	if GetConVar("developer"):GetInt() >= 1 then
 		if IsValid(map_edit.pnlMainEditor) then
 			map_edit.pnlMainEditor:Remove()
@@ -472,7 +474,12 @@ function map_edit.OnDisabled()
 end
 
 function map_edit.Toggle()
+	if not LocalPlayer():zen_HasPermNotify("map_edit") then
+		return
+	end
 	map_edit.IsActive = not map_edit.IsActive
+
+	ui.DebugInfo("Toggle: " .. tostring(map_edit.IsActive))
 
 	if not map_edit.IsActive then
 		map_edit.OnDisabled()
@@ -480,7 +487,6 @@ function map_edit.Toggle()
 		return
 	end
 
-	if not LocalPlayer():zen_HasPerm("map_edit") then return end
 
 	map_edit.OnEnabled()
 end
