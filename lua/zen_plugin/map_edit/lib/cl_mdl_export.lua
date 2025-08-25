@@ -713,6 +713,7 @@ local function export_model(model)
 
     log("Material amount: ", material_count)
 
+    local not_exported_materials = {}
 
     if material_count > 0 then
         log("Searching materials:")
@@ -724,6 +725,7 @@ local function export_model(model)
                 AddToExport(sFoundedPath)
             else
                 log("- ", v.name, ": ", color_red, " Not founded!")
+                ins(not_exported_materials, v.name)
             end
 
 
@@ -769,6 +771,37 @@ local function export_model(model)
         local SECOND_PATH = _CPaths("export_model/", model_name, "", file_path)
         FileWrite(SECOND_PATH, data, true)
     end
+
+    -- Write MODEL_INFO with model path and information
+    do
+        local readme_path = _CPaths("export_model/", model_name, "MODEL_INFO.txt")
+        local readme_data = _C{
+            PACKAGE_NAME, " v", PACKAGE_VERSION, "\n",
+            "Model: ", model, "\n",
+            "Exported at: ", os.date("%Y-%b-%d %H:%M:%S"), "\n",
+            "\n",
+            "Exported files:\n",
+        }
+
+        for file_path, v in pairs(files_to_export) do
+            readme_data = readme_data .. ("- " .. file_path .. "\n")
+        end
+
+        -- Add not exported materials
+        if next(not_exported_materials) != nil then
+            readme_data = readme_data .. "\nNot exported materials:\n"
+            for k, v in pairs(not_exported_materials) do
+                readme_data = readme_data .. ("- " .. v .. "\n")
+            end
+        end
+
+        FileWrite(readme_path, readme_data, true)
+    end
+
+    -- Echo result path
+    local finish_path = "garrysmod/data/export_model/" .. model_name
+    log("Result path: <GMOD_PATH>", finish_path, " (Saved in Clipboard)")
+    SetClipboardText(finish_path)
 
     /*
     if CLIENT_DLL then
