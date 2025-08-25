@@ -766,11 +766,7 @@ local function export_model(model)
         end
 
         local file_name = string.GetFileFromFilename(file_path)
-
-        local MAIN_PATH = _CPaths("export_model/", model_name, file_name)
-        local SECOND_PATH = _CPaths("export_model/", model_name, "addon/", file_path)
-
-        FileWrite(MAIN_PATH, data)
+        local SECOND_PATH = _CPaths("export_model/", model_name, "", file_path)
         FileWrite(SECOND_PATH, data, true)
     end
 
