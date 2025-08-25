@@ -1052,8 +1052,44 @@ end
 concommand.Add("export_model", function(ply, cmd, args)
     local model = args[1]
 
+    if !model or model == "" then
+        log("Usage: export_model <model_path>")
+        return
+    end
+
     export_model(model)
-end)
+end, nil, "Export model by path. Usage: export_model <model_path>")
+
+-- Concommand to export my LocalPlayer() model
+concommand.Add("export_mymodel", function(ply, cmd, args)
+    if !IsValid(ply) then return end
+    if !ply:IsPlayer() then return end
+
+    local model = ply:GetModel()
+
+    export_model(model)
+end, nil, "Export your player model")
+
+-- Concommand to export this entity model
+concommand.Add("export_thismodel", function(ply, cmd, args)
+    if !IsValid(ply) then return end
+    if !ply:IsPlayer() then return end
+
+    local tr = ply:GetEyeTrace()
+    if !tr then return end
+    if !IsValid(tr.Entity) then
+        log("You don't looking at entity!")
+        return
+    end
+
+    local model = tr.Entity:GetModel()
+    if !model or model == "" then
+        log("Entity don't have model!")
+        return
+    end
+
+    export_model(model)
+end, nil, "Export entity model which you looking at")
 
 
 return {
