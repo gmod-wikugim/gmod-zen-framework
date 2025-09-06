@@ -45,6 +45,7 @@ function stencil_cut.StartStencil()
     render_SetStencilReferenceValue(9)
     render_SetStencilFailOperation(STENCILOPERATION_REPLACE)
 end
+local stencil_cut_StartStencil = stencil_cut.StartStencil
 
 -- Stencil Box Cut Operation
 function stencil_cut.EndStencil()
@@ -58,6 +59,7 @@ function stencil_cut.EndStencil()
 
     render_SetStencilEnable(false)
 end
+local stencil_cut_EndStencil = stencil_cut.EndStencil
 
 -- Stencil Box Cut Operation
 ---@param callback fun(width: number, height: number)
@@ -75,7 +77,7 @@ end
 ---@param draw_func fun()
 ---@param mask_func fun()
 function stencil_cut.DrawWithSimpleMask(draw_func, mask_func)
-    stencil_cut.StartStencil()
+    stencil_cut_StartStencil()
 
     mask_func()
 
@@ -86,5 +88,5 @@ function stencil_cut.DrawWithSimpleMask(draw_func, mask_func)
 
     draw_func()
 
-    stencil_cut.EndStencil()
+    stencil_cut_EndStencil()
 end
