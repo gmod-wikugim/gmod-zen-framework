@@ -8,8 +8,8 @@ local AimVector = util.AimVector
 local CursorPos = input.GetCursorPos
 local IntersectRayWithPlane = util.IntersectRayWithPlane
 
-local VECTOR = FindMetaTable("Vector")
-local ANGLE = FindMetaTable("Angle")
+local VECTOR = FindMetaTable("Vector") --[[@class Vector]]
+local ANGLE = FindMetaTable("Angle") --[[@class Angle]]
 
 local Vector_Dot = VECTOR.Dot
 local Angle_Forward = ANGLE.Forward
@@ -159,6 +159,15 @@ local render_Capture = render.Capture
 local render_PopRenderTarget = render.PopRenderTarget
 local CreateMaterial = CreateMaterial
 
+---@param width number
+---@param height number
+---@param draw_func fun(w: number, h:number)
+---@param mask_func fun(w:number, h:number)?
+---@param bCapturePNG boolean
+---@param texture_name string?
+---@return IMaterial Material, string PNG, number width, number height
+---@overload fun(width: number, height: number, draw_func: fun(w: number, h:number), mask_func: fun(w:number, h:number), bCapturePNG: false|nil, texture_name: string?): IMaterial, nil, number, number
+---@overload fun(width: number, height: number, draw_func: fun(w: number, h:number), mask_func: fun(w:number, h:number), bCapturePNG: true, texture_name: string?): IMaterial, string, number, number
 function material_cache.Generate2DMaterial(width, height, draw_func, mask_func, bCapturePNG, texture_name)
     assert(type(texture_name) == "string" or texture_name == nil, "texture_name not is string")
 
@@ -283,16 +292,113 @@ end
 */
 ---@param mat_base IMaterial
 ---@param mask_func fun(w: number, h:number)
+---@param width number?
+---@param height number?
 ---@return IMaterial
-function material_cache.CutMaterial(mat_base, mask_func)
+function material_cache.CutMaterial(mat_base, mask_func, width, height)
+    width = width or 512
+    height = height or 512
 
-    local mat = material_cache.Generate2DMaterial(512, 512, function(w, h)
+    local mat = material_cache.Generate2DMaterial(width, height, function(w, h)
         surface.SetMaterial(mat_base)
         surface.SetDrawColor(255, 255, 255)
         surface.DrawTexturedRect(0, 0, w, h)
     end, mask_func)
-
     return mat
 end
 
+local assert = assert
+local type = type
+local GetRenderTargetEx = GetRenderTargetEx
+local render_PushRenderTarget = render.PushRenderTarget
+local render_Clear = render.Clear
+local cam_Start2D = cam.Start2D
+local stencil_cut_StartStencil = stencil_cut.StartStencil
+local stencil_cut_FilterStencil = stencil_cut.FilterStencil
+local stencil_cut_EndStencil = stencil_cut.EndStencil
+local cam_End2D = cam.End2D
+local render_Capture = render.Capture
+local render_PopRenderTarget = render.PopRenderTarget
+local CreateMaterial = CreateMaterial
 
+local function GenerateMaterial(shaderName, materialData, width, height, draw_func, mask_func, bCapturePNG, texture_name, bDontClearTarget)
+    assert(type(texture_name) == "string" or texture_name == nil, "texture_name not is string")
+
+    if texture_name == nil then
+        material_cache.iMatCounter = material_cache.iMatCounter + 1
+        texture_name = "material_cache/auto_generated/" .. material_cache.iMatCounter
+    end
+
+    local texture = GENERATED_TEXTURES[texture_name] or GetRenderTargetEx(texture_name,
+        width, height,
+        RT_SIZE_NO_CHANGE,        -- Just no touch anything
+        MATERIAL_RT_DEPTH_SEPARATE, -- Alpha use multiply alpha object. If any bags then change to --> MATERIAL_RT_DEPTH_SEPARATE --> MATERIAL_RT_DEPTH_ONLY
+        1 + 256,                  -- Best Combo to enable high-equility screenshot
+        0,                        -- Dont tested
+        IMAGE_FORMAT_RGBA16161616 -- Allow use more colors in game. Default game colors is restricted!
+    )
+
+    render_PushRenderTarget(texture)
+
+    if bDontClearTarget != true then render_Clear(0, 0, 0, 0, true, true) end
+
+    cam_Start2D()
+
+    if mask_func then
+        stencil_cut_StartStencil()
+        stencil_cut_FilterStencil(mask_func, width, height)
+    end
+    draw_func(width, height)
+
+    if mask_func then
+        stencil_cut_EndStencil()
+    end
+    cam_End2D()
+
+
+    local PNG
+    if bCapturePNG then
+        PNG = render_Capture {
+            format = "png",
+            w = width,
+            h = height,
+            quality = 100,
+            x = 0,
+            y = 0
+        }
+    end
+
+    render_PopRenderTarget()
+
+    local MAT_DATA = {
+        ["$basetexture"] = texture:GetName(),
+    }
+
+    for k, v in pairs(materialData) do
+        MAT_DATA[k] = v
+    end
+
+    local result_material = GENERATED_MATERIALS[texture_name] or CreateMaterial(texture_name, shaderName, MAT_DATA)
+
+    GENERATED_MATERIALS[texture_name] = result_material
+
+    return result_material, PNG, width, height, texture
+end
+
+---@param width number
+---@param height number
+---@param draw_func fun(w: number, h:number)
+---@param mask_func fun(w:number, h:number)?
+---@param bCapturePNG boolean
+---@param texture_name string?
+---@return IMaterial Material, string PNG, number width, number height, texture IMaterial
+---@overload fun(width: number, height: number, draw_func: fun(w: number, h:number), mask_func: fun(w:number, h:number), bCapturePNG: false|nil, texture_name: string?): IMaterial, nil, number, number, ITexture
+---@overload fun(width: number, height: number, draw_func: fun(w: number, h:number), mask_func: fun(w:number, h:number), bCapturePNG: true, texture_name: string?): IMaterial, string, number, number, ITexture
+function material_cache.Generate2DMaterial(width, height, draw_func, mask_func, bCapturePNG, texture_name)
+    return GenerateMaterial("UnlitGeneric", {
+        ["$ignorez"] = "1",
+        ["$translucent"] = "1",
+        ["$vertexcolor"] = "1",
+        ["$vertexalpha"] = "1"
+    }, width, height, draw_func, mask_func, bCapturePNG, texture_name)
+end
