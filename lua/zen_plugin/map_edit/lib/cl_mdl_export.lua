@@ -427,7 +427,7 @@ local function readMdl(filePath)
 
                 DECLARE_BYTESWAP_DATADESC(function()
                     texture.name = readAutoString():gsub("%z", "")
-                end, mdlTable.texture_offset + texture.name_offset + current)
+                end, texture.name_offset + current)
 
 
                 mdlTable.textures[i] = texture
