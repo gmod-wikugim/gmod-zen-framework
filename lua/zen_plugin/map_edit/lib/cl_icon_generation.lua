@@ -34,48 +34,43 @@ function icon_generation.generateWeapon(weapon_class, callback, GenerationSettin
 
         hook.Remove("PostRender", render_id)
 
-        local CSEnt = ents.CreateClientProp(WorldModel)
+        GenerationSettings = GenerationSettings or {}
+
+        local CSEnt
+
+        if GenerationSettings.CSEnt then
+            CSEnt = GenerationSettings.CSEnt
+        else
+            CSEnt = ents.CreateClientProp(WorldModel)
+            if IsValid(CSEnt) then
+                SafeRemoveEntityDelayed(CSEnt, 5)
+
+                local phys = CSEnt:GetPhysicsObject()
+                if IsValid(phys) then
+                    phys:EnableMotion(false)
+                end
+
+                -- CSEnt:SetPos(VectorRand(-10000, 10000))
+                -- CSEnt:SetAngles(AngleRand(-360, 360))
+
+                CSEnt:DrawShadow(false)
+                CSEnt:SetupBones()
+                CSEnt:SetNoDraw(true)
+            end
+        end
+
         if !IsValid(CSEnt) then
             callback(false, "Failed to create clientside entity for model " .. tostring(WorldModel))
             return
         end
 
-        icon_generation.LastCreatedEntity = CSEnt
-
-        SafeRemoveEntityDelayed(CSEnt, 1)
-
-        local phys = CSEnt:GetPhysicsObject()
-        if IsValid(phys) then
-            phys:EnableMotion(false)
-        end
-
-        GenerationSettings = GenerationSettings or {}
-
         GenerationSettings.fov = GenerationSettings.fov or 70
-
-        if GenerationSettings.ModelMaterial then CSEnt:SetMaterial(GenerationSettings.ModelMaterial) end
-        CSEnt:DrawShadow(false)
-        CSEnt:SetupBones()
-        CSEnt:SetNoDraw(true)
-
 
         local _mins, _maxs = CSEnt:GetRenderBounds()
         local _middle = (_mins + _maxs) / 2
 
-        local wep_origin = _middle
-        local wep_angles = Angle(0,0,0)
-
-
-        if GenerationSettings.OffsetRight then
-            wep_origin = wep_origin + wep_angles:Right() * GenerationSettings.OffsetRight
-        end
-        if GenerationSettings.OffsetUp then
-            wep_origin = wep_origin + wep_angles:Up() * GenerationSettings.OffsetUp
-        end
-        if GenerationSettings.OffsetForward then
-            wep_origin = wep_origin + wep_angles:Forward() * GenerationSettings.OffsetForward
-        end
-
+        local wep_origin = CSEnt:GetPos()
+        local wep_angles = CSEnt:GetAngles()
 
         local size = 0
         for i = 1, 3 do
@@ -85,9 +80,21 @@ function icon_generation.generateWeapon(weapon_class, callback, GenerationSettin
         size = math.max(size, 50)
 
 
-        local cam_pos = wep_origin + Vector(0, size/1.5, 0)
-        local cam_ang = (wep_origin - cam_pos):Angle()
+        local cam_pos = wep_origin + wep_angles:Right() * -50
 
+        if GenerationSettings.OffsetRight then
+            cam_pos = cam_pos + wep_angles:Right() * GenerationSettings.OffsetRight
+        end
+        if GenerationSettings.OffsetUp then
+            cam_pos = cam_pos + wep_angles:Up() * GenerationSettings.OffsetUp
+        end
+        if GenerationSettings.OffsetForward then
+            cam_pos = cam_pos + wep_angles:Forward() * GenerationSettings.OffsetForward
+        end
+
+        -- Get cam_ang from cam_pos and wep_origin and wep_angles to look at wep_origin with correct up vector
+        local cam_ang = Angle(wep_angles)
+        cam_ang:RotateAroundAxis(cam_ang:Up(), -90)
 
         local CAM = {}
         CAM.type = "3D"
@@ -160,22 +167,16 @@ function icon_generation.generateWeapon(weapon_class, callback, GenerationSettin
 
 end
 
-
 ---@param weapon_class string
 ---@param callback fun(mat: IMaterial?)
 function icon_generation.CreateMaterialForWeapon(weapon_class, callback, GenerationSettings, RefreshIcon)
     local mat_path = "icon_generation/" .. weapon_class .. ".png"
 
     -- Check file exists then load it and file length less 1 day
-    if file.Exists(mat_path, "DATA") and file.Time(mat_path, "DATA") > (os.time() - 86400) then
-        if RefreshIcon then
-            RunConsoleCommand("mat_reloadtexture", "data/icon_generation/" .. weapon_class)
-        end
-
+    if !RefreshIcon and file.Exists(mat_path, "DATA") and file.Time(mat_path, "DATA") > (os.time() - 86400) then
         callback( Material("data/" .. mat_path, "smooth") )
         return
     end
-
 
 
     icon_generation.generateWeapon(weapon_class, function(succ, data)
@@ -190,7 +191,8 @@ function icon_generation.CreateMaterialForWeapon(weapon_class, callback, Generat
 
             if callback then
                 local mat = Material("data/" .. mat_path, "smooth")
-                RunConsoleCommand("mat_reloadtexture", "data/icon_generation/" .. weapon_class)
+                mat:Recompute()
+                RunConsoleCommand("mat_reloadtexture", mat:GetName("$basetexture"))
                 callback( mat )
             end
         else
