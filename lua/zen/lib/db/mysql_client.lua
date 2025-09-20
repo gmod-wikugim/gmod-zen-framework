@@ -22,12 +22,50 @@ mysql_client.iClientID = mysql_client.iClientID or 0
 
 ---@class mysql_client.Client
 
+/*
+Example setup configurations with file (garrysmod/database_settings.txt):
+```
+local DB_CLIENT = mysql_client.NewClient("client_name", "database_settings.txt")
+```
+
+`garrysmod/database_settings.txt` (example):
+```
+database
+{
+    address "127.0.0.1"
+    port 3306
+    user "root"
+    password ""
+    database "database_name"
+    module "mysqloo"
+}
+```
+*/
 ---@param client_name string
----@param mysql_host_settings mysql_host_settings
+---@param mysql_host_settings mysql_host_settings|string If string, then load as keyvalues from file path, relative to garrysmod/ (mean don't add garrysmod/ prefix)
 ---@return mysql_client.Client
 function mysql_client.NewClient(client_name, mysql_host_settings)
     assert(type(client_name) == "string", "mysql_client.NewClient() client_name must be a string")
-    assert(type(mysql_host_settings) == "table", "mysql_client.NewClient() mysql_host_settings must be a table")
+    assert(type(mysql_host_settings) == "table" or type(mysql_host_settings) == "string", "mysql_client.NewClient() mysql_host_settings must be a table or string")
+
+    if type(mysql_host_settings) == "string" then
+
+        -- Load settings from file
+        local FileData = file.Read(mysql_host_settings, "GAME")
+        assert(FileData, "mysql_client.NewClient() mysql_host_settings file not found: " .. mysql_host_settings)
+        local data = util.KeyValuesToTable(FileData)
+        assert(type(data) == "table", "mysql_client.NewClient() mysql_host_settings file is not a valid keyvalues file: " .. mysql_host_settings)
+
+        mysql_host_settings = {
+            address = data.address or data.host,
+            user = data.user or data.username,
+            password = data.password or data.pass,
+            database = data.database or data.db or data.dbname,
+            port = tonumber(data.port),
+            module = data.module,
+        }
+    end
+
     assert(type(mysql_host_settings.address) == "string", "mysql_client.NewClient() mysql_host_settings.address must be a string")
     assert(type(mysql_host_settings.user) == "string", "mysql_client.NewClient() mysql_host_settings.user must be a string")
     assert(type(mysql_host_settings.password) == "string", "mysql_client.NewClient() mysql_host_settings.password must be a string")
@@ -40,6 +78,9 @@ function mysql_client.NewClient(client_name, mysql_host_settings)
     assert(mysql_host_settings.password ~= "", "mysql_client.NewClient() mysql_host_settings.password must not be empty")
     assert(mysql_host_settings.database ~= "", "mysql_client.NewClient() mysql_host_settings.database must not be empty")
     assert(mysql_host_settings.module ~= "", "mysql_client.NewClient() mysql_host_settings.module must not be empty")
+
+    -- Check address is not localhost
+    assert(mysql_host_settings.address ~= "localhost", "mysql_client.NewClient() mysql_host_settings.address must not be 'localhost', use ip address instead (example: 127.0.0.1 or 0.0.0.0)")
 
 
 
