@@ -10,6 +10,7 @@ zen.IncludeSH("zen_plugin/map_edit/lib/map_reader/lamps/LUMP_GAME_LUMP.lua")
 zen.IncludeSH("zen_plugin/map_edit/lib/map_reader/structure/sh_bspinfo.lua")
 
 zen.IncludeCL("zen_plugin/map_edit/lib/cl_mdl_export.lua")
+zen.IncludeCL("zen_plugin/map_edit/lib/cl_bsp_export.lua")
 zen.IncludeCL("zen_plugin/map_edit/lib/cl_icon_generation.lua")
 
 
