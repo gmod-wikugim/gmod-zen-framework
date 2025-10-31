@@ -140,7 +140,7 @@ zen.IncludeCL("zen/menu/permission/cl_menu.lua")
 
 --== PLUGINS ==--
 
-zen.IncludePlugin("map_edit")
-zen.IncludePlugin("panel_manager")
-zen.IncludePlugin("server_model_viewer")
+for k, v in pairs(_CFG.OfficialPlugins) do
+    zen.IncludePlugin(v)
+end
 -- zen.IncludePlugin("fun") // To Fix

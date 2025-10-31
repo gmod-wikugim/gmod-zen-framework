@@ -175,6 +175,7 @@ _CFG.OfficialPlugins = {
     "map_edit",
     "panel_manager",
     "server_model_viewer",
+    "permaprops"
 }
 
 
