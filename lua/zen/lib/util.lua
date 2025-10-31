@@ -2608,3 +2608,20 @@ local function equals(o1, o2, ignore_mt)
     return true
 end
 util.Equal = equals
+
+
+-- Ffunction to register only server-console command
+---@param name string
+---@param func fun(ply: Player, cmd: string, args: table)
+function util.AddSerialCommand(name, func)
+    if SERVER then
+        concommand.Add(name, function(ply, cmd, args)
+            if IsValid(ply) then
+                msg.Console(ply, "This command can only be run from the server console!")
+                return
+            end
+
+            func(ply, cmd, args)
+        end)
+    end
+end
