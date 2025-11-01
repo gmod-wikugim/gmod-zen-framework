@@ -17,6 +17,6 @@ jobs:
           username: ${{ secrets.STEAM_USERNAME }}
           password: ${{ secrets.STEAM_PASSWORD }}
           totp: ${{ steps.steam-totp.outputs.code }}
-          path: build
+          path: .
           appId: 4000
           publishedFileId: 3596528689
