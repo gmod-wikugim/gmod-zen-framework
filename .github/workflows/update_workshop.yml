@@ -19,9 +19,8 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v5
         with:
-            ref: ${{ github.head_ref }}
-            lfs: 'true'
-            submodules: 'true'
+            lfs: true
+            submodules: true
       - name: LS
         run: ls -la /server
       - name: Uploading stuff
