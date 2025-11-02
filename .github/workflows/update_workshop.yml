@@ -21,7 +21,6 @@ jobs:
         with:
             lfs: true
             submodules: true
-            persist-credentials: true
       - name: LS
         run: ls -la /server
       - name: Uploading stuff
