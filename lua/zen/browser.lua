@@ -62,6 +62,7 @@ zen.IncludeCL({
 
 -- Interface include
 zen.IncludeCL({
+    "zen/lib/interface/render.lua",
     "zen/lib/interface/ui/cl_fonts.lua",
     "zen/lib/interface/ui/cl_widget.lua",
     "zen/lib/interface/ui/cl_debug.lua",
