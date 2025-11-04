@@ -5,7 +5,7 @@ on:
 
 jobs:
   updateWorkshop:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     container:
       image: jtaylerj/gmod-workshop-deploy:latest
       volumes:
