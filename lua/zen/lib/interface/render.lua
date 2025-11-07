@@ -79,6 +79,7 @@ end
 
 
 -- Create translucent material with translucent mask, example usage below
+-- ! WARNING ! Use only single paint operation with full width and height (mean single material, or single box/poly)
 ---@param textureID string -- Just unique name for RenderTarget
 ---@param width number
 ---@param height number
@@ -154,7 +155,8 @@ function render.CreateTranslucentMaterialWithMask(textureID, width, height, bSav
 end
 local _CreateTranslucentMaterialWithMask = render.CreateTranslucentMaterialWithMask
 
--- Draw some material
+-- Draw some material with depth alpha mask
+-- ! WARNING ! Use only single paint operation with full width and height (mean single material, or single box/poly)
 ---@param textureID string -- Just unique name for RenderTarget
 ---@param width number
 ---@param height number
