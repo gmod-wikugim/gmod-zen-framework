@@ -170,12 +170,13 @@ do -- Custom print function
 end
 
 
-_CFG.OfficialPlugins = {
+_CFG.OfficialPlugins = table.Flip{
     "fun",
     "map_edit",
     "developer_kit",
     "server_model_viewer",
-    "permaprops"
+    "permaprops",
+    "tv"
 }
 
 

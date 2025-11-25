@@ -145,8 +145,22 @@ zen.IncludeCL({
 })
 
 --== PLUGINS ==--
+-- Search third-party plugins folders, and check for browser.lua to include
+do
+    local _, folders = file.Find("zen_plugin/*", "LUA")
+    for _, folder_name in ipairs(folders) do
+        if _CFG.OfficialPlugins[folder_name] then
+            log("Zen Framework: Including official plugin '" .. folder_name .. "'")
+            zen.IncludePlugin(folder_name)
+            continue
+        end
 
-for k, v in pairs(_CFG.OfficialPlugins) do
-    zen.IncludePlugin(v)
+        local bExists = file.Exists("zen_plugin/" .. folder_name .. "/browser.lua", "LUA")
+        if bExists then
+            log("Zen Framework: Including third-party plugin '" .. folder_name .. "'")
+            zen.IncludePlugin(folder_name)
+        else
+            warn("Zen Framework: Plugin folder '" .. folder_name .. "' does not contain browser.lua, skipping...")
+        end
+    end
 end
--- zen.IncludePlugin("fun") // To Fix
