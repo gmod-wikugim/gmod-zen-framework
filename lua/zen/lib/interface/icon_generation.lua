@@ -83,7 +83,7 @@ end
 ---@class zen.icon_generation.GenerationSettings
 ---@field CSEnt CSEnt?
 ---@field id string? Unique identifier for the icon generation settings
----@field model string
+---@field model string?
 ---@field bodygroups string?
 ---@field skin number?
 ---@field fov number?
@@ -101,6 +101,7 @@ end
 ---@field CamaraAngles Angle?
 ---@field width number?
 ---@field height number?
+---@field lookAt Vector?
 ---@field PreDrawModel fun(CSEnt: CSEnt, cam_pos: Vector, cam_ang: Angle)?
 ---@field PostDrawModel fun(CSEnt: CSEnt, cam_pos: Vector, cam_ang: Angle)?
 
@@ -229,6 +230,8 @@ function icon_generation.GenerateTexture(GenerationSettings, callback)
 
         if GenerationSettings.CamaraAngles then
             cam_ang = GenerationSettings.CamaraAngles
+        elseif GenerationSettings.lookAt then
+            cam_ang = (GenerationSettings.lookAt - cam_pos):Angle()
         end
 
         local CAM = {}
