@@ -1,38 +1,135 @@
----@meta
-icon_generation = icon_generation or {}
+module("zen")
 
-local weapon_material = "models/debug/debugwhite"
+---@class zen.icon_generation
+icon_generation = _GET("icon_generation")
 
-local wireframe_mat = Material(weapon_material)
+
+local PANEL = FindMetaTable("Panel") --[[@class Panel]]
+
+local TEXTURE = FindMetaTable("ITexture") --[[@class ITexture]]
+local TEXTURE_GetName = TEXTURE.GetName
+
+local format = string.format
+local GetRenderTargetEx = GetRenderTargetEx
+
+local render_PushRenderTarget = render.PushRenderTarget
+local render_PopRenderTarget = render.PopRenderTarget
+
+local cam_Start2D = cam.Start2D
+local cam_End2D = cam.End2D
+
+local render_Clear = render.Clear
+local render_ClearDepth = render.ClearDepth
+
+local render_SetWriteDepthToDestAlpha = render.SetWriteDepthToDestAlpha
+
+local render_OverrideBlend = render.OverrideBlend
+
+local BLENDFUNC_MIN = BLENDFUNC_MIN
+local BLENDFUNC_ADD = BLENDFUNC_ADD
+local BLEND_SRC_COLOR = BLEND_SRC_COLOR
+local BLEND_SRC_ALPHA = BLEND_SRC_ALPHA
+
+local surface_SetDrawColor = surface.SetDrawColor
+local surface_SetMaterial = surface.SetMaterial
+local surface_DrawTexturedRect = surface.DrawTexturedRect
+
+local TEXTURE_PATTERN = "icon_generation/%s_%d_%d_%d_%d_%d_%d_%d"
+local TEXTURE_MATERIAL_PATTERN = "materials/%s"
+
+local TEXTURE_FLAGS = bit.bor(4, 8, 16, 32, 512, 8192, 32768)
+local IMAGE_FORMAT = bit.bor(IMAGE_FORMAT_RGBA8888)
+
+local SIZE_MODE = RT_SIZE_NO_CHANGE
+local DEPTH_MODE = MATERIAL_RT_DEPTH_SEPARATE
+local TEXTURE_FLAGS = TEXTURE_FLAGS
+local RT_FLAGS = 0
+
+local function GetTextureRT(textureID, width, height, size_mode, depth_mode, texture_flags, rt_flags, image_format)
+
+    local full_textureID = format(TEXTURE_PATTERN, textureID, width, height, size_mode or SIZE_MODE, depth_mode or DEPTH_MODE, texture_flags or TEXTURE_FLAGS, rt_flags or RT_FLAGS, image_format or IMAGE_FORMAT)
+
+    local texture = GetRenderTargetEx(full_textureID,
+        width, height,
+        SIZE_MODE,
+        DEPTH_MODE,
+        TEXTURE_FLAGS,
+        RT_FLAGS,
+        IMAGE_FORMAT
+    )
+
+    return texture, full_textureID
+end
+
+
+local function GetTextureMaterial(textureID, width, height, size_mode, depth_mode, texture_flags, rt_flags, image_format)
+    local texture, full_textureID = GetTextureRT(textureID, width, height, size_mode, depth_mode, texture_flags, rt_flags, image_format)
+
+    local MaterialName = format(TEXTURE_MATERIAL_PATTERN, full_textureID)
+
+    local MAT_FROM_TEXTURE = CreateMaterial(MaterialName, "UnlitGeneric", {
+        ["$basetexture"] = TEXTURE_GetName(texture),
+        ["$ignorez"] = "1",
+        ["$translucent"] = "1",
+        ["$vertexcolor"] = "1",
+        ["$vertexalpha"] = "1",
+    })
+
+    return texture, MAT_FROM_TEXTURE
+end
+
+
+
+---@class zen.icon_generation.GenerationSettings
+---@field CSEnt CSEnt?
+---@field id string? Unique identifier for the icon generation settings
+---@field model string
+---@field bodygroups string?
+---@field skin number?
+---@field fov number?
+---@field AddFOV number?
+---@field OffsetRight number?
+---@field OffsetUp number?
+---@field OffsetForward number?
+---@field RotateRight number?
+---@field RotateUp number?
+---@field RotateForward number?
+---@field bThisDebug boolean?
+---@field bThisSetup boolean?
+---@field LifeTime number? Time in seconds before the generated icon is considered stale and needs regeneration
+---@field CamaraPosition Vector?
+---@field CamaraAngles Angle?
+---@field width number?
+---@field height number?
+---@field PreDrawModel fun(CSEnt: CSEnt, cam_pos: Vector, cam_ang: Angle)?
+---@field PostDrawModel fun(CSEnt: CSEnt, cam_pos: Vector, cam_ang: Angle)?
 
 -- Generate PNG Data for a given entity class
----@overload fun(weapon_class: string, callback: fun(success: true, png_data: IMaterial))
----@overload fun(weapon_class: string, callback: fun(success: false, err: string))
-function icon_generation.generateWeapon(weapon_class, callback, GenerationSettings)
+---@overload fun(GenerationSettings: zen.icon_generation.GenerationSettings, callback: fun(succ: true, renderTexture: ITexture, renderMaterial: IMaterial))
+---@overload fun(GenerationSettings: zen.icon_generation.GenerationSettings, callback: fun(succ: false, errMsg: string))
+function icon_generation.GenerateTexture(GenerationSettings, callback)
     callback = callback or function(succ, data)
         if !succ then
-            print("icon_generation.generateWeapon: Failed to generate icon for weapon class " .. tostring(weapon_class) .. ": " .. tostring(data))
+            print("icon_generation.generateWeapon: Failed to generate icon " .. tostring(data))
         end
     end
 
-    local SWEP = weapons.GetStored(weapon_class)
-    if !SWEP then
-        callback(false, "Weapon table not found for class " .. tostring(weapon_class))
+    -- Check CSEnt or model defined
+    if !GenerationSettings.CSEnt and (type(GenerationSettings.model) != "string" or GenerationSettings.model == "") then
+        callback(false, "Either CSEnt or model must be defined in GenerationSettings")
         return
     end
 
-    local WorldModel = SWEP.WorldModel
-    if type(WorldModel) != "string" or WorldModel == "" then
-        callback(false, "WorldModel not defined for weapon class " .. tostring(weapon_class))
-        return
-    end
+    -- Default values
+    GenerationSettings.id = GenerationSettings.id or "default"
+    GenerationSettings.width = GenerationSettings.width or 512
+    GenerationSettings.height = GenerationSettings.height or 512
 
-    local CSEnt
+    local CSEnt = GenerationSettings.CSEnt
 
-    if GenerationSettings.CSEnt then
-        CSEnt = GenerationSettings.CSEnt
-    else
-        CSEnt = ents.CreateClientProp(WorldModel)
+    if CSEnt == nil then
+        CSEnt = ents.CreateClientProp(GenerationSettings.model)
+
         if IsValid(CSEnt) then
             SafeRemoveEntityDelayed(CSEnt, 10)
 
@@ -47,10 +144,20 @@ function icon_generation.generateWeapon(weapon_class, callback, GenerationSettin
             CSEnt:DrawShadow(false)
             CSEnt:SetupBones()
             CSEnt:SetNoDraw(true)
+
+            if GenerationSettings.bodygroups then
+                CSEnt:SetBodygroups(GenerationSettings.bodygroups)
+            end
+
+            if GenerationSettings.skin then
+                CSEnt:SetSkin(GenerationSettings.skin)
+            end
+
+        else
+            callback(false, "Failed to create clientside entity for model " .. tostring(GenerationSettings.model))
+            return
         end
     end
-
-    GenerationSettings = GenerationSettings or {}
 
     GenerationSettings.fov = GenerationSettings.fov or 70
 
@@ -58,28 +165,29 @@ function icon_generation.generateWeapon(weapon_class, callback, GenerationSettin
         GenerationSettings.fov = GenerationSettings.fov - GenerationSettings.AddFOV
     end
 
-
     local DEBUG = GenerationSettings.bThisDebug == true
     local SETUP = GenerationSettings.bThisSetup == true
     local DEBUG_OR_SETUP = DEBUG or SETUP
 
+    local UniqueID = string.format("%p_%s", CSEnt, GenerationSettings.id)
 
-    local render_id = "icon_generation_rt_" .. weapon_class
 
-    local save_path = string.format("es_closet/generated_icon/%s.png", weapon_class)
-    png_generation.Generate(save_path, 500, 300, false, function (w, h)
+    local RenderTexture, RenderMaterial = GetTextureMaterial(UniqueID, GenerationSettings.width, GenerationSettings.height)
+
+    render_PushRenderTarget(RenderTexture)
+        render_Clear(0,0,0,0)
+        render_ClearDepth(true)
 
         if !IsValid(CSEnt) then
-            hook.Remove("PostRender", render_id)
-            callback(false, "Failed to create clientside entity for model " .. tostring(WorldModel))
+            callback(false, "Failed to create clientside entity")
             return
         end
 
         local _mins, _maxs = CSEnt:GetRenderBounds()
         local _middle = (_mins + _maxs) / 2
 
-        local wep_origin = CSEnt:GetPos()
-        local wep_angles = CSEnt:GetAngles()
+        local entity_origin = CSEnt:GetPos()
+        local entity_angles = CSEnt:GetAngles()
 
         local size = 0
         for i = 1, 3 do
@@ -88,7 +196,7 @@ function icon_generation.generateWeapon(weapon_class, callback, GenerationSettin
 
         size = math.max(size, 50)
 
-        local DefaultRotate = Angle(wep_angles)
+        local DefaultRotate = Angle(entity_angles)
 
         if GenerationSettings.RotateRight then
             DefaultRotate:RotateAroundAxis(DefaultRotate:Right(), GenerationSettings.RotateRight)
@@ -100,20 +208,28 @@ function icon_generation.generateWeapon(weapon_class, callback, GenerationSettin
             DefaultRotate:RotateAroundAxis(DefaultRotate:Forward(), GenerationSettings.RotateForward)
         end
 
-        local custom_middle_position = Vector(wep_origin)
+        local custom_middle_position = Vector(entity_origin)
         if GenerationSettings.OffsetRight then
-            custom_middle_position = custom_middle_position + wep_angles:Right() * GenerationSettings.OffsetRight
+            custom_middle_position = custom_middle_position + entity_angles:Right() * GenerationSettings.OffsetRight
         end
         if GenerationSettings.OffsetUp then
-            custom_middle_position = custom_middle_position + wep_angles:Up() * GenerationSettings.OffsetUp
+            custom_middle_position = custom_middle_position + entity_angles:Up() * GenerationSettings.OffsetUp
         end
         if GenerationSettings.OffsetForward then
-            custom_middle_position = custom_middle_position + wep_angles:Forward() * GenerationSettings.OffsetForward
+            custom_middle_position = custom_middle_position + entity_angles:Forward() * GenerationSettings.OffsetForward
         end
 
         local cam_pos = (custom_middle_position) + DefaultRotate:Right() * 50
 
-        local cam_ang = (custom_middle_position - cam_pos):AngleEx(wep_angles:Up())
+        local cam_ang = (custom_middle_position - cam_pos):AngleEx(entity_angles:Up())
+
+        if GenerationSettings.CamaraPosition then
+            cam_pos = GenerationSettings.CamaraPosition
+        end
+
+        if GenerationSettings.CamaraAngles then
+            cam_ang = GenerationSettings.CamaraAngles
+        end
 
         local CAM = {}
         CAM.type = "3D"
@@ -126,8 +242,8 @@ function icon_generation.generateWeapon(weapon_class, callback, GenerationSettin
 
         CAM.x = 0
         CAM.y = 0
-        CAM.w = w
-        CAM.h = h
+        CAM.w = GenerationSettings.width
+        CAM.h = GenerationSettings.height
 
         CAM.aspect = CAM.w / CAM.h
 
@@ -138,13 +254,16 @@ function icon_generation.generateWeapon(weapon_class, callback, GenerationSettin
             render.OverrideAlphaWriteEnable(true, true)
             render.SetWriteDepthToDestAlpha( false )
 
-            render.ModelMaterialOverride(wireframe_mat)
+            if GenerationSettings.PreDrawModel then
+                GenerationSettings.PreDrawModel(CSEnt, cam_pos, cam_ang)
+            end
 
-
-
-            CSEnt:SetMaterial(weapon_material)
             CSEnt:DrawModel()
             CSEnt:FrameAdvance()
+
+            if GenerationSettings.PostDrawModel then
+                GenerationSettings.PostDrawModel(CSEnt, cam_pos, cam_ang)
+            end
 
             if SETUP then
                 render.SetColorMaterial()
@@ -154,14 +273,14 @@ function icon_generation.generateWeapon(weapon_class, callback, GenerationSettin
 
             render.SuppressEngineLighting( false )
             render.OverrideAlphaWriteEnable(false, false)
-            render.ModelMaterialOverride(nil)
             render.SetWriteDepthToDestAlpha(true)
 
         cam.End()
 
-    end, function (material)
-        callback(true, material)
-    end)
+    render_PopRenderTarget()
+
+    callback(true, RenderTexture, RenderMaterial)
+
 
     /*
     hook.Add("PostRender", render_id, function()
@@ -180,8 +299,8 @@ function icon_generation.generateWeapon(weapon_class, callback, GenerationSettin
         local _mins, _maxs = CSEnt:GetRenderBounds()
         local _middle = (_mins + _maxs) / 2
 
-        local wep_origin = CSEnt:GetPos()
-        local wep_angles = CSEnt:GetAngles()
+        local entity_origin = CSEnt:GetPos()
+        local entity_angles = CSEnt:GetAngles()
 
         local size = 0
         for i = 1, 3 do
@@ -190,7 +309,7 @@ function icon_generation.generateWeapon(weapon_class, callback, GenerationSettin
 
         size = math.max(size, 50)
 
-        local DefaultRotate = Angle(wep_angles)
+        local DefaultRotate = Angle(entity_angles)
 
         if GenerationSettings.RotateRight then
             DefaultRotate:RotateAroundAxis(DefaultRotate:Right(), GenerationSettings.RotateRight)
@@ -202,20 +321,20 @@ function icon_generation.generateWeapon(weapon_class, callback, GenerationSettin
             DefaultRotate:RotateAroundAxis(DefaultRotate:Forward(), GenerationSettings.RotateForward)
         end
 
-        local custom_middle_position = Vector(wep_origin)
+        local custom_middle_position = Vector(entity_origin)
         if GenerationSettings.OffsetRight then
-            custom_middle_position = custom_middle_position + wep_angles:Right() * GenerationSettings.OffsetRight
+            custom_middle_position = custom_middle_position + entity_angles:Right() * GenerationSettings.OffsetRight
         end
         if GenerationSettings.OffsetUp then
-            custom_middle_position = custom_middle_position + wep_angles:Up() * GenerationSettings.OffsetUp
+            custom_middle_position = custom_middle_position + entity_angles:Up() * GenerationSettings.OffsetUp
         end
         if GenerationSettings.OffsetForward then
-            custom_middle_position = custom_middle_position + wep_angles:Forward() * GenerationSettings.OffsetForward
+            custom_middle_position = custom_middle_position + entity_angles:Forward() * GenerationSettings.OffsetForward
         end
 
         local cam_pos = (custom_middle_position) + DefaultRotate:Right() * 50
 
-        local cam_ang = (custom_middle_position - cam_pos):AngleEx(wep_angles:Up())
+        local cam_ang = (custom_middle_position - cam_pos):AngleEx(entity_angles:Up())
 
         local CAM = {}
         CAM.type = "3D"
@@ -338,19 +457,85 @@ function icon_generation.CreateMaterialForWeapon(weapon_class, callback, Generat
     end, GenerationSettings)
 end
 
-/* Debug
-icon_generation.generateWeapon("arccw_go_m1014", function (success, png_data)
+-- Concommand to test icon generation, with drawing result
+concommand.Add("zen_test_icon_generation", function()
+    local Frame = vgui.Create("DFrame")
+    Frame:SetSize(600, 600)
+    Frame:Center()
+    Frame:MakePopup()
 
-end, {
-    OffsetForward = 20,
-    OffsetRight = 5,
-    OffsetUp = -4,
-    RotateForward = 0,
-    RotateRight = 0,
-    RotateUp = 0,
-    bThisDebug = true
-})
+    local IconPanel = vgui.Create("DPanel", Frame)
+    IconPanel:Dock(FILL)
+    IconPanel.Paint = nil
 
-*/
+
+    icon_generation.GenerateTexture({
+        model = "models/props_c17/display_cooler01a.mdl",
+        fov = 90,
+        OffsetForward = 40,
+        OffsetUp = 0,
+        OffsetRight = 40,
+        bThisDebug = true,
+    }, function (succ, renderTexture, renderMaterial)
+        if succ then
+            IconPanel.Paint = function(self, w, h)
+                surface_SetDrawColor(255, 255, 255, 255)
+                surface_SetMaterial(renderMaterial)
+                surface_DrawTexturedRect(0, 0, w, h)
+            end
+        else
+            print("Failed to generate icon: " .. tostring(renderTexture))
+        end
+    end)
+
+    local IconPanel2 = vgui.Create("DPanel", Frame)
+    IconPanel2:Dock(FILL)
+    IconPanel2.Paint = nil
+
+    icon_generation.GenerateTexture({
+        model = "models/weapons/w_pistol.mdl",
+        fov = 90,
+        OffsetForward = 20,
+        OffsetUp = 0,
+        OffsetRight = 0,
+        bThisDebug = true,
+    }, function (succ, renderTexture, renderMaterial)
+        if succ then
+            IconPanel2.Paint = function(self, w, h)
+                surface_SetDrawColor(255, 255, 255, 255)
+                surface_SetMaterial(renderMaterial)
+                surface_DrawTexturedRect(0, 0, w, h)
+            end
+        else
+            print("Failed to generate icon: " .. tostring(renderTexture))
+        end
+    end)
+
+
+    local IconPanel3 = vgui.Create("DPanel", Frame)
+    IconPanel3:Dock(FILL)
+    IconPanel3.Paint = nil
+
+    icon_generation.GenerateTexture({
+        model = "models/props_interiors/VendingMachineSoda01a.mdl",
+        fov = 90,
+        OffsetForward = 0,
+        OffsetUp = 0,
+        OffsetRight = 90,
+        bThisDebug = true,
+    }, function (succ, renderTexture, renderMaterial)
+        if succ then
+            IconPanel3.Paint = function(self, w, h)
+                surface_SetDrawColor(255, 255, 255, 255)
+                surface_SetMaterial(renderMaterial)
+                surface_DrawTexturedRect(0, 0, w, h)
+            end
+        else
+            print("Failed to generate icon: " .. tostring(renderTexture))
+        end
+    end)
+
+
+end)
 
 hook.Run("icon_generation_loaded")
