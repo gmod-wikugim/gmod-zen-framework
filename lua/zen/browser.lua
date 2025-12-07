@@ -28,6 +28,8 @@ zen.IncludeSH({
     "zen/lib/cvars.lua",
     "zen/lib/developer.lua",
     "zen/lib/steam.lua",
+    "zen/lib/download.lua",
+    "zen/lib/geoip.lua",
 })
 
 zen.IncludeCL({
