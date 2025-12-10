@@ -1,3 +1,4 @@
+module("zen")
 -- Library use http://ip-api.com/json/24.48.0.1 to get geoip info
 
 ---@class zen.geoip

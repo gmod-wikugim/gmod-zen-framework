@@ -1,3 +1,5 @@
+module("zen")
+
 -- Library which download files from internet
 -- Repeat 3 times if failed, each 5 seconds
 -- Check to good code result 200
