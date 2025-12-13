@@ -52,6 +52,12 @@ end)
 
 local function RequestInit()
     ihook.Run("ReadyForNetwork")
+
+    if util.NetworkStringToID(nt.channels.clientReady) == 0 then
+        log("NT-Error: Server didn't register clientReady channel yet!")
+        return
+    end
+
     net.Start(nt.channels.clientReady)
     net.SendToServer()
 end
