@@ -186,7 +186,7 @@ concommand.Add("zen_request_access", function(ply, cmd, args)
         mi_RequestAmount = mi_RequestAmount + 1
         RequestID = mi_RequestAmount
         mt_AccessRequests[RequestUniqueID] = RequestID 
-        mt_AccessRequestPerm = {
+        mt_AccessRequestPerm[mi_RequestAmount] = {
             perm_name = perm_name,
             SteamID64 = ply:SteamID64(),
         }
@@ -207,13 +207,13 @@ concommand.Add("zen_approve_access_request", function(ply, cmd, args)
 
     local RequestID = tonumber(args[1])
     if not RequestID then
-        msg.Error(ply, "Invalid request ID")
+        print("Invalid request ID")
         return
     end
 
     local REQUEST = mt_AccessRequestPerm[RequestID]
     if !REQUEST then
-        msg.Error(ply, "Request not found or already approved")
+        print("Request not found or already approved")
         return
     end
 
@@ -221,4 +221,6 @@ concommand.Add("zen_approve_access_request", function(ply, cmd, args)
     local SteamID64 = REQUEST.SteamID64
 
     iperm.DB:GivePermission(SteamID64, perm_name, true)
+
+    msg.Notify(ply, Format("Approved request #%s for player %s to get permission '%s'", RequestID, SteamID64, perm_name), NOTIFY_GENERIC, 5)
 end)
