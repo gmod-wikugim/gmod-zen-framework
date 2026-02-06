@@ -7,6 +7,8 @@ mysql_client = _GET("mysql_client")
 ---@type table <string, mysql_client.Client>
 mysql_client.mt_ClientList = mysql_client.mt_ClientList or {}
 
+mysql_client.version = "1.0.0"
+
 mysql_client.iClientID = mysql_client.iClientID or 0
 
 
