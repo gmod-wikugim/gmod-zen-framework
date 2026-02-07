@@ -64,8 +64,71 @@
         if callback then callback(false) end
     end)
 
+    ```
+
+    DB.Query([[
+        SELECT * FROM `es_weapon_icon_offsets`;
+    ]], function(data)
+        if not data or #data == 0 then
+            callback({})
+            return
+        end
+
+        local weapon_offsets = {}
+        for _, row in ipairs(data) do
+            weapon_offsets[row.weapon_class] = {
+                OffsetForward = tonumber(row.OffsetForward),
+                OffsetUp = tonumber(row.OffsetUp),
+                OffsetRight = tonumber(row.OffsetRight),
+                RotateForward = tonumber(row.RotateForward),
+                RotateUp = tonumber(row.RotateUp),
+                RotateRight = tonumber(row.RotateRight),
+                AddFOV = tonumber(row.AddFOV),
+                extra = util.JSONToTable(row.extra),
+                edit_time = tonumber(row.edit_time),
+            }
+        end
+
+        callback(weapon_offsets)
+    end,
+    function(err)
+        callback({}) -- Return empty weapon_offsets on error
+    end)
+
+    ```
+
+    DB.QueryFormat([[
+        SELECT * FROM `es_weapon_icon_offsets` WHERE weapon_class = %s;
+    ]], {weapon_class}, function(data)
+        if not data or #data == 0 then
+            callback({})
+            return
+        end
+
+        local weapon_offsets = {}
+        for _, row in ipairs(data) do
+            weapon_offsets[row.weapon_class] = {
+                OffsetForward = tonumber(row.OffsetForward),
+                OffsetUp = tonumber(row.OffsetUp),
+                OffsetRight = tonumber(row.OffsetRight),
+                RotateForward = tonumber(row.RotateForward),
+                RotateUp = tonumber(row.RotateUp),
+                RotateRight = tonumber(row.RotateRight),
+                AddFOV = tonumber(row.AddFOV),
+                extra = util.JSONToTable(row.extra),
+                edit_time = tonumber(row.edit_time),
+            }
+        end
+
+        callback(weapon_offsets[weapon_class])
+    end,
+    function(err)
+        callback({}) -- Return empty weapon_offsets on error
+    end)
+
 
 */
+
 
 
 
@@ -78,7 +141,7 @@ mysql_client = _GET("mysql_client")
 ---@type table <string, mysql_client.Client>
 mysql_client.mt_ClientList = mysql_client.mt_ClientList or {}
 
-mysql_client.version = "1.0.3"
+mysql_client.version = "1.0.4"
 
 mysql_client.iClientID = mysql_client.iClientID or 0
 
