@@ -7,12 +7,12 @@ mysql_client = _GET("mysql_client")
 ---@type table <string, mysql_client.Client>
 mysql_client.mt_ClientList = mysql_client.mt_ClientList or {}
 
-mysql_client.version = "1.0.0"
+mysql_client.version = "1.0.2"
 
 mysql_client.iClientID = mysql_client.iClientID or 0
 
 
----@class mysql_host_settings
+---@class mysql_host_settings: table
 ---@field enable boolean? Default true
 ---@field address string
 ---@field user string
@@ -22,7 +22,28 @@ mysql_client.iClientID = mysql_client.iClientID or 0
 ---@field module string? Default "mysqloo"
 
 
----@class mysql_client.Client
+-- Validation list for mysql_host_settings, used in mysql_client.NewClient() to validate config and set default values
+mysql_client.configValidationList = {
+    ["enabled"] = { type = "boolean", default = true },
+    ["address"] = { type = "string", required = true },
+    ["user"] = { type = "string", required = true },
+    ["password"] = { type = "string", required = true },
+    ["database"] = { type = "string", required = true },
+    ["port"] = { type = "number", default = 3306 },
+    ["module"] = { type = "string", default = "mysqloo" },
+}
+
+
+-- Alias for human friendly config keys, example: host -> address, username -> user, pass -> password, db -> database, dbname -> database, enabled -> enable
+mysql_client.humanoidKeyAlias = {
+    ["host"] = "address",
+    ["username"] = "user",
+    ["pass"] = "password",
+    ["db"] = "database",
+    ["dbname"] = "database",
+    ["enabled"] = "enable",
+}
+
 
 /*
 Example setup configurations with file (garrysmod/database_settings.txt):
@@ -50,40 +71,67 @@ function mysql_client.NewClient(client_name, mysql_host_settings)
     assert(type(client_name) == "string", "mysql_client.NewClient() client_name must be a string")
     assert(type(mysql_host_settings) == "table" or type(mysql_host_settings) == "string", "mysql_client.NewClient() mysql_host_settings must be a table or string")
 
+    -- Load settings from file
     if type(mysql_host_settings) == "string" then
+        local settings_path = mysql_host_settings
 
-        -- Load settings from file
+        assert(file.Exists(mysql_host_settings, "GAME"), "mysql_client.NewClient() mysql_host_settings file not found: " .. mysql_host_settings)
         local FileData = file.Read(mysql_host_settings, "GAME")
         assert(FileData, "mysql_client.NewClient() mysql_host_settings file not found: " .. mysql_host_settings)
-        local data = util.KeyValuesToTable(FileData)
-        assert(type(data) == "table", "mysql_client.NewClient() mysql_host_settings file is not a valid keyvalues file: " .. mysql_host_settings)
 
-        mysql_host_settings = {
-            address = data.address or data.host,
-            user = data.user or data.username,
-            password = data.password or data.pass,
-            database = data.database or data.db or data.dbname,
-            port = tonumber(data.port),
-            module = data.module,
-        }
+        mysql_host_settings = util.KeyValuesToTable(FileData)
+        assert(type(mysql_host_settings) == "table", "mysql_client.NewClient() mysql_host_settings file is not a valid keyvalues file: " .. tostring(settings_path))
     end
 
-    assert(type(mysql_host_settings.address) == "string", "mysql_client.NewClient() mysql_host_settings.address must be a string")
-    assert(type(mysql_host_settings.user) == "string", "mysql_client.NewClient() mysql_host_settings.user must be a string")
-    assert(type(mysql_host_settings.password) == "string", "mysql_client.NewClient() mysql_host_settings.password must be a string")
-    assert(type(mysql_host_settings.database) == "string", "mysql_client.NewClient() mysql_host_settings.database must be a string")
-    assert(type(mysql_host_settings.module) == "string" or mysql_host_settings.module == nil, "mysql_client.NewClient() mysql_host_settings.module must be a string or nil")
-    assert(type(mysql_host_settings.port) == "number" or mysql_host_settings.port == nil, "mysql_client.NewClient() mysql_host_settings.port must be a number or nil")
-    assert(mysql_host_settings.module == "mysqloo", "mysql_client.NewClient() mysql_host_settings.module must be 'mysqloo'")
+    ---@cast mysql_host_settings table
+
+    -- Support humanoid keys, example: host -> address, username -> user, pass -> password
+    for humanoidKey, actualKey in pairs(mysql_client.humanoidKeyAlias) do
+        if mysql_host_settings[humanoidKey] ~= nil and mysql_host_settings[actualKey] == nil then
+            mysql_host_settings[actualKey] = mysql_host_settings[humanoidKey]
+
+            -- Log warning about humanoid key usage
+            MsgC(Color(255, 255, 0), string.format("mysql_client.NewClient() Warning: mysql_host_settings.%s is deprecated, please use mysql_host_settings.%s instead\n", humanoidKey, actualKey))
+
+            -- Remove humanoid key to avoid confusion
+            mysql_host_settings[humanoidKey] = nil
+        end
+    end
+
+    -- Check extra keys in mysql_host_settings and log warning about them
+    for key, value in pairs(mysql_host_settings) do
+        if mysql_client.configValidationList[key] == nil then
+            MsgC(Color(255, 255, 0), string.format("mysql_client.NewClient() Warning: mysql_host_settings.%s is not a valid config key\n", key))
+        end
+    end
+
+    -- Validate config with mysql_client.configValidationList
+    for key, validation in pairs(mysql_client.configValidationList) do
+        local value = mysql_host_settings[key]
+
+        if validation.required and value == nil then
+            error(string.format("mysql_client.NewClient() mysql_host_settings.%s is required", key))
+        end
+
+        if value ~= nil then
+            if type(value) ~= validation.type then
+                error(string.format("mysql_client.NewClient() mysql_host_settings.%s must be a %s", key, validation.type))
+            end
+        else
+            mysql_host_settings[key] = validation.default
+        end
+    end
+
+    -- Personal pre-validation for important keys, example: address, user, password, database must not be empty strings, module must be "mysqloo" or nil, port must be a number between 1 and 65535
+    assert(mysql_host_settings.address ~= "", "mysql_client.NewClient() mysql_host_settings.address must not be empty")
     assert(mysql_host_settings.address ~= "", "mysql_client.NewClient() mysql_host_settings.address must not be empty")
     assert(mysql_host_settings.user ~= "", "mysql_client.NewClient() mysql_host_settings.user must not be empty")
     assert(mysql_host_settings.password ~= "", "mysql_client.NewClient() mysql_host_settings.password must not be empty")
     assert(mysql_host_settings.database ~= "", "mysql_client.NewClient() mysql_host_settings.database must not be empty")
     assert(mysql_host_settings.module ~= "", "mysql_client.NewClient() mysql_host_settings.module must not be empty")
-
-    -- Check address is not localhost
+    assert(mysql_host_settings.module == "mysqloo", "mysql_client.NewClient() mysql_host_settings.module must be 'mysqloo'")
+    assert(mysql_host_settings.port >= 1 and mysql_host_settings.port <= 65535, "mysql_client.NewClient() mysql_host_settings.port must be a number between 1 and 65535")
     assert(mysql_host_settings.address ~= "localhost", "mysql_client.NewClient() mysql_host_settings.address must not be 'localhost', use ip address instead (example: 127.0.0.1 or 0.0.0.0)")
-
 
 
     -- Kill old client if exists
@@ -194,6 +242,12 @@ function mysql_client.NewClient(client_name, mysql_host_settings)
 
         if not MYSQL_CLIENT.IsModuleExists(MYSQL_CLIENT.MySQL.module) then
             MYSQL_CLIENT.Log("MySQL module `", MYSQL_CLIENT.MySQL.module, "` not found, please install it")
+
+            if MYSQL_CLIENT.MySQL.module == "mysqloo" then
+                MYSQL_CLIENT.Log("  You can download `mysqloo` from https://github.com/FredyH/MySQLOO/releases")
+                MYSQL_CLIENT.Log("  After downloading, put the `mysqloo` module in `garrysmod/lua/bin/` folder, and restart the script/server")
+            end
+
             if onError then onError("MySQL module not found") end
             return
         end
@@ -492,3 +546,83 @@ concommand.Add("mysql_client_dump", function(ply, cmd, args)
 end)
 
 hook.Run("MySQL_ClientLoaded")
+
+-- Unit tests for mysql_client, with a test client and test database, and print results in console
+concommand.Add("mysql_client_test", function(ply, cmd, args)
+    if not IsValid(ply) or ply:IsSuperAdmin() then
+        local TEST_CLIENT_NAME = "test_client"
+        local TEST_DB_FILE = "database_settings.txt"
+
+        local TEST_CLIENT = mysql_client.NewClient(TEST_CLIENT_NAME, TEST_DB_FILE)
+        TEST_CLIENT.OnConnect("test_on_connect", function()
+            TEST_CLIENT.Log("Test client connected:", COLOR_GOOD, " Success")
+
+            -- Test query
+            TEST_CLIENT.Query("SELECT 1 AS test", function(data)
+                if data and data[1] and data[1].test == 1 then
+                    TEST_CLIENT.Log("   Test query:", COLOR_GOOD, " Success")
+                else
+                    TEST_CLIENT.Log("   Test query failed, but unexpected result: ", COLOR_ERROR, tostring(data))
+                end
+            end, function(err)
+                TEST_CLIENT.Log("   Test query failed: " .. err)
+            end)
+
+
+
+            -- Create table, insert data and select data test, delete table after test
+            local create_table_query = [[
+                CREATE TABLE IF NOT EXISTS test_table (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    name VARCHAR(255) NOT NULL
+                )
+            ]]
+
+            TEST_CLIENT.Query(create_table_query, function()
+                TEST_CLIENT.Log("   Test table created:", COLOR_GOOD, " Success")
+
+                local insert_query = [[
+                    INSERT INTO test_table (name) VALUES ('test_name')
+                ]]
+
+                TEST_CLIENT.Query(insert_query, function()
+                    TEST_CLIENT.Log("   Test data inserted:", COLOR_GOOD, " Success")
+
+                    local select_query = [[
+                        SELECT * FROM test_table WHERE name = 'test_name'
+                    ]]
+
+                    TEST_CLIENT.Query(select_query, function(data)
+                        if data and data[1] and data[1].name == "test_name" then
+                            TEST_CLIENT.Log("   Test select query:", COLOR_GOOD, " Success")
+                        else
+                            TEST_CLIENT.Log("   Test select query failed, but unexpected result: ", COLOR_ERROR, tostring(data))
+                        end
+
+                        -- Cleanup
+                        TEST_CLIENT.Query("DROP TABLE IF EXISTS test_table")
+                        TEST_CLIENT.Kill()
+                    end, function(err)
+                        TEST_CLIENT.Log("   Test select query:", COLOR_ERROR, " failed: " .. err)
+
+                        -- Cleanup
+                        TEST_CLIENT.Query("DROP TABLE IF EXISTS test_table")
+                        TEST_CLIENT.Kill()
+                    end)
+                end, function(err)
+                    TEST_CLIENT.Log("   Test data insert:", COLOR_ERROR, " failed: " .. err)
+
+                    -- Cleanup
+                    TEST_CLIENT.Query("DROP TABLE IF EXISTS test_table")
+                    TEST_CLIENT.Kill()
+                end)
+            end, function(err)
+                TEST_CLIENT.Log("   Test table creation:", COLOR_ERROR, " failed: " .. err)
+
+                -- Cleanup
+                TEST_CLIENT.Kill()
+            end)
+
+        end, true)
+    end
+end)
