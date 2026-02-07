@@ -1,3 +1,74 @@
+/*
+    MySQL Client Library
+    
+    A Lua module for connecting to and interacting with MySQL databases in Garry's Mod.
+    Provides functionality for executing queries, managing connections, and handling results.
+    
+    Example Usage:
+
+    ```
+    
+    es_armory.MYSQL_CLIENT = mysql_client.NewClient("es_armory", "database_settings.txt")
+
+    local DB = es_armory.MYSQL_CLIENT
+    DB.OnConnect("SetupTables", function()
+
+        DB.Query([[
+            CREATE TABLE IF NOT EXISTS `es_weapon_icon_offsets` (
+                weapon_class Varchar(255),
+                OffsetForward DOUBLE(32, 4),
+                OffsetUp DOUBLE(32, 4),
+                OffsetRight DOUBLE(32, 4),
+                RotateForward DOUBLE(32, 4),
+                RotateUp DOUBLE(32, 4),
+                RotateRight DOUBLE(32, 4),
+                AddFOV INT(16),
+                edit_time BIGINT,
+                extra text,
+                PRIMARY KEY (weapon_class)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        ]], function()
+            DB.Log("es_armory: es_weapon_icon_offsets table created or already exists.")
+        end)
+
+    end, true)
+
+    ```
+
+
+    DB.QueryFormat([[
+        INSERT INTO `es_weapon_icon_offsets` (weapon_class, OffsetForward, OffsetUp, OffsetRight, RotateForward, RotateUp, RotateRight, AddFOV, extra, edit_time)
+        VALUES (%s, %f, %f, %f, %f, %f, %f, %f, %s, %f)
+        ON DUPLICATE KEY UPDATE OffsetForward = %f, OffsetUp = %f, OffsetRight = %f, RotateForward = %f, RotateUp = %f, RotateRight = %f, AddFov = %f, extra = %s, edit_time = %f;
+    ]], {
+        weapon_class, OffsetForward, OffsetUp, OffsetRight, RotateForward, RotateUp, RotateRight, AddFOV, extra_json, edit_time,
+        OffsetForward, OffsetUp, OffsetRight, RotateForward, RotateUp, RotateRight, AddFOV, extra_json, edit_time},
+    function()
+        if callback then callback(true) end
+    end,
+    function(err)
+        if callback then callback(false) end
+    end)
+
+
+    ```
+
+    DB.QueryFormat([[
+        DELETE FROM `es_weapon_icon_offsets`
+        WHERE weapon_class = %s;
+    ]], {weapon_class},
+    function()
+        if callback then callback(true) end
+    end,
+    function(err)
+        if callback then callback(false) end
+    end)
+
+
+*/
+
+
+
 ---@meta
 module("zen")
 
@@ -7,7 +78,7 @@ mysql_client = _GET("mysql_client")
 ---@type table <string, mysql_client.Client>
 mysql_client.mt_ClientList = mysql_client.mt_ClientList or {}
 
-mysql_client.version = "1.0.2"
+mysql_client.version = "1.0.3"
 
 mysql_client.iClientID = mysql_client.iClientID or 0
 
